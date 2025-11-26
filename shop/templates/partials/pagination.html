@@ -1,0 +1,34 @@
+
+<div class="pagination-wrapper">
+  <ul class="pagination">
+    {% if page.has_previous %}
+      <li><a href="?page={{ page.previous_page_number }}">«</a></li>
+
+      {% if page.number > 3 %}
+        <li><a href="?page=1">1</a></li>
+        {% if page.number > 4 %}
+          <li><span>...</span></li>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    {% for num in page.paginator.page_range %}
+      {% if page.number == num %}
+        <li class="active"><a href="?page={{ num }}">{{ num }}</a></li>
+      {% elif num > page.number|add:'-3' and num < page.number|add:'3' %}
+        <li><a href="?page={{ num }}">{{ num }}</a></li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page.has_next %}
+      {% if page.number < page.paginator.num_pages|add:'-3' %}
+        <li><span>...</span></li>
+        <li><a href="?page={{ page.paginator.num_pages }}">{{ page.paginator.num_pages }}</a></li>
+      {% elif page.number < page.paginator.num_pages|add:'-2' %}
+        <li><a href="?page={{ page.paginator.num_pages }}">{{ page.paginator.num_pages }}</a></li>
+      {% endif %}
+
+      <li><a href="?page={{ page.next_page_number }}">»</a></li>
+    {% endif %}
+  </ul>
+</div>

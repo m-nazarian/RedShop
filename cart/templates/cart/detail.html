@@ -1,0 +1,119 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}cart{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    <div class="messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
+                 style="background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+    <div class="cart-detail-container">
+    
+        {% for item in cart %}
+            
+            <div class="product-item" data-item-id="{{ item.product.id }}">
+                <a href="{% url 'shop:product_detail' item.product.id item.product.slug %}">
+                    <img src="{{ item.product.images.first.file.url }}" class="img-cart">
+                </a>
+                <div class="product-info">
+                    <h3>
+                        <a href="{% url 'shop:product_detail' item.product.id item.product.slug %}">
+                        {{ item.product.name|fa_number }}
+                        </a>
+                    </h3>
+                    <p>تعداد: <span id="item-quantity-{{ item.product.id }}">{{ item.quantity|fa_number }}</span></p>
+                    <p>قیمت هر محصول: <span>{{ item.price|money_format }} تومان</span></p>
+                    <p>قیمت کل: <span id="item-total-{{ item.product.id }}">{{ item.total|money_format }} تومان</span></p>
+                </div>
+                <div class="actions">
+                    <div class="quantity-add">+</div>
+                    <div class="quantity-decrease">-</div>
+                    <div class="quantity-remove">حذف</div>
+                </div>
+            </div>
+
+        {% endfor %}
+        <div class="total-price">
+            <p>قیمت کل: <span id="item-total-price">{{ cart.get_total_price|money_format }} تومان</span></p>
+            {% if cart|length > 0 %}
+                <p>هزینه ارسال: <span id="item-post-price">{{ cart.get_post_price_if_any|money_format }} تومان</span></p>
+                <p>مبلغ قابل پرداخت: <span id="item-final-price">{{ cart.get_final_price|money_format }} تومان</span></p>
+            {% else %}
+                <p class="empty-cart-text">سبد خرید شما خالی است</p>
+            {% endif %}
+        </div>
+        <div class="checkout-buttons">
+            <div class="continue-btn"><a href="{% url 'orders:checkout_address' %}?next={{ request.path }}">ادامه خرید</a></div>
+            <div class="back-btn"><a href="{% url 'shop:product_list' %}">برگشت به لیست خرید</a></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        $(document).ready(function(){
+            $('.quantity-add').on('click', function(){
+                updateQuantity($(this).closest('.product-item').data('item-id'), 'add');
+            });
+            $('.quantity-decrease').on('click', function(){
+                updateQuantity($(this).closest('.product-item').data('item-id'), 'decrease');
+            });
+            $('.quantity-remove').on('click', function(){
+                removeItem($(this).closest('.product-item').data('item-id'));
+            });
+            function updateQuantity(itemId, action){
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url 'cart:update_quantity' %}',
+                    data: {
+                        'item_id': itemId,
+                        'action': action,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function(response){
+                        if (response.success){
+                            $('#item_count').text(response.item_count);
+                            $('#total_price').text(response.total_price);
+                            $('#item-quantity-'+ itemId).text(response.quantity);
+                            $('#item-total-'+ itemId).text(response.item_total);
+                            $('#item-total-price').text(response.total_price);
+                            $('#item-final-price').text(response.final_price);
+                            $('#item-post-price').text(response.item_count > 0 ? response.post_price : 0);
+                        } else {
+                            alert('Error updating quantity!');
+                        }
+                    }
+                });
+            }
+            function removeItem(itemId){
+                $.ajax({
+                    type: 'POST',
+                    url: '{% url 'cart:remove_item' %}',
+                    data: {
+                        'item_id': itemId,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function(response){
+                        if (response.success){
+                            $('#item_count').text(response.item_count);
+                            $('#total_price').text(response.total_price);
+                            $('#item-total-price').text(response.total_price);
+                            $('#item-final-price').text(response.final_price);
+                            $('#item-post-price').text(response.item_count > 0 ? response.post_price : 0);
+                            $(`.product-item[data-item-id=${itemId}]`).remove();
+                        } else {
+                            alert('Error updating quantity!');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

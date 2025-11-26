@@ -1,0 +1,13 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% block title %}register_done{% endblock %}
+
+{% block content %}
+    <div>
+        <h1>  {{ user }} عزیز </h1>
+        <p>ثبت نام شما با موفقیت انحام شد</p>
+        <a href="{% url 'account:profile' %}">ورود به وبسایت</a>
+    </div>
+
+
+{% endblock %}

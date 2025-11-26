@@ -1,0 +1,71 @@
+{% load static %}
+{% load custom_filters %}
+{% load mptt_tags %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/components.css' %}">
+{% endblock %}
+
+<nav class="navbar">
+    <div class="navbar-container">
+        <div class="navbar-logo">
+            <a href="{% url 'shop:index' %}">🛍 فروشگاه من</a>
+        </div>
+
+        <label>
+            <input type="text" placeholder="جستجو..." class="search-input">
+        </label>
+
+        <div class="navbar-actions">
+            {% with item_count=cart|length %}
+                <a href="{% url 'cart:cart_detail' %}" class="navbar-cart-link">
+                    <div class="cart-info-container">
+                    <span class="cart-icon">🛒</span>
+                        <span class="cart-info">
+                            <span id="item_count" class="item-count">{{ item_count|fa_number }}</span> item,
+                            <span id="total_price" class="total-price">{{ cart.get_total_price|money_format }}</span>
+                        </span>
+                    </div>
+                </a>
+            {% endwith %}
+        </div>
+    </div>
+
+
+
+    <div class="navbar-con">
+        {% load mptt_tags %}
+        <ul class="nav-categories">
+        {# ✅ تغییر نام متغیر به categories_tree #}
+            {% recursetree categories_tree %}
+                <li class="dropdown">
+                {# لینک به صفحه دسته‌بندی #}
+                <a href="{{ node.get_absolute_url }}">{{ node.name }}</a>
+
+                {# اگر فرزند دارد، زیرمنو را نمایش بده #}
+                    {% if not node.is_leaf_node %}
+                        <ul class="submenu">
+                            {{ children }}
+                        </ul>
+                    {% endif %}
+                </li>
+            {% endrecursetree %}
+        </ul>
+
+
+
+        <div class="other-link__log">
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'account:profile' %}">{{ request.user.account.display_name|default:request.user }}</a>
+                <form method="post" action="{% url 'account:logout' %}">
+                    {% csrf_token %}
+                    <a href="{% url 'account:logout' %}" class="logout-btn"><i class="fa fa-sign-out-alt"></i> خروج</a>
+                </form>
+                {% else %}
+                <li><a href="{% url 'account:login' %}" style="color: #fff">ورود</a></li>
+                <li><a href="{% url 'account:register' %}" style="color: #fff">ثبت نام</a></li>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div id="menu-overlay" class="menu-overlay"></div>

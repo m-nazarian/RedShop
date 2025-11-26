@@ -1,0 +1,66 @@
+{% load custom_filters %}
+{% for filter in ordered_filters %}
+    <div class="filter-group">
+
+        <h3 class="filter-header__h3">{{ filter.title }}</h3>
+
+        <div class="filter-content">
+
+            {% if filter.key == 'price' %}
+                {% with current_price=current_selections.max_price|default:filter.data.max %}
+                <input type="range"
+                       id="price-range"
+                       class="filter-input"
+                       data-filter="max_price"
+                       min="{{ filter.data.min }}"
+                       max="{{ filter.data.max }}"
+                       value="{{ current_price }}"
+                       step="10000">
+                <span id="price-value">تا {{ current_price|money_format }} تومان</span>
+                {% endwith %}
+                <hr>
+            {% elif filter.key == 'brand' %}
+                {% for brand in filter.data %}
+                    <label>
+                        <input type="checkbox"
+                               class="filter-input"
+                               data-filter="brand"
+                               value="{{ brand.id }}"
+                               {% if brand.id|is_in_list:current_selections.brand %}checked{% endif %}
+                        >
+                        {{ brand.name }}
+                    </label>
+                {% endfor %}
+                <hr>
+            {% elif filter.key == 'color' %}
+                {% for color in filter.data %}
+                    <label class="filter-label">
+                        <input type="checkbox"
+                               class="filter-input"
+                               data-filter="color"
+                               value="{{ color.id }}"
+                               {% if color.id|is_in_list:current_selections.color %}checked{% endif %}
+                        >
+                        {{ color.name }}
+                    </label>
+                {% endfor %}
+
+            {% elif filter.type == 'dynamic' %}
+                {% for value in filter.data %}
+
+                    <label>
+                        <input type="checkbox"
+                               class="filter-input"
+                               data-filter="{{ filter.key }}" value="{{ value }}"
+                               {% if value|is_in_list:current_selections|get_item:filter.key %}checked{% endif %}
+                        >
+                        {{ value }}
+
+                    </label>
+
+                {% endfor %}
+
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}

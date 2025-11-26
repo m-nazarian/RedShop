@@ -1,0 +1,62 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% load mptt_tags %}
+{% load custom_filters %}
+{% block title %}Home{% endblock %}
+
+
+{% block content %}
+
+<div class="index-body">
+
+
+    <div>
+        <section class="hero-banner">
+            <div class="slider">
+                <div class="slides">
+                    <img src="{% static 'images/banner1.jpg' %}" alt="بنر 1">
+                    <img src="{% static 'images/banner2.jpg' %}" alt="بنر 2">
+                    <img src="{% static 'images/banner3.jpg' %}" alt="بنر 3">
+                    <img src="{% static 'images/banner4.jpg' %}" alt="بنر 4">
+                </div>
+                <button class="prev">&#10094;</button>
+                <button class="next">&#10095;</button>
+                <div class="dots"></div>
+            </div>
+        </section>
+
+
+            <section class="categories-index__section">
+                <h2>دسته‌بندی محصولات</h2>
+            </section>
+            <div class="categories-index">
+
+                {% for cat in categories_parents %}
+                    <div class="category-box">
+                        <a href="{{ cat.get_absolute_url }}">
+
+                            {% if cat.photo %}
+                                <img src="{{ cat.photo.url }}" alt="{{ cat.name }}">
+                            {% endif %}
+
+                            <div class="categories-name">{{ cat.name }}</div>
+                        </a>
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+
+    </div>
+
+        {% latest_product 5 fa_number %}
+
+
+
+
+    <script src="{% static 'js/slider.js' %}"></script>
+
+</div>
+
+{% endblock %}

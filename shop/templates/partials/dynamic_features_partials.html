@@ -1,0 +1,19 @@
+{% load custom_filters %}
+{% for feature_name, values in dynamic_features.items %}
+    <div class="filter-group">
+        <h3>{{ feature_name }}</h3>
+        <div class="filter-content">
+            {% for value in values %}
+                <label>
+                    {% with filter_name=feature_name|slugify|add_prefix:"feature_" %}
+                        <input type="checkbox"
+                               class="filter-input"
+                               data-filter="{{ filter_name }}"
+                               value="{{ value }}">
+                        {{ value }}
+                    {% endwith %}
+                </label>
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}

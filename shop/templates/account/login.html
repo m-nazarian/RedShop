@@ -1,0 +1,38 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% block title %}login{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/login.css' %}">
+{% endblock %}
+
+
+
+{% block content %}
+    <div class="body_login">
+        <div class="base__div">
+            <div class="circle circle__one"></div>
+            <div class="circle circle__tow"></div>
+            <div class="form__login">
+                <h2 class="header__login">ورود به حساب کاربری</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="number-login">
+                        <label class="input__login__Label" for="number">شماره تلفن</label >
+                        <input class="input__login__input" type="text" id="number" name="phone" placeholder=" شماره موبایل" required>
+                    </div>
+                    <div>
+                        <label class="input__login__Label" for="password">رمز عبور</label>
+                        <input class="input__login__input" id="password" type="password" name="password" placeholder=" رمز عبور" required>
+                    </div>
+                    <input class="input__login__input-login" type="submit" value="ورود">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

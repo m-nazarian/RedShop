@@ -1,0 +1,39 @@
+{% load static %}
+{% load mptt_tags %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>shop | {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/layout.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/product_list.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/detail.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/cart.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/index.css' %}">
+    <link rel="stylesheet" href="{% static 'output.css' %}">
+
+
+    <link rel="stylesheet" href="{% static 'css/fonts.css' %}">
+
+
+    {% block extra_css %}{% endblock %}
+    {% block head %} {% endblock %}
+</head>
+
+<body>
+    {% include 'partials/header.html' %}
+    {% include 'partials/navigation.html' %}
+    <div class="page-wrapper">
+        {% block content %} {% endblock %}
+    </div>
+    {% include 'partials/footer.html' %}
+    <script src="{% static 'js/header.js' %}" defer></script>
+    {% block extra_js %}
+        <script src="{% static 'js/jquery.min.js' %}"></script>
+        <script src="{% static 'js/header.js' %}"></script>
+        <script src="{% static 'js/detail.js' %}"></script>
+
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,113 @@
+{% extends 'parent/base.html' %}
+{% load thumbnail %}
+{% load custom_filters %}
+{% load static %}
+
+{% block title %}profile{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/profile.css' %}">
+{% endblock %}
+{% block extra_js %}
+    <script src="{% static 'js/profile.js' %}"></script>
+{% endblock %}
+
+
+{% block content %}
+    <!-- محتوای اصلی -->
+<main class="main">
+    <div class="container">
+                    <!-- سایدبار پروفایل -->
+            <aside class="sidebar">
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        {% if request.user.account.photo %}
+                            <img src="{{ request.user.account.photo.url }}" alt="تصویر پروفایل" class="profile-photo">
+                        {% else %}
+                            <img src="{% static 'images/man.png' %}" style="width: 75px">
+                        {% endif %}
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ request.user.account.display_name }}</h2>
+                        <section>{{ request.user.phone|fa_number }}</section>
+                        <button onclick="window.location.href='{% url 'account:edit_account' %}'" class="edit-profile-btn">ویرایش پروفایل</button>
+                    </div>
+                </div>
+
+                <nav class="profile-nav">
+                    <ul>
+                        <li class="{% if active_tab == 'orders' %}active{% endif %}">
+                            <a href="{% url 'orders:user_orders' %}">سفارش‌های من</a>
+                        </li>
+                        <li><a href="#">دیدگاه‌های من</a></li>
+                        <li><a href="#">لیست‌های من</a></li>
+                        <li><a href="#">آدرس‌های من</a></li>
+                        <li><a href="#">کارت‌های هدیه</a></li>
+                        <li><a href="#">‌کلاب</a></li>
+                        <li><a href="#">پیغام‌ها</a></li>
+                        <li><a href="#">تنظیمات</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <!-- بخش محتوای پروفایل -->
+            <section class="profile-content">
+                <div class="content-header">
+                    <h2>سفارش‌های من</h2>
+                    <div class="search-box">
+                        <label>
+                            <input type="text" placeholder="جستجو در سفارش‌ها...">
+                        </label>
+                        <button class="search-btn">🔍</button>
+                    </div>
+                </div>
+
+                <div class="orders-list">
+                    {% if orders %}
+                        {% for order in orders %}
+                            <div class="order-card">
+                                <div class="order-header">
+                                    <div class="order-info">
+                                        <span class="order-id">شماره سفارش: {{ order.id }}</span>
+                                        <span class="order-date">تاریخ: {{ order.created|date:"Y/m/d" }}</span>
+                                    </div>
+                                    <div class="order-status {{ order.status }}">
+                                        {{ order.get_status_display }}
+                                    </div>
+                                </div>
+
+                                <div class="order-items">
+                                    {% for item in order.items.all %}
+                                        <div class="order-item">
+                                            <a href="{{ item.product.get_absolute_url}}">
+                                                <img src="{{ item.product.images.first.file.url }}">
+                                            </a>
+                                            <div class="item-info">
+                                                <h4>{{ item.product.name }}</h4>
+                                                <p>تعداد: {{ item.quantity }} عدد</p>
+                                                <p class="price">{{ item.get_cost|money_format }} تومان</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="order-footer">
+                                    <div class="order-total">
+                                        <strong>مبلغ کل: {{ order.get_total_cost|money_format }} تومان</strong>
+                                    </div>
+                                    <div class="order-actions">
+                                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-primary">مشاهده جزئیات</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>هنوز سفارشی ثبت نکرده‌اید.</p>
+                    {% endif %}
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'parent/base.html' %}
+{% block title %}سفارش ثبت شد{% endblock %}
+{% block content %}
+<main class="checkout-complete">
+<div class="container success-box">
+<h2>سفارش شما با موفقیت ثبت شد</h2>
+<p>پرداخت در محل — پرداخت هنگام تحویل انجام خواهد شد.</p>
+<a href="{% url 'orders:user_orders' %}" class="btn btn-primary">مشاهده سفارش‌ها</a>
+</div>
+</main>
+{% endblock %}

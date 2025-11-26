@@ -1,0 +1,49 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% block title %}ویرایش حساب کاربری{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/edit_account.css' %}">
+{% endblock %}
+{% block content %}
+<div class="edit-account-container">
+
+    <!-- پیام‌های موفقیت و خطا -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <h1 class="page-title">ویرایش اطلاعات حساب کاربری</h1>
+    <p class="page-desc">لطفا اطلاعات خود را ویرایش کرده و سپس روی "ذخیره تغییرات" کلیک کنید.</p>
+
+    <form method="post" enctype="multipart/form-data" class="edit-account-form">
+        {% csrf_token %}
+
+        <!-- بخش اطلاعات شخصی -->
+        <div class="form-section">
+            <h2>اطلاعات کاربری</h2>
+            <div class="form-fields">
+                {{ user_form.as_p }}
+            </div>
+        </div>
+
+        <!-- بخش اطلاعات پروفایل -->
+        <div class="form-section">
+            <h2>اطلاعات پروفایل</h2>
+            <div class="form-fields">
+                {{ account_form.as_p }}
+            </div>
+        </div>
+
+        <button type="submit" class="save-btn">💾 ذخیره تغییرات</button>
+    </form>
+
+    <div class="back-profile">
+        <a href="{% url 'account:profile' %}" class="back-link">بازگشت به پروفایل</a>
+    </div>
+</div>
+{% endblock %}

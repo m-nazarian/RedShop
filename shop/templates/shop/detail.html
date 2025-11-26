@@ -1,0 +1,168 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}product detail{% endblock %}
+
+{% block content %}
+    <div class="product-container">
+
+        <div class="product-wrapper">
+            <div class="product-detail">
+                <h2>{{ product.name|fa_number }}</h2>
+                <p class="product-detail-category">دسته بندی: {{ product.category }}</p>
+
+                <div class="product-colors">
+                    <div class="product-colors__div">
+                        {% for color in product.colors.all %}
+                            <span class="color-dot" title="{{ color.name }}" style="background: {{ '#'|add:color.hex_code }}"></span>
+                            <p>{{ color.name }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="product-show">
+                    <p class="product-detail-inventory">موجودی: {{ product.inventory|fa_number }}</p>
+                    <ul class="product-detail-features">
+                        {% for f in product.features.all %}
+                        <li class="product-detail-features-list">{{ f.name }}: {{ f.value }}</li>
+                        {% endfor %}
+                    </ul>
+                        <div class="price__detail">
+                            <span class="original-price">قیمت:{{ product.price|money_format }} تومان</span>
+
+                            <span class="discounted-price-d">قیمت پس از تخفیف{{ product.new_price|money_format }} تومان</span>
+                        </div>
+
+                        <button type="button" id="add_cart" class="add-cart__button">افزودن به سبد خرید🛒</button>
+                </div>
+            </div>
+
+            <div class="product-images">
+
+                <div class="main-image-wrapper">
+                    <img id="main-image" src="{{ product.images.first.file.url }}" class="main-image" alt="Main Product Image">
+                </div>
+
+                <div class="thumbnails-container">
+                    {% for img in product.images.all %}
+                        <img src="{{ img.file.url }}" class="page-thumbnail" alt="Thumbnail">
+                    {% endfor %}
+                </div>
+
+            </div>
+
+                {#========================================#}
+                {#--------------Lightbox------------------#}
+                {#========================================#}
+            <div id="lightbox" class="lightbox">
+                <span class="close-lightbox">&times;</span>
+
+                <div class="lightbox-nav prev-btn">&#10094;</div>
+                <div class="lightbox-nav next-btn">&#10095;</div>
+
+                <div class="lightbox-slider-container">
+                    <div class="lightbox-track" id="track">
+                        </div>
+                </div>
+
+                <div class="lightbox-bottom-strip">
+                    <div class="lightbox-thumbnails" id="lightbox-thumbnails">
+                        </div>
+                </div>
+
+                <div class="lightbox-counter"></div>
+            </div>
+
+        </div>
+
+
+
+
+    </div>
+
+    <div class="product-description">
+        <h3>توضیحات محصول</h3>
+        <p>{{ product.description|fa_number }}</p>
+    </div>
+        <h3 class="product-detail__info">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="arrow-product">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
+</svg>
+             مشخصات کالا
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="arrow-product">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
+</svg>
+        </h3>
+        <div class="product-specs">
+        {% for group, features in grouped_features.items %}
+            <div class="spec-group">
+
+            <button type="button" class="collapsible-group">{{ group }}</button>
+            <div class="content">
+
+                <table class="spec-table">
+                    {% for f in features %}
+                        <tr>
+                            <td class="spec-name">{{ f.name|fa_number }}</td>
+                            <td class="spec-value">{{ f.value|fa_number }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+
+            </div>
+
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+<script src="{% static 'js/jquery.min.js' %}"></script>
+
+<script src="{% static 'js/detail.js' %}"></script>
+
+<script>
+    $(document).ready(function(){
+        $('#add_cart').click(function(){
+            const button = $(this);
+
+            button.prop('disabled', true).text('در حال پردازش...');
+
+            $.ajax({
+               type: 'POST',
+                url: '{% url 'cart:add_to_cart' product.id %}',
+                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'},
+
+                success: function(data){
+                    // 1. آپدیت اعداد هدر
+                    $('#item_count').text(data.item_count);
+                    $('#total_price').text(data.total_price);
+
+                    // 2. نمایش پیام موفقیت
+                    showToast('محصول با موفقیت به سبد خرید اضافه شد', 'success');
+                },
+
+                error: function(xhr, status, error) {
+                    // اگر سرور ارور داد (مثلا موجودی کافی نیست یا ارور 500)
+                    // سعی میکنیم متن ارور سرور رو بخونیم، اگر نبود پیام پیش‌فرض میدیم
+                    let errorMsg = 'متاسفانه مشکلی رخ داده است.';
+
+                    if(xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error; //پیامی که از ویو جانگو فرستادیم
+                    }
+
+                    showToast(errorMsg, 'error');
+                },
+
+                complete: function() {
+                    // برگرداندن دکمه به حالت اول
+                    button.prop('disabled', false).text('افزودن به سبد خرید🛒');
+                }
+            });
+        });
+    });
+</script>
+
+<div id="toast-container"></div>
+
+{% endblock %}

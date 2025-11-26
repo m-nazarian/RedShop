@@ -1,0 +1,17 @@
+{% extends 'parent/base.html' %}
+{% load custom_filters %}
+{% block title %}تأیید نهایی سفارش{% endblock %}
+{% block content %}
+    <main class="review-page">
+        <div class="container">
+            <h2 class="page-title">تأیید نهایی سفارش</h2>
+            <div class="order-summary-box">
+                <p>مبلغ نهایی سفارش: <strong>{{ cart.get_final_price|money_format }} تومان</strong></p>
+            </div>
+            <form method="post" action="{% url 'orders:checkout_create_order' %}">
+                {% csrf_token %}
+                <button class="btn btn-success" type="submit">ثبت سفارش و پرداخت در محل</button>
+            </form>
+        </div>
+    </main>
+{% endblock %}

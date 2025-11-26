@@ -1,0 +1,1 @@
+tailwindcss.exe -i ./static/input.css -o ./static/output.css --watch

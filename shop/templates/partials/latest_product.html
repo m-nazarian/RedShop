@@ -1,0 +1,22 @@
+{% load jformat %}
+{% load custom_filters %}
+
+
+<div class="latest-product">
+    <h2>آخرین محصول ها</h2>
+    <div class="latest-product_wrapper">
+            {% for product in l_products %}
+        <div class="latest-product__div">
+            <a href="{{ product.get_absolute_url }}">
+                {% if product.images.first %}
+                    <img class="latest-product-img" src="{{ product.images.first.file.url }}" alt="{{ product.name }}">
+                {% endif %}
+            </a>
+            <a href="{{ product.get_absolute_url }}">
+                {{ product.name|fa_number }}: {{ product.created|jformat:"%Y/%m/%d-%H:%M"|fa_number }}
+            </a>
+
+        </div>
+    {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,286 @@
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-in-out;
+}
+
+.cart-container{
+    width: 100%;
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    background-color: var(--dark-color);
+    border-bottom-left-radius: 5px;
+    z-index: 555;
+}
+
+.cart-info-container{
+    width: 200px;
+    height: 50px;
+    background-color: var(--dark-color);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    margin-left: 0;
+    box-shadow: 0 5px 5px rgba(0,0,0, 0.2);
+
+}
+
+.cart-icon{
+    color: #fff;
+}
+
+.pagination-wrapper {
+    text-align: center;
+    margin: 2rem 0;
+}
+.pagination {
+    list-style: none;
+    padding: 0;
+    display: inline-flex;
+    direction: rtl;
+}
+.pagination li {
+    margin: 0 4px;
+}
+.pagination a, .pagination span {
+    display: block;
+    padding: 6px 12px;
+    background: var(--button__color);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all .3s;
+    box-shadow: var(--shadow__product);
+}
+.pagination a:hover {
+    background: var(--button__color__hover);
+    transform: scale(1.2);
+}
+.pagination .active a {
+    background: #a3a3a3;
+    color: white;
+}
+/* ==========================
+   Navbar Dropdown Style
+========================== */
+.navbar {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    right: 0;
+    background-color: var(--ligth-color);
+    z-index: 550;
+}
+
+.navbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.navbar-logo a {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+.navbar-con{
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    gap: 25px;
+    margin: 0;
+    color: #fff;
+    font-size: 17px;
+}
+
+.navbar-links li {
+    position: relative;
+}
+
+.search-input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 10px;
+    width: 400px;
+}
+
+.navbar-links a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 8px 10px;
+    transition: all 0.2s ease;
+}
+
+.navbar-links a:hover {
+    color: #cacaca;
+}
+.other-link{
+    display: flex;
+    gap: 30px;
+}
+
+/* ==========================
+   --- لایه مات پس‌زمینه ---
+========================== */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(25, 25, 25, 0.65);
+    backdrop-filter: blur(6px);
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease 300ms;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    transition: all 180ms ease-in 80ms;
+}
+
+/* ==========================
+        --- منوها ---
+========================== */
+
+.nav-categories {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+    position: relative;
+    z-index: 20;
+}
+
+.nav-categories > .dropdown {
+    position: relative;
+}
+
+.nav-categories a {
+    color: #fff;
+    text-decoration: none;
+    padding: 8px 12px;
+    transition: color 0.2s;
+}
+.nav-categories a:hover {
+    color: var(--bg_color);
+}
+
+/* !* --- زیرمنوها --- *! */
+.submenu {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    color: #000;
+    border-radius: 6px;
+    min-width: 200px;
+    z-index: 30;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: all 180ms ease-in 180ms;
+    list-style: none;
+    padding-right: 0;
+}
+
+.submenu li {
+    position: relative;
+
+}
+
+.submenu a {
+    display: block;
+    color: #333;
+    padding: 10px;
+}
+
+.submenu a:hover {
+    background: #f2f2f2;
+    border-radius: 10px;
+}
+
+ /* --- زیرمنوی سطح دوم ---  */
+.submenu .submenu {
+    right: 101%;
+    top: 0;
+}
+
+/* *نمایش زیرمنو با hover  */
+.dropdown:hover > .submenu {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+}
+
+.nav-categories, .dropdown-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-categories > li {
+    position: relative;
+}
+
+.dropdown-menu {
+    visibility: hidden;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    min-width: 180px;
+    z-index: 1000;
+}
+
+.dropdown:hover > .dropdown-menu {
+    display: block;
+}
+
+.nav-categories > li:hover > .dropdown-menu {
+    display: block;
+    left: 0;
+    top: 0;
+}
+
+/* سبد خرید */
+.navbar-actions {
+    text-align: left;
+}
+
+.navbar-actions .cart-info-container {
+    margin-left: 0;
+}
+
+.other-link__log{
+    display: flex;
+    gap: 10px;
+}
+.other-link__log a{
+    color: #fff;
+}
+
+.category-menu, .subcategory-menu {
+    list-style: none;
+    padding-left: 10px;
+}
+
+.category-menu > li {
+    margin-bottom: 5px;
+}
+
+.subcategory-menu {
+    margin-top: 5px;
+    padding-left: 20px;
+    border-left: 1px dashed #ccc;
+}

@@ -1,0 +1,69 @@
+{% extends 'parent/base.html' %}
+{% load custom_filters %}
+{% block title %}سفارش‌های من{% endblock %}
+{% block content %}
+    <main class="orders-page">
+        <div class="container">
+            <h2 class="page-title">سفارش‌های من</h2>
+            {% if orders %}
+            <div class="orders-list">
+                {% for order in orders %}
+            <div class="order-box">
+                <h4>سفارش شماره {{ order.order_number }}</h4>
+                <p>تاریخ: {{ order.created|date:"Y/m/d H:i"|fa_number }}</p>
+                <p>وضعیت: {{ order.get_status_display }}</p>
+                <p>مبلغ کل: {{ order.total|money_format }} تومان</p>
+                <p>آدرس: {{ order.address|fa_number }}</p>
+                <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-secondary">مشاهده جزئیات</a>
+            </div>
+            {% endfor %}
+            </div>
+            {% else %}
+            <p>هنوز سفارشی ثبت نکرده‌اید.</p>
+            {% endif %}
+        </div>
+    </main>
+
+
+<style>
+
+    .orders-page{
+        padding: 20px;
+
+    }
+
+    .container{
+        background-color: var(--ligth-color);
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .page-title{
+        text-align: center;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .orders-list{
+
+    }
+
+    .order-box{
+        border-radius: 10px;
+        background-color: var(--ligth-color);
+        margin: 10px 0;
+        padding: 10px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    }
+
+    .btn{
+
+    }
+
+    .btn-secondary{
+
+    }
+</style>
+{% endblock %}
+
+

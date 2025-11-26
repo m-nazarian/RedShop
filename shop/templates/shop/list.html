@@ -1,0 +1,42 @@
+{% extends 'parent/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block title %}فهرست محصولات{% endblock %}
+
+{% block content %}
+<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+<div class="products-page">
+    <div class="filters-sidebar">
+        <div id="all-filters-container">
+            {% include 'partials/all_filters_partials.html' with ordered_filters=ordered_filters %}
+        </div>
+    </div>
+    <div class="sort__container__parent">
+        <div class="sort-container">
+            <img src="{% static 'images/sort.png' %}" alt="Sort Icon" class="sort-icon">
+            <span style="margin-left: 10px;">مرتب‌سازی بر اساس :</span>
+
+            <select id="sort-select" class="filter-input" data-filter="sort">
+                <option value="newest" {% if sort_option == 'newest' %}selected{% endif %}>جدیدترین</option>
+                <option value="cheapest" {% if sort_option == 'cheapest' %}selected{% endif %}>ارزان‌ترین</option>
+                <option value="expensive" {% if sort_option == 'expensive' %}selected{% endif %}>گران‌ترین</option>
+                <option value="name" {% if sort_option == 'name' %}selected{% endif %}>الفبا</option>
+            </select>
+        </div>
+    </div>
+    <div class="product-grid" id="product-container">
+        {% include 'partials/product_list_partials.html' with products=products %}
+    </div>
+
+
+</div>
+
+{% include "partials/pagination.html" with page=products %}
+
+
+{% block extra_js %}
+  <script src="{% static 'js/filters.js' %}"></script>
+{% endblock %}
+
+{% endblock %}

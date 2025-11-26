@@ -1,0 +1,159 @@
+
+/*============================*/
+/*---------Hero banner--------*/
+/*============================*/
+.hero-banner img {
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.hero-banner {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+}
+
+.slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.slides {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease-in-out;
+}
+
+.slides img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    flex-shrink: 0;
+    user-select: none;
+    cursor: grab;
+}
+
+button.next, button.prev {
+    transform: translate(-30%, -120%);
+    background-color: rgba(0,0,0,0.4);
+    border: none;
+    color: white;
+    font-size: 20px;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 25%;
+}
+
+button.prev { left: 10px; }
+button.next { right: 10px; }
+
+.dots {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+.dots span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 0 5px;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.dots span.active {
+    background-color: white;
+}
+
+/*============================*/
+/*-------latest-product-------*/
+/*============================*/
+
+.latest-product{
+    text-align: center;
+    padding: 20px;
+}
+.latest-product h2{
+    padding: 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.latest-product_wrapper{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.latest-product-img{
+    border-radius: 10px;
+    width: -webkit-fill-available;
+    padding: 10px;
+}
+
+.latest-product__div{
+    background-color: white;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.latest-product__div a{
+    color: black;
+}
+
+/*============================*/
+/*------categories-index------*/
+/*============================*/
+
+.categories-index__section {
+    text-align: center;
+    margin: 20px 0;
+}
+.categories-index__section h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.categories-index{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    padding: 20px;
+
+}
+
+.category-box{
+    background-color: #fff;
+    text-align: center;
+    border-radius: 10px;
+}
+
+.category-box img{
+    padding: 20px;
+    width: -webkit-fill-available;
+}
+
+.categories-name{
+    font-size: 1rem;
+    font-weight: bold;
+    padding-bottom: 10px;
+    color: black;
+}
+
+/*============================*/
+/*-----------Footer-----------*/
+/*============================*/
+.footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    color: #666;
+    font-size: 0.9rem;
+}

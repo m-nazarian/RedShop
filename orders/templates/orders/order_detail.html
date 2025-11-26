@@ -1,0 +1,102 @@
+{% extends 'parent/base.html' %}
+{% load custom_filters %}
+{% block title %}جزئیات سفارش{% endblock %}
+{% block content %}
+    <main class="order-detail-page">
+        <div class="container">
+            <h2 class="page-title">جزئیات سفارش شماره {{ order.order_number }}</h2>
+            <div class="order-meta">
+                <p>تاریخ سفارش: {{ order.created|date:"Y/m/d"|fa_number }}</p>
+                <p>وضعیت: {{ order.get_status_display }}</p>
+                <p>روش پرداخت: {{ order.get_payment_method_display }}</p>
+            </div>
+            <h3>محصولات</h3>
+            <div class="order-items">
+                {% for item in order.items.all %}
+                    <div class="order-item">
+                        <img src="{{ item.product.images.first.file.url }}" class="order-item-img">
+                        <div class="item-info">
+                            <h4>{{ item.product.name|fa_number }}</h4>
+                            <p>تعداد: {{ item.quantity|fa_number }}</p>
+                            <p>قیمت واحد: {{ item.price|money_format }} تومان</p>
+                            <p>قیمت کل: {{ item.price|multiply:item.quantity|money_format }} تومان</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="order-meta">
+                <p>مجموع کالاها: {{ order.get_total_cost|money_format }} تومان</p>
+                <p>هزینه ارسال: {{ order.post_price|money_format }} تومان</p>
+                <p><strong>جمع نهایی: {{ order.total|money_format }} تومان</strong></p>
+            </div>
+            <div class="order-meta">
+                <h3>اطلاعات ارسال</h3>
+                <p>{{ order.first_name }} {{ order.last_name }}</p>
+                <p>شماره تماس: {{ order.phone|fa_number }}</p>
+                <p>آدرس: {{ order.address_line|fa_number }}, {{ order.city }}, {{ order.province }} — کد پستی {{ order.postal_code|fa_number }}</p>
+            </div>
+            <div class="order-actions">
+                <a onclick="window.print()" class="btn">چاپ سفارش</a>
+                <a href="{% url 'orders:user_orders' %}" class="btn btn-secondary">بازگشت</a>
+            </div>
+        </div>
+    </main>
+
+
+    <style>
+
+        .order-detail-page{
+            padding: 20px;
+        }
+
+        .container{
+            padding: 10px;
+            background-color: var(--ligth-color);
+            border-radius: 10px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .page-title{
+
+        }
+
+        .order-meta{
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 5px;
+            margin: 5px;
+        }
+
+        .order-item{
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 5px;
+            margin: 5px;
+        }
+
+
+        .order-item-img{
+            width: 80px;
+        }
+
+        .item-info{
+
+        }
+
+        .order-actions{
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .btn{
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 5px;
+            cursor: pointer;
+            color: var(--bg_color);
+        }
+
+    </style>
+{% endblock %}

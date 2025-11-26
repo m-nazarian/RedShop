@@ -1,0 +1,46 @@
+git{% extends 'parent/base.html' %}
+{% load static %}
+{% block title %}register{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="body_login">
+    <div class="base__div">
+        <div class="circle circle__one"></div>
+        <div class="circle circle__tow"></div>
+        <div class="form__login">
+            <h2 class="header__login">ثبت‌نام کاربر جدید</h2>
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="number-login">
+                    <label for="id_phone" class="input__login__Label">شماره موبایل</label>
+                    {{ form.phone }}
+                </div>
+
+                <div class="number-login">
+                    <label for="id_password" class="input__login__Label">رمز عبور</label>
+                    {{ form.password }}
+                </div>
+
+                <div class="number-login">
+                    <label for="id_password2" class="input__login__Label">تکرار رمز عبور</label>
+                    <div>{{ form.password2 }}</div>
+                </div>
+
+                <button type="submit" class="input__login__input-login">ثبت‌نام</button>
+            </form>
+
+            {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                        <li class="alert alert-{{ message.tags }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

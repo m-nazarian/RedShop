@@ -1,0 +1,536 @@
+.product-container{
+    display: flex;
+    justify-content: space-between;
+    margin: 20px;
+}
+.product-wrapper{
+    display:flex ;
+    width: 100%;
+}
+
+.product-detail{
+    display: grid;
+    width: 49%;
+    padding: 20px;
+    margin: 10px;
+    box-sizing: border-box;
+    background-color: var(--background__color);
+    border-radius: 10px;
+    box-shadow: var(--shadow__product);
+    line-height: 3;
+
+}
+
+.product-detail h2{
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+
+
+
+
+.product-colors{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(1fr, 1fr));
+}
+.product-colors__div{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.color-dot {
+    width: 22px;
+    height: 22px;
+    display: inline-block;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+.product-show{
+    box-sizing: border-box;
+    border-radius: 10px;
+    gap: 10px;
+}
+
+
+
+
+.product-description{
+    clear: both;
+    margin: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: var(--background__color);
+    border-radius: 10px;
+    box-shadow: var(--shadow__product);
+    line-height: 2;
+}
+
+.img-cart{
+    border-radius: 10px;
+}
+
+.add-cart__button{
+    font-weight: 600;
+    font-size: 1.2rem;
+    background-color: var(--ligth-color);
+    border-radius: 10px;
+    margin-left: 10px;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+    width: 95%;
+    cursor: pointer;
+    border: none;
+}
+
+.add-cart__button:hover{
+    background-color: var(--dark-color);
+}
+
+.original-price{
+    text-decoration: line-through;
+    color: red;
+}
+
+.discounted-price-d{
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+.price__detail{
+    margin-top: 10px;
+    display: grid;
+}
+
+
+.product-detail-category{
+    display: grid;
+    align-items: center;
+    margin-top: auto;
+    padding: 10px 0;
+}
+.product-detail-inventory{
+    display: grid;
+    align-items: center;
+    margin-top: auto;
+}
+
+.product-detail-features{
+    text-decoration: none;
+    display: contents;
+}
+
+.product-detail-features-list{
+    list-style: inside;
+    margin-top: 10px;
+
+}
+
+.table-wrapper{
+    background-color: #fff;
+    margin: 5px 20px 20px 20px;
+    border-radius: 10px;
+    padding: 1px;
+}
+
+.able-wrapper__wrapp{
+    padding: 20px 20px 20px 30px;
+    width: 100%;
+}
+
+.table-div{
+    clear: both;
+    margin: 20px;
+    padding: 20px;
+
+}
+
+.table-feature{
+    padding: 10px;
+    width: 250px;
+    text-align: right;
+    box-shadow: var(--shadow__product);
+    border-radius: 2px;
+}
+
+.table-value{
+    padding: 10px;
+    width: 450px;
+    text-align: right;
+    box-shadow: var(--shadow__product);
+    border-radius: 2px;
+}
+
+.table-feature__tr{
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+    padding-right: 0;
+}
+
+/*-------------------------*/
+.product-specs{
+    padding: 0 20px 0 20px;
+}
+
+.spec-group {
+    margin-bottom: 25px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.spec-title {
+    background-color: #f7f7f7;
+    padding: 10px 15px;
+    font-weight: bold;
+    border-bottom: 1px solid #eee;
+}
+
+.spec-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.spec-table td {
+    padding: 8px 15px;
+    border-top: 1px solid #f2f2f2;
+}
+
+.spec-name {
+    width: 35%;
+    color: #555;
+}
+.spec-value {
+    color: #000;
+}
+
+.collapsible-group {
+    background-color: var(--ligth-color);
+    color: white;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: right;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.active, .collapsible-group:hover {
+    background-color: var(--dark-color);
+}
+
+.collapsible-group:after {
+    content: '\002B';
+    color: white;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+}
+
+.content{
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: #f1f1f1;
+}
+
+.active:after {
+    content: "\2212";
+}
+.product-detail__info{
+    text-align: center;
+    background-color: var(--ligth-color);
+    color: white;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.arrow-product{
+    width: 20px;
+    font-weight: bold;
+}
+
+
+/*===============================*/
+/*--------product-images---------*/
+/*===============================*/
+.product-images{
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px;
+    width: 49%;
+}
+
+.main-image-wrapper{
+    display: flex;
+    justify-content: center;
+}
+
+.main-image{
+    max-width: 70%;
+}
+/* --- استایل تامبنیل‌های صفحه اصلی --- */
+.thumbnails-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    overflow-x: auto; /* اسکرول افقی در صورت زیاد بودن عکس‌ها */
+    padding: 6px;
+}
+.page-thumbnail {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    opacity: 0.7;
+}
+.page-thumbnail:hover {
+    opacity: 1;
+}
+/* کلاسی که JS به عکس فعال در صفحه اصلی می‌دهد */
+.page-thumbnail.active-thumb {
+    border-color: #007bff; /* رنگ حاشیه عکس انتخاب شده */
+    opacity: 1;
+    transform: scale(1.05);
+}
+/*=========================*/
+/*--------lightbox---------*/
+/*=========================*/
+/* --- استایل لایت‌باکس (نسخه نهایی) --- */
+.lightbox {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    direction: ltr !important; /* اجبار به چپ‌چین برای عملکرد صحیح اسلایدر */
+}
+.lightbox.show { opacity: 1; }
+
+.lightbox-slider-container {
+    width: 100%;
+    height: 85%; /* 15 درصد پایین برای تامبنیل‌ها خالی بماند */
+    overflow: hidden;
+    position: relative;
+    margin-top: 0; /* چسبیده به بالا */
+}
+
+.lightbox-track {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    cursor: grab;
+}
+.lightbox-track:active { cursor: grabbing; }
+
+.lightbox-slide {
+    min-width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.lightbox-slide img {
+    max-width: 95%;
+    max-height: 95%;
+    object-fit: contain;
+    user-select: none;
+    transform-origin: center center;
+    transition: transform 0.1s linear;
+}
+
+/* نوار پایین لایت‌باکس */
+.lightbox-bottom-strip {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 120px; /* ارتفاع نوار پایین */
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2010;
+}
+
+.lightbox-thumbnails {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 8px 20px;
+    max-width: 90%;
+    scroll-behavior: smooth; /* اسکرول نرم */
+}
+/* مخفی کردن اسکرول بار */
+.lightbox-thumbnails::-webkit-scrollbar { height: 5px; }
+.lightbox-thumbnails::-webkit-scrollbar-thumb { background: #555; border-radius: 5px; }
+
+.lightbox-thumb-img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+    flex-shrink: 0; /* جلوگیری از جمع شدن عکس‌ها */
+}
+.lightbox-thumb-img:hover { opacity: 1; transform: translateY(-3px); }
+
+/* عکس فعال در لایت باکس */
+.lightbox-thumb-img.active-lightbox-thumb {
+    opacity: 1;
+    border-color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255,255,255,0.3);
+}
+
+/* دکمه‌ها */
+.close-lightbox {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 45px;
+    cursor: pointer;
+    z-index: 2020;
+    line-height: 1;
+}
+.lightbox-nav {
+    position: absolute;
+    top: 45%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 2020;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transition: 0.2s;
+}
+.lightbox-nav:hover { background: rgba(255,255,255,0.25); }
+.prev-btn { left: 20px; }
+.next-btn { right: 20px; }
+
+.lightbox-counter {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    z-index: 2020;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 10px;
+}
+
+/*===================================*/
+/*--------Toast Notification---------*/
+/*===================================*/
+/* کانتینر اصلی که پیام‌ها توش صف میشن */
+    #toast-container {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none; /* کلیک ازش رد بشه مگر روی خود پیام */
+    }
+
+    /* استایل خود پیام */
+    .toast-message {
+        min-width: 280px;
+        background-color: #fff;
+        color: #333;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        font-family: inherit;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        opacity: 0;
+        transform: translateX(-50px); /* حالت اولیه: کمی به چپ رفته */
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* انیمیشن فنری */
+        pointer-events: auto;
+        direction: rtl; /* متن فارسی */
+        border-right: 5px solid #ddd; /* خط رنگی وضعیت */
+    }
+
+    /* کلاس فعال شدن برای نمایش */
+    .toast-message.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* استایل موفقیت (سبز) */
+    .toast-message.success {
+        border-right-color: #00b894;
+    }
+    .toast-message.success .toast-icon {
+        color: #00b894;
+    }
+
+    /* استایل خطا (قرمز) */
+    .toast-message.error {
+        border-right-color: #d63031;
+    }
+    .toast-message.error .toast-icon {
+        color: #d63031;
+    }
+
+    /* آیکون و متن */
+    .toast-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+    }
+    .toast-icon {
+        font-size: 20px;
+    }
+    .toast-close {
+        margin-right: 15px;
+        cursor: pointer;
+        color: #aaa;
+        font-size: 18px;
+    }
+    .toast-close:hover { color: #000; }
+    
+    

@@ -1,0 +1,166 @@
+{% extends 'parent/base.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block title %}تکمیل آدرس ارسال{% endblock %}
+
+{% block content %}
+<main class="checkout">
+    <div class="container">
+        <h2 class="page-title">تکمیل آدرس ارسال</h2>
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="add-new-container">
+             <a href="{% url 'account:add_address' %}?next={{ request.path }}" class="btn-add-new">
+                <span>+</span> افزودن آدرس جدید
+            </a>
+        </div>
+
+        {% if addresses %}
+            <form method="post" id="select-address-form">
+                {% csrf_token %}
+
+                <div class="addresses-grid">
+                    {% for address in addresses %}
+                        <div class="address-card {% if forloop.first %}selected{% endif %}">
+
+                            <label class="address-label" for="addr-{{ address.id }}">
+                                <div class="radio-container">
+                                    <input type="radio" id="addr-{{ address.id }}" name="address_id" value="{{ address.id }}" {% if forloop.first %}checked{% endif %}>
+                                    <span class="radio-custom"></span>
+                                </div>
+
+                                <div class="address-details">
+                                    <h4 class="city-title">{{ address.province }} - {{ address.city }}</h4>
+                                    <p class="address-line">{{ address.address_line|fa_number }}</p>
+                                    <div class="meta-info">
+                                        {% if address.postal_code %}
+                                            <span>📮 {{ address.postal_code|fa_number }}</span>
+                                        {% endif %}
+                                        {% if address.phone %}
+                                            <span>📞 {{ address.phone|fa_number }}</span>
+                                        {% endif %}
+                                        <span class="receiver">👤 {{ address.first_name }} {{ address.last_name }}</span>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <div class="address-actions">
+                                <a href="{% url 'account:edit_address' address.id %}?next={{ request.path }}" class="action-btn edit-btn" title="ویرایش">
+                                    ✏️
+                                </a>
+
+                                <button type="button" class="action-btn delete-btn" onclick="confirmDelete('{{ address.id }}')" title="حذف">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-primary btn-lg">ثبت و ادامه خرید</button>
+                </div>
+            </form>
+        {% else %}
+            <div class="empty-state">
+                <p>شما هنوز هیچ آدرسی ثبت نکرده‌اید.</p>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<form id="delete-address-form" method="post" action="{% url 'account:delete_address' %}" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="address_id" id="delete_input_id">
+</form>
+
+<script>
+    function confirmDelete(addressId) {
+        if (confirm("آیا از حذف این آدرس اطمینان دارید؟")) {
+            document.getElementById('delete_input_id').value = addressId;
+            document.getElementById('delete-address-form').submit();
+        }
+    }
+
+    // اضافه کردن کلاس selected به کارت انتخاب شده برای استایل
+    const radios = document.querySelectorAll('input[name="address_id"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.address-card').forEach(c => c.classList.remove('selected'));
+            if(this.checked) {
+                this.closest('.address-card').classList.add('selected');
+            }
+        });
+    });
+</script>
+
+<style>
+    .page-title { margin-bottom: 20px; font-size: 1.5rem; font-weight: bold; }
+
+    /* دکمه افزودن آدرس */
+    .add-new-container { margin-bottom: 20px; display: flex; justify-content: flex-end; }
+    .btn-add-new {
+        border: 2px dashed #ccc; color: #555; padding: 10px 20px;
+        border-radius: 8px; text-decoration: none; display: flex; align-items: center; gap: 8px;
+        transition: 0.3s;
+    }
+    .btn-add-new:hover { border-color: #007bff; color: #007bff; background: #f0f8ff; }
+
+    /* لیست آدرس‌ها */
+    .addresses-grid { display: flex; flex-direction: column; gap: 15px; }
+
+    .address-card {
+        display: flex; justify-content: space-between; align-items: center;
+        border: 2px solid #eee; border-radius: 12px; padding: 15px;
+        transition: 0.3s; background: #fff; position: relative;
+    }
+
+    /* وقتی آدرس انتخاب شده است */
+    .address-card.selected {
+        border-color: #007bff; background-color: #f9fbff; box-shadow: 0 4px 10px rgba(0,123,255,0.1);
+    }
+
+    .address-label {
+        display: flex; align-items: flex-start; gap: 15px; flex-grow: 1; cursor: pointer; margin: 0;
+    }
+
+    .radio-container { margin-top: 5px; }
+
+    .address-details { display: flex; flex-direction: column; gap: 5px; }
+    .city-title { margin: 0; font-size: 1.1rem; font-weight: bold; color: #333; }
+    .address-line { color: #666; margin: 0; font-size: 0.95rem; line-height: 1.5; }
+    .meta-info { display: flex; gap: 15px; font-size: 0.85rem; color: #888; margin-top: 5px; flex-wrap: wrap; }
+
+    /* دکمه‌های عملیات (ویرایش/حذف) */
+    .address-actions {
+        display: flex; flex-direction: column; gap: 10px; margin-right: 15px;
+        border-right: 1px solid #eee; padding-right: 15px;
+    }
+
+    .action-btn {
+        background: none; border: none; cursor: pointer; font-size: 1.2rem;
+        opacity: 0.6; transition: 0.2s; text-decoration: none;
+    }
+    .edit-btn:hover { opacity: 1; transform: scale(1.1); }
+    .delete-btn:hover { opacity: 1; transform: scale(1.1); filter: grayscale(0); }
+
+    .form-footer { margin-top: 30px; text-align: left; border-top: 1px solid #eee; padding-top: 20px; }
+
+    @media (max-width: 768px) {
+        .address-card { flex-direction: column; align-items: flex-start; }
+        .address-actions {
+            flex-direction: row; border-right: none; border-top: 1px solid #eee;
+            width: 100%; padding-top: 10px; margin-top: 10px; margin-right: 0; justify-content: flex-end;
+        }
+    }
+</style>
+{% endblock %}

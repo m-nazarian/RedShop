@@ -1,0 +1,188 @@
+from django.db import models
+from django.urls import reverse
+from mptt.fields import TreeForeignKey
+from mptt.models import MPTTModel
+from slugify import slugify
+
+
+class Category(MPTTModel):
+    name = models.CharField(max_length=100, verbose_name="نام دسته")
+    slug = models.SlugField(max_length=100, unique=True, verbose_name="اسلاگ (slug)")
+    photo = models.ImageField(upload_to="category_images/",blank=True, null=True, verbose_name="تصویر دسته بندی")
+    created = models.DateTimeField(auto_now_add=True, verbose_name='زمان ایجاد')
+
+    parent = TreeForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children',
+        verbose_name="دسته والد"
+    )
+
+    class MPTTMeta:
+        order_insertion_by = ['created']
+
+    class Meta:
+        verbose_name = "دسته‌بندی"
+        verbose_name_plural = "دسته‌بندی‌ها"
+
+
+
+    def __str__(self):
+        return self.name
+
+
+    def get_absolute_url(self):
+        return reverse('shop:product_list_by_category', args=[self.slug])
+
+
+class Brand(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name='نام برند')
+    About_the_company = models.TextField(max_length=6500, verbose_name="درباره کمپانی")
+    established = models.CharField(max_length=100, verbose_name="زمان تاسیس")
+
+    class Meta:
+        verbose_name = 'برند'
+        verbose_name_plural = 'برندها'
+
+    def __str__(self):
+        return self.name
+
+
+class Color(models.Model):
+    name = models.CharField(max_length=50, unique=True, verbose_name='نام رنگ')
+    hex_code = models.CharField(max_length=7,blank=True, null=True, verbose_name='کد رنگ')
+
+    class Meta:
+        verbose_name = 'رنگ'
+        verbose_name_plural = 'رنگ‌ها'
+
+    def __str__(self):
+        return self.name
+
+
+class Product(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', verbose_name='دسته بندی')
+    name = models.CharField(max_length=250, verbose_name='نام')
+    slug = models.SlugField(max_length=250, verbose_name='اسلاگ')
+    description = models.TextField(max_length=6500, verbose_name='توضیحات')
+    inventory = models.PositiveIntegerField(default=0, verbose_name='موجودی')
+    price = models.PositiveIntegerField(default=0, verbose_name='قیمت')
+    weight = models.PositiveIntegerField(default=0, verbose_name='وزن')
+
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='products', verbose_name='برند')
+    colors = models.ManyToManyField(Color, related_name='products', blank=True, verbose_name='رنگ‌ها')
+
+    off = models.PositiveIntegerField(default=0, verbose_name='تخفیف')
+    new_price = models.PositiveIntegerField(default=0, verbose_name='قیمت پس از تخفیف')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='زمان ایجاد')
+    updated = models.DateTimeField(auto_now=True, verbose_name='زمان بروزرسانی')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:  # اگر هنوز اسلاگ وارد نشده بود
+            # تبدیل عنوان فارسی به فینگلیش و ساخت اسلاگ
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def get_grouped_features(self):
+        feature_values = self.feature_values.select_related(
+            'feature', 'feature__group'
+        ).order_by('feature__group__id')
+
+        grouped_features = {}
+        for fv in feature_values:
+            group_name = fv.feature.group.name if fv.feature.group else "سایر مشخصات"
+            if group_name not in grouped_features:
+                grouped_features[group_name] = []
+            grouped_features[group_name].append({
+                'name': fv.feature.name,
+                'value': fv.value
+            })
+        return grouped_features
+
+    class Meta:
+        ordering = ['-created']
+        indexes = [
+            models.Index(fields=['id', 'slug']),
+            models.Index(fields=['name']),
+            models.Index(fields=['-created']),
+        ]
+        verbose_name = 'محصول'
+        verbose_name_plural = 'محصول‌ها'
+
+    def get_absolute_url(self):
+        return reverse('shop:product_detail', args=[self.id, self.slug])
+
+    def __str__(self):
+        return self.name
+
+
+class Image(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images", verbose_name="محصول")
+    file = models.ImageField(upload_to="product_image/%Y/%m/%d")
+    title = models.CharField(max_length=250, verbose_name="عنوان", null=True, blank=True)
+    description = models.TextField(verbose_name="توضیحات", null=True, blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created']
+        indexes = [
+            models.Index(fields=['created'])
+        ]
+        verbose_name = "تصویر"
+        verbose_name_plural = "تصویر ها"
+
+    def __str__(self):
+        return self.title if self.title else f"تصویر {self.product.name}"
+
+
+# -------------------------------
+# 🔹 مدل‌های جدید برای ویژگی‌های پویا
+# -------------------------------
+class FeatureGroup(models.Model):
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE,
+        related_name='feature_groups',
+        verbose_name='دسته'
+    )
+    name = models.CharField(max_length=250, verbose_name='نام گروه ویژگی')
+
+    class Meta:
+        verbose_name = 'گروه ویژگی'
+        verbose_name_plural = 'گروه‌های ویژگی'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.category} - {self.name}"
+
+
+
+class CategoryFeature(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category_features', verbose_name='دسته')
+    group = models.ForeignKey(FeatureGroup, on_delete=models.SET_NULL, null=True, blank=True, related_name='features',
+                              verbose_name='گروه ویژگی')
+    name = models.CharField(max_length=250, verbose_name='نام ویژگی')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='زمان ایجاد')
+
+    class Meta:
+        ordering = ['group', 'id']
+        verbose_name = "ویژگی دسته"
+        verbose_name_plural = "ویژگی‌های دسته"
+
+    def __str__(self):
+        return f"{self.category} - {self.name}"
+
+
+class ProductFeatureValue(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='feature_values', verbose_name='محصول')
+    feature = models.ForeignKey(CategoryFeature, on_delete=models.CASCADE, related_name='values', verbose_name='ویژگی')
+    value = models.CharField(max_length=250, verbose_name='مقدار ویژگی')
+
+    class Meta:
+        verbose_name = "مقدار ویژگی محصول"
+        verbose_name_plural = "مقادیر ویژگی‌های محصول"
+
+    def __str__(self):
+        return f"{self.product} - {self.feature}: {self.value}"
+

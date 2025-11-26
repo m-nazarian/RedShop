@@ -1,0 +1,38 @@
+{% load custom_filters %}
+
+{% for product in products %}
+    <div class="product-card">
+        <div class="product-image-container">
+            <a href="{{ product.get_absolute_url }}">
+                {% if product.images.first %}
+                    <img class="list-img" src="{{ product.images.first.file.url }}" alt="{{ product.name }}">
+                {% endif %}
+            </a>
+
+            {% if product.colors.exists %}
+            <div class="product-colors-badge">
+                {% for color in product.colors.all|slice:":4" %} <span class="color-dot__list"
+                          style="background-color: {{ '#' |add:color.hex_code }};"
+                          title="{{ color.name }}">
+                    </span>
+                {% endfor %}
+                {% if product.colors.count > 4 %}
+                    <span class="color-plus__list">+</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <a href="{{ product.get_absolute_url }}">
+            <h4 class="list-name">{{ product.name|fa_number }}</h4>
+        </a>
+        <div class="price-section">
+             {% if product.off > 0 %}
+                <div class="old-price">{{ product.price | money_format }} تومان</div>
+             {% endif %}
+            <p class="discounted-price">{{ product.new_price | money_format }} تومان</p>
+        </div>
+    </div>
+{% empty %}
+    <p class="no-result">هیچ محصولی مطابق فیلترها یافت نشد.</p>
+{% endfor %}
