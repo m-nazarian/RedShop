@@ -4,92 +4,89 @@
 {% load static %}
 
 {% block title %}profile{% endblock %}
-{% block extra_css %}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/profile.css' %}">
-{% endblock %}
 {% block extra_js %}
     <script src="{% static 'js/profile.js' %}"></script>
 {% endblock %}
 
 
 {% block content %}
-    <!-- محتوای اصلی -->
-<main class="main">
-    <div class="container">
-                    <!-- سایدبار پروفایل -->
-            <aside class="sidebar">
-                <div class="profile-card">
-                    <div class="profile-avatar">
-                        {% if request.user.account.photo %}
-                            <img src="{{ request.user.account.photo.url }}" alt="تصویر پروفایل" class="profile-photo">
-                        {% else %}
-                            <img src="{% static 'images/man.png' %}" style="width: 75px">
-                        {% endif %}
+<main class="bg-gray-50 min-h-screen py-8">
+    <div class="container mx-auto px-4 lg:px-8 max-w-7xl">
+
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
+
+            <aside class="w-full lg:w-1/4 xl:w-1/5 shrink-0 mb-6 lg:mb-0">
+
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 mb-4 flex flex-col items-center text-center">
+                    <div class="relative mb-4 group cursor-pointer">
+                        <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-100 ring-2 ring-blue-50">
+                            {% if request.user.account.photo %}
+                                <img src="{{ request.user.account.photo.url }}" alt="پروفایل" class="w-full h-full object-cover">
+                            {% else %}
+                                <img src="{% static 'images/man.png' %}" alt="پروفایل پیش‌فرض" class="w-full h-full object-cover p-2 bg-gray-50">
+                            {% endif %}
+                        </div>
+                        <div class="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <span class="text-white text-xl">📷</span>
+                        </div>
                     </div>
-                    <div class="profile-info">
-                        <h2>{{ request.user.account.display_name }}</h2>
-                        <section>{{ request.user.phone|fa_number }}</section>
-                        <button onclick="window.location.href='{% url 'account:edit_account' %}'" class="edit-profile-btn">ویرایش پروفایل</button>
-                    </div>
+
+                    <h2 class="text-lg font-bold text-gray-800 mb-1">
+                        {{ request.user.account.display_name|default:"کاربر ناشناس" }}
+                    </h2>
+                    <span class="text-gray-500 text-sm mb-4 dir-ltr block">
+                        {{ request.user.phone|fa_number }}
+                    </span>
+
+                    <button onclick="window.location.href='{% url 'account:edit_account' %}'"
+                            class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 transition-colors">
+                        <span>✏️</span>
+                        <span>ویرایش مشخصات</span>
+                    </button>
                 </div>
 
-                <nav class="profile-nav">
-                    <ul class="space-y-1">
-                        <li>
-                            <a href="#"
-                               class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 active-tab"
-                               data-url="{% url 'orders:user_orders_partial' %}"
-                               data-target="orders">
-                               <span class="text-xl">🛍️</span>
-                               <span class="font-medium">سفارش‌های من</span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#"
-                               class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                               data-url="{% url 'account:user_addresses_partial' %}"
-                               data-target="addresses">
-                               <span class="text-xl">📍</span>
-                               <span class="font-medium">آدرس‌های من</span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 cursor-not-allowed">
-                               <span class="text-xl">💬</span>
-                               <span class="font-medium">دیدگاه‌های من (به زودی)</span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{% url 'account:logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
-                               <span class="text-xl">🚪</span>
-                               <span class="font-medium">خروج</span>
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <nav class="profile-nav p-2">
+                        <ul class="space-y-1">
+                            <li>
+                                <a href="#"
+                                   class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 group active-tab"
+                                   data-url="{% url 'orders:user_orders_partial' %}"
+                                   data-target="orders">
+                                   <span class="text-xl group-hover:scale-110 transition-transform">🛍️</span>
+                                   <span class="font-medium">سفارش‌های من</span>
+                                   <span class="mr-auto text-gray-400 text-xs">❮</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                   class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 group"
+                                   data-url="{% url 'account:user_addresses_partial' %}"
+                                   data-target="addresses">
+                                   <span class="text-xl group-hover:scale-110 transition-transform">📍</span>
+                                   <span class="font-medium">آدرس‌های من</span>
+                                   <span class="mr-auto text-gray-400 text-xs">❮</span>
+                                </a>
+                            </li>
+                            <li class="border-t border-gray-100 my-2"></li>
+                            <li>
+                                <a href="{% url 'account:logout' %}"
+                                   class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors duration-200">
+                                   <span class="text-xl">🚪</span>
+                                   <span class="font-medium">خروج از حساب</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
             </aside>
 
-            <!-- بخش محتوای پروفایل -->
-            <section class="profile-content">
-                <div class="content-header">
-                    <h2>سفارش‌های من</h2>
-                    <div class="search-box">
-                        <label>
-                            <input type="text" placeholder="جستجو در سفارش‌ها...">
-                        </label>
-                        <button class="search-btn">🔍</button>
+            <section class="profile-content w-full lg:w-3/4 xl:w-4/5">
+                <div class="min-h-[400px]" id="profile-dynamic-content">
                     </div>
-                </div>
-
-                <div class="orders-list" id="profile-dynamic-content">
-                </div>
-
             </section>
+
         </div>
-    </main>
-
-
+    </div>
+</main>
 {% endblock %}
