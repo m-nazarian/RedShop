@@ -1,5 +1,7 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from .forms import *
 from django.contrib.auth import authenticate, login, logout
@@ -102,8 +104,31 @@ def user_logout(request):
 
 @login_required
 def add_address(request):
-    next_page = request.GET.get('next', 'account:profile')
+    # اگر AJAX بود (برای مودال)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if request.method == 'POST':
+            form = AddressForm(request.POST)
+            if form.is_valid():
+                address = form.save(commit=False)
+                address.user = request.user
+                address.save()
+                return JsonResponse({'success': True})
+            else:
+                # فرم نامعتبر است -> فرم را دوباره با خطاها رندر کن و بفرست
+                html_form = render_to_string('partials/address_form.html', {
+                    'form': form, 'action_url': request.path
+                }, request=request)
+                return JsonResponse({'success': False, 'html_form': html_form})
+        else:
+            # درخواست GET برای باز کردن مودال
+            form = AddressForm()
+            html_form = render_to_string('partials/address_form.html', {
+                'form': form, 'action_url': request.path
+            }, request=request)
+            return JsonResponse({'html_form': html_form})
 
+    # --- اگر درخواست معمولی بود (مثلاً از صفحه چک‌اوت) ---
+    next_page = request.GET.get('next', 'account:profile')
     if request.method == 'POST':
         form = AddressForm(request.POST)
         if form.is_valid():
@@ -113,29 +138,43 @@ def add_address(request):
             return redirect(next_page)
     else:
         form = AddressForm()
-
     return render(request, 'registration/add_address.html', {'form': form})
 
 
 @login_required
 def edit_address(request, address_id):
-    # فقط کاربر صاحب آدرس بتواند آن را ویرایش کند
     address = get_object_or_404(Address, id=address_id, user=request.user)
-    next_page = request.GET.get('next', 'orders:checkout_address')
 
+    # AJAX Handler
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if request.method == 'POST':
+            form = AddressForm(request.POST, instance=address)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({'success': True})
+            else:
+                html_form = render_to_string('partials/address_form.html', {
+                    'form': form, 'action_url': request.path
+                }, request=request)
+                return JsonResponse({'success': False, 'html_form': html_form})
+        else:
+            form = AddressForm(instance=address)
+            html_form = render_to_string('partials/address_form.html', {
+                'form': form, 'action_url': request.path
+            }, request=request)
+            return JsonResponse({'html_form': html_form})
+
+    # Standard Handler
+    next_page = request.GET.get('next', 'orders:checkout_address')
     if request.method == 'POST':
         form = AddressForm(request.POST, instance=address)
         if form.is_valid():
             form.save()
-            messages.success(request, 'آدرس با موفقیت ویرایش شد.')
+            messages.success(request, 'آدرس ویرایش شد.')
             return redirect(next_page)
     else:
         form = AddressForm(instance=address)
-
-    return render(request, 'registration/add_address.html', {
-        'form': form,
-        'is_edit': True
-    })
+    return render(request, 'registration/add_address.html', {'form': form, 'is_edit': True})
 
 
 @login_required

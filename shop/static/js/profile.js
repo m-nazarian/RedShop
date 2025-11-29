@@ -102,3 +102,86 @@ document.addEventListener("DOMContentLoaded", function() {
         defaultTab.click();
     }
 });
+
+
+// ==========================================
+// مدیریت مودال (Modal)
+// ==========================================
+
+const modal = document.getElementById('general-modal');
+const modalBackdrop = document.getElementById('modal-backdrop');
+const modalPanel = document.getElementById('modal-panel');
+const modalContent = document.getElementById('modal-content');
+
+// تابع بستن مودال (با انیمیشن)
+window.closeModal = function() {
+    if (!modal) return;
+
+    // 1. شروع انیمیشن محو شدن
+    // پنل کوچک و کمرنگ می‌شود
+    if (modalPanel) {
+        modalPanel.classList.add('opacity-0', 'scale-95');
+        modalPanel.classList.remove('opacity-100', 'scale-100');
+    }
+    // پس‌زمینه کمرنگ می‌شود
+    if (modalBackdrop) {
+        modalBackdrop.classList.add('opacity-0');
+        modalBackdrop.classList.remove('opacity-100');
+    }
+
+    // 2. صبر می‌کنیم تا انیمیشن (300ms) تمام شود، بعد hidden می‌کنیم
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+};
+
+// تابع باز کردن مودال
+window.openAddressModal = function(url) {
+    if (!modal) return;
+
+    // ریست کردن محتوا به حالت لودینگ
+    modalContent.innerHTML = `
+        <div class="flex justify-center py-10">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+    `;
+
+    // 1. نمایش ظرف اصلی (هنوز نامرئی است)
+    modal.classList.remove('hidden');
+
+    // 2. با یک تاخیر بسیار کوتاه، انیمیشن ورود را اجرا می‌کنیم
+    // (بدون setTimeout مرورگر تغییر را حس نمی‌کند و انیمیشن اجرا نمی‌شود)
+    setTimeout(() => {
+        if (modalBackdrop) {
+            modalBackdrop.classList.remove('opacity-0');
+            modalBackdrop.classList.add('opacity-100');
+        }
+        if (modalPanel) {
+            modalPanel.classList.remove('opacity-0', 'scale-95');
+            modalPanel.classList.add('opacity-100', 'scale-100');
+        }
+    }, 10);
+
+    // دریافت فرم از سرور
+    fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.html_form) {
+            modalContent.innerHTML = data.html_form;
+
+            // اجرای اسکریپت‌های داخل فرم
+            const scripts = modalContent.querySelectorAll("script");
+            scripts.forEach(script => {
+                const newScript = document.createElement("script");
+                newScript.textContent = script.textContent;
+                document.body.appendChild(newScript);
+            });
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        modalContent.innerHTML = '<p class="text-red-500 text-center py-4">خطا در بارگذاری فرم.</p>';
+    });
+};
