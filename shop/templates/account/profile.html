@@ -34,17 +34,40 @@
                 </div>
 
                 <nav class="profile-nav">
-                    <ul>
-                        <li class="{% if active_tab == 'orders' %}active{% endif %}">
-                            <a href="{% url 'orders:user_orders' %}">سفارش‌های من</a>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#"
+                               class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 active-tab"
+                               data-url="{% url 'orders:user_orders_partial' %}"
+                               data-target="orders">
+                               <span class="text-xl">🛍️</span>
+                               <span class="font-medium">سفارش‌های من</span>
+                            </a>
                         </li>
-                        <li><a href="#">دیدگاه‌های من</a></li>
-                        <li><a href="#">لیست‌های من</a></li>
-                        <li><a href="#">آدرس‌های من</a></li>
-                        <li><a href="#">کارت‌های هدیه</a></li>
-                        <li><a href="#">‌کلاب</a></li>
-                        <li><a href="#">پیغام‌ها</a></li>
-                        <li><a href="#">تنظیمات</a></li>
+
+                        <li>
+                            <a href="#"
+                               class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                               data-url="{% url 'account:user_addresses_partial' %}"
+                               data-target="addresses">
+                               <span class="text-xl">📍</span>
+                               <span class="font-medium">آدرس‌های من</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-400 cursor-not-allowed">
+                               <span class="text-xl">💬</span>
+                               <span class="font-medium">دیدگاه‌های من (به زودی)</span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'account:logout' %}" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                               <span class="text-xl">🚪</span>
+                               <span class="font-medium">خروج</span>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
             </aside>
@@ -61,48 +84,7 @@
                     </div>
                 </div>
 
-                <div class="orders-list">
-                    {% if orders %}
-                        {% for order in orders %}
-                            <div class="order-card">
-                                <div class="order-header">
-                                    <div class="order-info">
-                                        <span class="order-id">شماره سفارش: {{ order.id }}</span>
-                                        <span class="order-date">تاریخ: {{ order.created|date:"Y/m/d" }}</span>
-                                    </div>
-                                    <div class="order-status {{ order.status }}">
-                                        {{ order.get_status_display }}
-                                    </div>
-                                </div>
-
-                                <div class="order-items">
-                                    {% for item in order.items.all %}
-                                        <div class="order-item">
-                                            <a href="{{ item.product.get_absolute_url}}">
-                                                <img src="{{ item.product.images.first.file.url }}">
-                                            </a>
-                                            <div class="item-info">
-                                                <h4>{{ item.product.name }}</h4>
-                                                <p>تعداد: {{ item.quantity }} عدد</p>
-                                                <p class="price">{{ item.get_cost|money_format }} تومان</p>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-
-                                <div class="order-footer">
-                                    <div class="order-total">
-                                        <strong>مبلغ کل: {{ order.get_total_cost|money_format }} تومان</strong>
-                                    </div>
-                                    <div class="order-actions">
-                                        <a href="{% url 'orders:order_detail' order.id %}" class="btn btn-primary">مشاهده جزئیات</a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <p>هنوز سفارشی ثبت نکرده‌اید.</p>
-                    {% endif %}
+                <div class="orders-list" id="profile-dynamic-content">
                 </div>
 
             </section>

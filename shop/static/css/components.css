@@ -284,3 +284,76 @@
     padding-left: 20px;
     border-left: 1px dashed #ccc;
 }
+
+
+/* استایل باکس نتایج جستجو */
+.search-results-box {
+    position: absolute;
+    top: 100%; /* دقیقا زیر اینپوت */
+    right: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: none; /* پیش‌فرض مخفی */
+    overflow: hidden;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+    color: #333;
+}
+
+.search-item:hover {
+    background-color: #f9f9f9;
+}
+
+.search-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.search-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-item-title {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.search-item-cat {
+    font-size: 11px;
+    color: #888;
+}
+
+/* استایل بخش "جستجو در دسته‌بندی" */
+.search-suggestion-header {
+    background-color: #f0faff;
+    color: #007bff;
+    padding: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    border-bottom: 1px solid #e1e1e1;
+    display: block;
+    text-decoration: none;
+}
+.search-suggestion-header:hover {
+    background-color: #e6f7ff;
+    text-decoration: none;
+}
+.search-icon-small {
+    margin-left: 5px;
+}

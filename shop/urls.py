@@ -12,5 +12,6 @@ urlpatterns = [
     path('product/<int:id>/<slug:slug>/', views.product_detail, name='product_detail'),
     path('api/features/<int:category_id>/', views.get_category_features, name='get_category_features'),
     path('categoryfeature/autocomplete/', views.categoryfeature_autocomplete, name='categoryfeature_autocomplete'),
+    path('api/search/', views.search_suggestions, name='search_suggestions'),
 
 ]

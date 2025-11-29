@@ -1,0 +1,68 @@
+{% load custom_filters %}
+
+<div class="space-y-4">
+    {% if orders %}
+        {% for order in orders %}
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-5">
+
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-100 pb-4 mb-4 gap-4">
+                    <div class="text-sm text-gray-600 flex flex-col sm:flex-row gap-2 sm:gap-6">
+                        <span class="font-medium">
+                            شماره سفارش: <span class="text-gray-900">{{ order.id }}</span>
+                        </span>
+                        <span class="hidden sm:inline text-gray-300">|</span>
+                        <span>
+                            تاریخ: <span class="text-gray-900">{{ order.created|date:"Y/m/d" }}</span>
+                        </span>
+                    </div>
+
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                        {{ order.get_status_display }}
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    {% for item in order.items.all %}
+                        <div class="flex items-center gap-4">
+                            <a href="{{ item.product.get_absolute_url }}" class="shrink-0">
+                                {% if item.product.images.first %}
+                                    <img src="{{ item.product.images.first.file.url }}" alt="{{ item.product.name }}" class="w-16 h-16 object-cover rounded-lg border border-gray-100">
+                                {% else %}
+                                    <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                        📷
+                                    </div>
+                                {% endif %}
+                            </a>
+
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-semibold text-gray-800 truncate">
+                                    {{ item.product.name }}
+                                </h4>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <span>{{ item.quantity }} عدد</span>
+                                    <span class="mx-1">•</span>
+                                    <span>{{ item.get_cost|money_format }} تومان</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="text-gray-800">
+                        مبلغ کل: <span class="font-bold text-lg">{{ order.get_total_cost|money_format }} تومان</span>
+                    </div>
+
+                    <a href="{% url 'orders:order_detail' order.id %}" class="w-full sm:w-auto text-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                        مشاهده جزئیات
+                    </a>
+                </div>
+
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <p class="text-gray-500">هنوز سفارشی ثبت نکرده‌اید.</p>
+        </div>
+    {% endif %}
+</div>

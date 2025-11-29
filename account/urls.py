@@ -14,4 +14,5 @@ urlpatterns = [
     path('add-address/', views.add_address, name='add_address'),
     path('edit-address/<int:address_id>/', views.edit_address, name='edit_address'),
     path('delete-address/', views.delete_address, name='delete_address'),
+    path('api/my-addresses/', views.user_addresses_partial, name='user_addresses_partial'),
 ]

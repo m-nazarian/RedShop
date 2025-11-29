@@ -11,9 +11,13 @@
             <a href="{% url 'shop:index' %}">🛍 فروشگاه من</a>
         </div>
 
-        <label>
-            <input type="text" placeholder="جستجو..." class="search-input">
-        </label>
+        <div class="search-wrapper" style="position: relative; width: 100%; max-width: 500px;">
+
+            <input type="text" id="main-search-input" placeholder="جستجو..." class="search-input" autocomplete="off">
+
+            <div id="search-results-box" class="search-results-box"></div>
+
+        </div>
 
         <div class="navbar-actions">
             {% with item_count=cart|length %}

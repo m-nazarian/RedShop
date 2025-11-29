@@ -1,4 +1,5 @@
-from .models import Brand, Color, ProductFeatureValue
+from django.db.models import Q, Count
+from .models import Brand, Color, ProductFeatureValue, Product, Category
 from collections import OrderedDict
 
 
@@ -115,3 +116,55 @@ def apply_filters(products, data):
                 pass
 
     return products
+
+
+def global_search(query):
+    """
+    جستجوی همزمان محصولات و پیدا کردن دسته‌بندی مرتبط
+    """
+    if not query:
+        return {'products': [], 'suggested_category': None}
+
+    # ۱. جستجو در محصولات (نام، توضیحات یا برند)
+    # از distinct استفاده می‌کنیم تا تکراری نیاید
+    products = Product.objects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query) |
+        Q(brand__name__icontains=query)
+    ).select_related('category').prefetch_related('images').distinct()[:5]  # فقط ۵ تای اول
+
+    # ۲. حدس زدن دسته‌بندی مرتبط 🧠
+    # اگر محصولاتی پیدا کردیم، ببینیم بیشترشون مال کدوم دسته‌ن؟
+    suggested_category = None
+
+    if products.exists():
+        # تمام دسته‌های محصولات پیدا شده را می‌گیریم
+        # و پرتکرارترین دسته را پیدا می‌کنیم
+        categories = [p.category for p in products]
+
+        # پیدا کردن پرتکرارترین (Most Common)
+        from collections import Counter
+        if categories:
+            most_common_cat = Counter(categories).most_common(1)[0][0]
+            suggested_category = {
+                'name': most_common_cat.name,
+                'slug': most_common_cat.slug,
+                'url': most_common_cat.get_absolute_url()
+            }
+
+    # ۳. فرمت‌دهی خروجی برای JSON
+    results = []
+    for p in products:
+        results.append({
+            'name': p.name,
+            'price': p.new_price if p.new_price else p.price,
+            'image': p.images.first().file.url if p.images.exists() else '',
+            'url': p.get_absolute_url(),
+            'category_name': p.category.name
+        })
+
+    return {
+        'products': results,
+        'suggested_category': suggested_category,
+        'query': query
+    }

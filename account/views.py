@@ -148,3 +148,11 @@ def delete_address(request):
         messages.success(request, 'آدرس حذف شد.')
 
     return redirect(request.META.get('HTTP_REFERER', 'orders:checkout_address'))
+
+@login_required
+def user_addresses_partial(request):
+    """
+    نمایش لیست آدرس‌ها به صورت AJAX
+    """
+    addresses = Address.objects.filter(user=request.user)
+    return render(request, 'partials/addresses_list.html', {'addresses': addresses})

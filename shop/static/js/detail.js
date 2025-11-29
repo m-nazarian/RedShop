@@ -5,9 +5,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // =========================================
     const collapsibles = document.querySelectorAll(".collapsible-group");
 
-    if (collapsibles.length === 0) {
-        console.warn("⚠️ Warning: No elements with class .collapsible-group found!");
-    }
 
     collapsibles.forEach((btn, index) => {
         // حذف ایونت‌های قبلی برای اطمینان

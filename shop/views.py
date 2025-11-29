@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
 import json
-from .services import sort_products, get_dynamic_features, assemble_filters, is_staff, apply_filters
+from .services import sort_products, get_dynamic_features, assemble_filters, is_staff, apply_filters, global_search
 
 
 # --------------------------------------------------------------------------
@@ -179,3 +179,15 @@ def categoryfeature_autocomplete(request):
 
     except Category.DoesNotExist:
         return JsonResponse({'results': []})
+
+
+def search_suggestions(request):
+    """
+    API برای جستجوی زنده (Live Search)
+    """
+    query = request.GET.get('q', '')
+    if len(query) < 2:  # اگر کمتر از ۲ حرف بود جستجو نکن (فشار نیاد)
+        return JsonResponse({'products': [], 'suggested_category': None})
+
+    data = global_search(query)
+    return JsonResponse(data)

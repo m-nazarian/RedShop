@@ -18,6 +18,19 @@ def user_orders(request):
 
 
 @login_required
+def user_orders_partial(request):
+    """
+    این ویو فقط HTML لیست سفارش‌ها را برمی‌گرداند (بدون هدر و فوتر).
+    مخصوص درخواست‌های AJAX پروفایل.
+    """
+    orders = Order.objects.filter(user=request.user).order_by('-created')
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'partials/orders_list.html', context)
+
+
+@login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
