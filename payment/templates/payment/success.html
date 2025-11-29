@@ -1,0 +1,40 @@
+{% extends 'parent/base.html' %}
+{% load custom_filters %}
+
+{% block title %}پرداخت موفق{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-lg border border-green-100 p-8 text-center">
+
+        <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
+            <svg class="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">پرداخت با موفقیت انجام شد!</h2>
+        <p class="text-gray-500 mb-8">سفارش شما ثبت شد و به زودی پردازش خواهد شد.</p>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-8 text-sm">
+            <div class="flex justify-between py-2 border-b border-gray-200">
+                <span class="text-gray-500">شماره سفارش:</span>
+                <span class="font-bold text-gray-800">{{ order_number }}</span>
+            </div>
+            <div class="flex justify-between py-2">
+                <span class="text-gray-500">شماره پیگیری تراکنش:</span>
+                <span class="font-bold text-gray-800 font-mono">{{ ref_id }}</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3 justify-center">
+            <a href="{% url 'account:profile' %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+                پیگیری سفارش
+            </a>
+            <a href="{% url 'shop:index' %}" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-colors">
+                صفحه اصلی
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

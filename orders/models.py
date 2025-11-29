@@ -120,9 +120,9 @@ class OrderItem(models.Model):
 
 
 class Transaction(models.Model):
-    # برای درگاه‌های آنلاین یا لاگ تراکنشِ COD
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='transactions')
     transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    ref_id = models.CharField(max_length=255, blank=True, null=True)
     provider = models.CharField(max_length=50, default='cod')
     amount = models.PositiveIntegerField()
     success = models.BooleanField(default=False)

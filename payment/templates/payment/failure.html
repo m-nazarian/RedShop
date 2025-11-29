@@ -1,0 +1,36 @@
+{% extends 'parent/base.html' %}
+{% load custom_filters %}
+
+{% block title %}پرداخت ناموفق{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-lg border border-red-100 p-8 text-center">
+        
+        <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
+            <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">پرداخت ناموفق بود!</h2>
+        <p class="text-gray-500 mb-8">
+            {% if message %}
+                {{ message }}
+            {% else %}
+                متاسفانه مشکلی در ارتباط با بانک پیش آمد.
+                {% if error_code %}<br><span class="text-xs text-red-400 mt-2 block">(کد خطا: {{ error_code }})</span>{% endif %}
+            {% endif %}
+        </p>
+
+        <div class="flex gap-3 justify-center">
+            <a href="{% url 'cart:cart_detail' %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+                بازگشت به سبد خرید
+            </a>
+            <a href="{% url 'orders:checkout_create' %}" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-colors">
+                تلاش مجدد
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

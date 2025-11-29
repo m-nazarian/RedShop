@@ -1,11 +1,27 @@
 {% extends 'parent/base.html' %}
 {% block title %}سفارش ثبت شد{% endblock %}
+
 {% block content %}
-<main class="checkout-complete">
-<div class="container success-box">
-<h2>سفارش شما با موفقیت ثبت شد</h2>
-<p>پرداخت در محل — پرداخت هنگام تحویل انجام خواهد شد.</p>
-<a href="{% url 'orders:user_orders' %}" class="btn btn-primary">مشاهده سفارش‌ها</a>
-</div>
+<main class="min-h-[70vh] flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center border-t-4 border-green-500">
+
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">سفارش شما با موفقیت ثبت شد!</h2>
+        <p class="text-gray-500 mb-8 leading-relaxed">
+            از خرید شما سپاسگزاریم. <br>
+            سفارش شما در حالت <span class="font-bold text-gray-800">پرداخت در محل</span> ثبت شد و پس از تایید ارسال خواهد شد.
+        </p>
+
+        <a href="{% url 'orders:user_orders' %}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-blue-600/20">
+            پیگیری سفارش‌ها
+        </a>
+
+        <a href="{% url 'shop:index' %}" class="block mt-4 text-gray-500 hover:text-gray-800 text-sm">
+            بازگشت به صفحه اصلی
+        </a>
+    </div>
 </main>
 {% endblock %}

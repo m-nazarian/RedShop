@@ -132,11 +132,13 @@ def checkout_create_order(request):
         Address, id=request.session["checkout_address_id"]
     )
 
+    # اگر کاربر چیزی نفرستاده بود، پیش‌فرض 'cod' بگذار
+    payment_method = request.POST.get('payment_method', 'cod')
+
     if request.session.get("order_created"):
+        # اگر قبلا ساخته شده، با توجه به روش پرداخت ریدایرکت کن
         return redirect("orders:checkout_complete")
 
-    # 🟩 شروع بلاک تراکنش اتمیک
-    # یعنی یا همه کارها انجام میشه یا هیچی انجام نمیشه (Rollback)
     try:
         with transaction.atomic():
             # 1. ساخت سفارش اولیه
@@ -152,28 +154,24 @@ def checkout_create_order(request):
                 city=address.city,
                 postal_code=address.postal_code,
                 address_line=address.address_line,
+
+                payment_method=payment_method
             )
 
-            # 2. ساخت آیتم‌ها و کسر موجودی
+            # ساخت آیتم‌ها و کسر موجودی
             for item in cart:
                 product_id = item['product'].id
                 quantity = item['quantity']
 
-                # 🔥 قفل کردن رکورد محصول برای جلوگیری از تداخل (Race Condition)
-                # select_for_update باعث میشه تا پایان این تراکنش، کس دیگه‌ای نتونه این محصول رو ویرایش کنه
                 product = Product.objects.select_for_update().get(id=product_id)
 
-                # بررسی موجودی دقیقاً در لحظه خرید
                 if product.inventory < quantity:
-                    # اگر موجودی کم بود، ارور ایجاد میکنیم تا تراکنش رول‌بک بشه
                     raise ValueError(
                         f"متاسفانه موجودی محصول '{product.name}' کافی نیست (موجودی فعلی: {product.inventory}).")
 
-                # کسر موجودی
                 product.inventory -= quantity
                 product.save()
 
-                # ایجاد آیتم سفارش
                 OrderItem.objects.create(
                     order=order,
                     product=product,
@@ -182,7 +180,7 @@ def checkout_create_order(request):
                     weight=item['weight'],
                 )
 
-            # 3. محاسبات نهایی سفارش
+            # محاسبات نهایی سفارش
             order.subtotal = order.get_total_cost()
             order.post_price = order.get_post_cost()
             order.shipping_price = order.post_price
@@ -191,17 +189,25 @@ def checkout_create_order(request):
 
             # پایان موفقیت‌آمیز
             request.session["order_created"] = True
+
+            # ذخیره آیدی سفارش در سشن برای درگاه
+            request.session['order_id'] = order.id
+
+            # پاک کردن سبد خرید
             cart.clear()
 
-            return redirect("orders:checkout_complete")
+            if order.payment_method == 'online':
+                # هدایت به پردازش پرداخت
+                return redirect('payment:process')
+            else:
+                # پرداخت در محل (COD) -> صفحه تشکر معمولی
+                return redirect("orders:checkout_complete")
 
     except ValueError as e:
-        # اگر موجودی کافی نبود، تراکنش خودکار لغو میشه و به اینجا میایم
         messages.error(request, str(e))
         return redirect("cart:cart_detail")
 
     except Exception as e:
-        # سایر خطاهای احتمالی
         messages.error(request, "مشکلی در ثبت سفارش پیش آمد. لطفا مجددا تلاش کنید.")
         return redirect("cart:cart_detail")
 

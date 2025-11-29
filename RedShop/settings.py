@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'cart.apps.CartConfig',
     'orders.apps.OrdersConfig',
     'account.apps.AccountConfig',
+    'payment.apps.PaymentConfig',
     'easy_thumbnails',
     'mptt',
     'django_jalali',
@@ -157,3 +158,11 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
+
+# Zarinpal Settings (Sandbox)
+ZARINPAL_MERCHANT_ID = "00000000-0000-0000-0000-000000000000"  # کد مخصوص سندباکس
+ZARINPAL_BROKER = "https://sandbox.zarinpal.com/pg/v4/payment/"
+ZARINPAL_REQUEST_URL = f"{ZARINPAL_BROKER}request.json"
+ZARINPAL_VERIFY_URL = f"{ZARINPAL_BROKER}verify.json"
+ZARINPAL_START_PAY_URL = "https://sandbox.zarinpal.com/pg/StartPay/"
+ZARINPAL_CALLBACK_URL = "http://127.0.0.1:8000/payment/verify/"  # آدرس بازگشت

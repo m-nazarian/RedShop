@@ -1,17 +1,96 @@
 {% extends 'parent/base.html' %}
 {% load custom_filters %}
-{% block title %}تأیید نهایی سفارش{% endblock %}
+{% block title %}تأیید نهایی و پرداخت{% endblock %}
+
 {% block content %}
-    <main class="review-page">
-        <div class="container">
-            <h2 class="page-title">تأیید نهایی سفارش</h2>
-            <div class="order-summary-box">
-                <p>مبلغ نهایی سفارش: <strong>{{ cart.get_final_price|money_format }} تومان</strong></p>
-            </div>
-            <form method="post" action="{% url 'orders:checkout_create_order' %}">
-                {% csrf_token %}
-                <button class="btn btn-success" type="submit">ثبت سفارش و پرداخت در محل</button>
-            </form>
+<main class="bg-gray-50 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+
+        <div class="flex items-center justify-center mb-8 text-sm text-gray-500">
+            <span class="text-green-600">✓ انتخاب آدرس</span>
+            <span class="mx-3">➔</span>
+            <span class="text-blue-600 font-bold">۲. پرداخت</span>
+            <span class="mx-3">➔</span>
+            <span>۳. اتمام خرید</span>
         </div>
-    </main>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <div class="md:col-span-2 space-y-6">
+
+                <h2 class="text-xl font-bold text-gray-800">انتخاب روش پرداخت</h2>
+
+                <form method="post" action="{% url 'orders:checkout_create_order' %}" id="payment-form">
+                    {% csrf_token %}
+
+                    <div class="space-y-4">
+                        <label class="block relative cursor-pointer group">
+                            <input type="radio" name="payment_method" value="online" class="peer sr-only" checked>
+                            <div class="p-5 bg-white border-2 border-gray-200 rounded-2xl transition-all peer-checked:border-blue-500 peer-checked:shadow-md hover:border-gray-300 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl">💳</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">پرداخت اینترنتی</h4>
+                                        <p class="text-sm text-gray-500">پرداخت آنلاین با تمام کارت‌های بانکی</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-500"></div>
+                            </div>
+                        </label>
+
+                        <label class="block relative cursor-pointer group">
+                            <input type="radio" name="payment_method" value="cod" class="peer sr-only">
+                            <div class="p-5 bg-white border-2 border-gray-200 rounded-2xl transition-all peer-checked:border-blue-500 peer-checked:shadow-md hover:border-gray-300 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl">🏠</div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">پرداخت در محل</h4>
+                                        <p class="text-sm text-gray-500">پرداخت نقدی یا کارتخوان هنگام تحویل</p>
+                                    </div>
+                                </div>
+                                <div class="w-5 h-5 border-2 border-gray-300 rounded-full peer-checked:border-blue-500 peer-checked:bg-blue-500"></div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-gray-100 rounded-xl text-sm text-gray-600 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span>📍 ارسال به:</span>
+                            <span class="font-bold text-gray-800">{{ address.address_line|truncatechars:50|fa_number }}</span>
+                        </div>
+                        <a href="{% url 'orders:checkout_address' %}" class="text-blue-600 text-xs hover:underline">تغییر آدرس</a>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="md:col-span-1">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 sticky top-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">صورتحساب</h3>
+
+                    <div class="space-y-3 text-sm mb-6">
+                        <div class="flex justify-between text-gray-600">
+                            <span>قیمت کالاها ({{ cart|length|fa_number }})</span>
+                            <span>{{ cart.get_total_price|money_format }} تومان</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>هزینه ارسال</span>
+                            <span>{{ cart.get_post_price|money_format }} تومان</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center border-t pt-4 mb-6">
+                        <span class="font-bold text-gray-800">مبلغ قابل پرداخت</span>
+                        <span class="text-xl font-bold text-blue-600">{{ cart.get_final_price|money_format }} <span class="text-xs font-normal text-gray-500">تومان</span></span>
+                    </div>
+
+                    <button type="submit" form="payment-form" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-red-500/30 transition-all">
+                        پرداخت و ثبت نهایی
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
 {% endblock %}
