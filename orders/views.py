@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.crypto import get_random_string
 from django.db import transaction
@@ -20,10 +21,25 @@ def user_orders(request):
 @login_required
 def user_orders_partial(request):
     """
-    این ویو فقط HTML لیست سفارش‌ها را برمی‌گرداند (بدون هدر و فوتر).
-    مخصوص درخواست‌های AJAX پروفایل.
+    نمایش لیست سفارش‌ها + قابلیت جستجو
     """
-    orders = Order.objects.filter(user=request.user).order_by('-created')
+    # 1. دریافت کلمه جستجو شده (اگر وجود داشته باشد)
+    query = request.GET.get('q')
+
+    # 2. کوئری پایه: سفارش‌های خود کاربر
+    orders = Order.objects.filter(user=request.user)
+
+    # 3. اگر کاربر چیزی جستجو کرده بود:
+    if query:
+        orders = orders.filter(
+            Q(order_number__icontains=query) |  # جستجو در شماره سفارش
+            Q(id__icontains=query) |  # جستجو در ID عددی
+            Q(items__product__name__icontains=query)  # جستجو در نام محصولات داخل سفارش
+        ).distinct()  # جلوگیری از تکراری شدن نتایج به خاطر Join
+
+    # 4. مرتب‌سازی نهایی
+    orders = orders.order_by('-created')
+
     context = {
         'orders': orders,
     }
