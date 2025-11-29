@@ -155,3 +155,11 @@ class AddressForm(forms.ModelForm):
             'postal_code': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            # اضافه کردن کلاس‌های Tailwind به تمام فیلدها
+            self.fields[field].widget.attrs.update({
+                'class': 'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all'
+            })

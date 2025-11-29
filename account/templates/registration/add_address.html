@@ -2,29 +2,67 @@
 {% block title %}افزودن آدرس جدید{% endblock %}
 
 {% block content %}
-<main class="add-address">
-    <div class="container">
-        <h2>افزودن آدرس جدید</h2>
+<main class="bg-gray-50 min-h-screen py-10">
+    <div class="container mx-auto px-4 max-w-2xl">
 
-        <form method="post" novalidate>
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            <div class="form-grid">
-                {% for field in form %}
-                    <div class="form-group">
-                        <label>{{ field.label_tag }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <div class="error">{{ field.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
+            <div class="bg-gray-50 px-8 py-6 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800">📍 ثبت آدرس جدید</h2>
+                <p class="text-gray-500 text-sm mt-1">لطفاً اطلاعات دقیق پستی خود را وارد کنید.</p>
             </div>
 
-            <input type="hidden" name="next" value="{{ next_url }}">
-            <button type="submit" class="btn btn-primary">ثبت آدرس</button>
-            <a href="{{ next_url }}" class="btn btn-secondary">انصراف</a>
-        </form>
+            <div class="p-8">
+                <form method="post" novalidate class="space-y-6">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-6 border border-red-100">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% for field in form %}
+                            <div class="form-group {% if field.name == 'address_line' %}md:col-span-2{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                </label>
+
+                                <div class="relative">
+                                    {{ field }}
+                                </div>
+
+                                {% if field.errors %}
+                                    <p class="mt-1 text-xs text-red-500 flex items-center gap-1">
+                                        <span>⚠</span>
+                                        {{ field.errors|join:", " }}
+                                    </p>
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <p class="mt-1 text-xs text-gray-400">{{ field.help_text }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <input type="hidden" name="next" value="{{ next_url }}">
+
+                    <div class="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
+                        <a href="{{ next_url|default:request.META.HTTP_REFERER }}"
+                           class="px-6 py-2.5 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors text-sm font-medium">
+                            انصراف
+                        </a>
+                        <button type="submit"
+                                class="px-6 py-2.5 rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition-all text-sm font-medium">
+                            ثبت آدرس
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </main>
 {% endblock %}
