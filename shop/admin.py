@@ -18,6 +18,11 @@ class ProductFeatureValueInline(admin.TabularInline):
     extra = 1
 
 
+class CommentLikeInline(admin.TabularInline):
+    model = CommentLike
+    extra = 0
+    readonly_fields = ('created',)  # تاریخ ثبت لایک فقط خواندنی باشد
+
 
 # -----------------------------
 # 🔹 مدل‌های پایه
@@ -111,3 +116,32 @@ class CategoryFeatureAutocomplete(AutocompleteJsonView):
         if category_id:
             qs = qs.filter(category_id=category_id)
         return qs
+
+
+@admin.register(ProductComment)
+class ProductCommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'score', 'suggest', 'show_likes', 'show_dislikes', 'active', 'created')
+    list_filter = ('active', 'score', 'suggest', 'created')
+    search_fields = ('user__phone', 'product__name', 'text')
+    list_editable = ('active',)
+    actions = ['approve_comments']
+
+    # اضافه کردن اینلاین
+    inlines = [CommentLikeInline]
+
+    # نمایش تعداد لایک در لیست
+    def show_likes(self, obj):
+        return obj.likes_count
+
+    show_likes.short_description = '👍 لایک'
+
+    # نمایش تعداد دیس‌لایک در لیست
+    def show_dislikes(self, obj):
+        return obj.dislikes_count
+
+    show_dislikes.short_description = '👎 دیس‌لایک'
+
+    def approve_comments(self, request, queryset):
+        queryset.update(active=True)
+
+    approve_comments.short_description = "تایید نظرات انتخاب شده"

@@ -343,3 +343,152 @@ function showToast(message, type = 'success') {
         setTimeout(() => { toast.remove(); }, 400);
     }, 4000);
 }
+
+//=========================================
+//---------مدیریت ارسال نظر با AJAX--------
+//=========================================
+// مدیریت ارسال نظر با AJAX
+document.addEventListener("DOMContentLoaded", function() {
+    const commentForm = document.getElementById('comment-form');
+
+    // استفاده از یک متغیر برای جلوگیری از اجرای چندباره ایونت
+    if (commentForm && !commentForm.dataset.listenerAttached) {
+
+        // علامت می‌زنیم که لیسنر به این فرم وصل شد
+        commentForm.dataset.listenerAttached = "true";
+
+        commentForm.addEventListener('submit', function(e) {
+            // 1. مهمترین خط: جلوگیری از ارسال عادی فرم توسط مرورگر
+            e.preventDefault();
+            e.stopImmediatePropagation(); // اطمینان از اینکه لیسنرهای تکراری احتمالی اجرا نشن
+
+            const form = this;
+
+            // 2. بررسی اینکه آیا فرم در حال ارسال است؟
+            if (form.dataset.submitting === "true") {
+                console.warn("Form is already submitting...");
+                return;
+            }
+
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+
+            // 3. قفل کردن فرم
+            form.dataset.submitting = "true"; // علامت "در حال ارسال"
+            btn.disabled = true;
+            btn.innerText = 'در حال ثبت...';
+
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    form.reset(); // پاک کردن فرم
+                    // ریست کردن ستاره‌ها (چون رادیو باتن هستن و با reset ممکنه بصری درست نشن)
+                    const lastStar = form.querySelector('input[name="score"][value="5"]');
+                    if(lastStar) lastStar.checked = true;
+                } else {
+                    showToast('لطفا ورودی‌ها را بررسی کنید.', 'error');
+                    console.log(data.errors);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('خطایی رخ داد.', 'error');
+            })
+            .finally(() => {
+                // 4. آزاد کردن فرم (چه موفق چه ناموفق)
+                delete form.dataset.submitting;
+                btn.disabled = false;
+                btn.innerText = originalText;
+            });
+        });
+    }
+});
+
+// ===========================================
+// -------سیستم لایک و دیس‌لایک نظرات 👍👎------
+// ===========================================
+
+function reactToComment(commentId, actionType) {
+    // پیدا کردن مستقیم عناصر با ID منحصر به فرد
+    const likeBtn = document.getElementById(`like-btn-${commentId}`);
+    const dislikeBtn = document.getElementById(`dislike-btn-${commentId}`);
+    const likeCountSpan = document.getElementById(`like-count-${commentId}`);
+    const dislikeCountSpan = document.getElementById(`dislike-count-${commentId}`);
+
+    const url = `/comment/react/${commentId}/`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `type=${actionType}`
+    })
+    .then(res => {
+        if (res.status === 401) {
+            showToast('برای ثبت نظر لطفاً وارد شوید.', 'error');
+            return null;
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data && data.success) {
+            // 1. آپدیت اعداد (لایو)
+            if (likeCountSpan) likeCountSpan.innerText = toPersianNum(data.likes_count);
+            if (dislikeCountSpan) dislikeCountSpan.innerText = toPersianNum(data.dislikes_count);
+
+            // 2. مدیریت کلاس‌های رنگی (UI Update)
+
+            // اول همه رنگ‌ها رو پاک می‌کنیم (حالت خنثی)
+            likeBtn.className = "flex items-center gap-1 px-2 py-1 rounded transition-colors duration-200 hover:text-green-600";
+            dislikeBtn.className = "flex items-center gap-1 px-2 py-1 rounded transition-colors duration-200 hover:text-red-500";
+
+            // حالا بر اساس وضعیت جدید رنگ می‌پاشیم
+            if (data.action === 'created' || data.action === 'changed') {
+                if (actionType === 'like') {
+                    // لایک شده: سبز و بولد
+                    likeBtn.classList.remove('hover:text-green-600');
+                    likeBtn.classList.add('text-green-600', 'bg-green-50', 'font-bold');
+                } else {
+                    // دیس‌لایک شده: قرمز و بولد
+                    dislikeBtn.classList.remove('hover:text-red-500');
+                    dislikeBtn.classList.add('text-red-500', 'bg-red-50', 'font-bold');
+                }
+            }
+            // اگر action === 'removed' بود، همون حالت خنثی که بالا ست کردیم باقی می‌مونه
+        }
+    })
+    .catch(err => console.error("Reaction Error:", err));
+}
+
+// توابع کمکی (اگر قبلا نداری)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function toPersianNum(num) {
+    return num.toString().replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
+}

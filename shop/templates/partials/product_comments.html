@@ -1,0 +1,146 @@
+{% load custom_filters %}
+{% load comment_tags %}
+{% load static %}
+
+<div class="mt-12 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-10" id="comments-section">
+
+    <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center gap-2">
+        <span>💬</span> نظرات کاربران
+        <span class="text-sm font-normal text-gray-500">({{ product.comments.count|fa_number }} نظر)</span>
+    </h3>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+        <div class="lg:col-span-1">
+            <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 sticky top-24">
+                <h4 class="font-bold text-gray-700 mb-4">دیدگاه خود را بنویسید</h4>
+
+                {% if request.user.is_authenticated %}
+                    <form id="comment-form" action="{% url 'shop:add_product_comment' product.id %}" method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label class="block text-xs font-medium text-gray-500 mb-2">امتیاز شما به این محصول</label>
+                            <div class="flex flex-row-reverse justify-end gap-1 group">
+                                {% for i in "54321" %} <input type="radio" name="score" id="star{{ i }}" value="{{ i }}" class="peer hidden" {% if i == "5" %}checked{% endif %}>
+                                    <label for="star{{ i }}" class="cursor-pointer text-gray-300 peer-checked:text-yellow-400 hover:text-yellow-400 peer-hover:text-yellow-400 transition-colors text-2xl">★</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.suggest }}
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.text }}
+                        </div>
+
+                        <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-red-500/20">
+                            ثبت دیدگاه
+                        </button>
+                    </form>
+                {% else %}
+                    <div class="text-center py-8">
+                        <p class="text-gray-500 text-sm mb-4">برای ثبت نظر ابتدا باید وارد شوید.</p>
+                        <a href="{% url 'account:login' %}?next={{ request.path }}" class="text-blue-600 border border-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                            ورود به حساب کاربری
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            {% for comment in comments %} <div class="border-b border-gray-100 last:border-0 pb-6">
+
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                                {% if comment.user.account.photo %}
+                                    <img src="{{ comment.user.account.photo.url }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <img src="{% static 'images/man.png' %}" class="w-full h-full object-cover p-1 opacity-50">
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-gray-800 text-sm">{{ comment.user.account.display_name }}</span>
+                                    <span class="text-xs text-gray-400">{{ comment.created|date:"Y/m/d"|fa_number }}</span>
+                                </div>
+
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    {% if comment.is_buyer %}
+                                        <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] px-2 py-0.5 rounded border border-green-100">
+                                            <span>🛍️</span> خریدار این محصول
+                                        </span>
+                                    {% endif %}
+
+                                    {% if comment.is_expert %}
+                                        <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-2 py-0.5 rounded border border-blue-100">
+                                            <span>💡</span> صاحب‌نظر در {{ product.category.name }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-2 py-1 rounded text-xs font-bold text-gray-700 border border-gray-200">
+                            {{ comment.score|fa_number }}.0
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {% if comment.suggest %}
+                            <span class="text-green-600 text-xs flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg>
+                                خرید این محصول را پیشنهاد می‌کنم
+                            </span>
+                        {% else %}
+                            <span class="text-red-500 text-xs flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2"></path></svg>
+                                خرید این محصول را پیشنهاد نمی‌کنم
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <p class="text-gray-600 text-sm leading-7 mb-4">
+                        {{ comment.text|linebreaksbr }}
+                    </p>
+
+                    <div class="flex justify-end gap-4 text-xs text-gray-400 mt-4 border-t border-gray-50 pt-3">
+
+                        {% get_user_reaction comment request.user as user_react %}
+
+                        <div class="flex items-center gap-1">
+                            <span class="text-xs text-gray-400">آیا این دیدگاه مفید بود؟</span>
+
+                            <button id="like-btn-{{ comment.id }}"
+                                    onclick="reactToComment('{{ comment.id }}', 'like')"
+                                    class="flex items-center gap-1 px-2 py-1 rounded transition-colors duration-200
+                                           {% if user_react == 'like' %}text-green-600 bg-green-50 font-bold{% else %}hover:text-green-600{% endif %}">
+                                <span>👍</span>
+                                <span id="like-count-{{ comment.id }}">{{ comment.likes_count|fa_number }}</span>
+                            </button>
+
+                            <button id="dislike-btn-{{ comment.id }}"
+                                    onclick="reactToComment('{{ comment.id }}', 'dislike')"
+                                    class="flex items-center gap-1 px-2 py-1 rounded transition-colors duration-200
+                                           {% if user_react == 'dislike' %}text-red-500 bg-red-50 font-bold{% else %}hover:text-red-500{% endif %}">
+                                <span>👎</span>
+                                <span id="dislike-count-{{ comment.id }}">{{ comment.dislikes_count|fa_number }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            {% empty %}
+                <div class="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                    <p class="text-gray-500 text-sm">هنوز هیچ دیدگاهی برای این محصول ثبت نشده است.</p>
+                    <p class="text-gray-400 text-xs mt-1">اولین نفری باشید که نظر می‌دهد!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

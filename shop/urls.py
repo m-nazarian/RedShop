@@ -13,5 +13,7 @@ urlpatterns = [
     path('api/features/<int:category_id>/', views.get_category_features, name='get_category_features'),
     path('categoryfeature/autocomplete/', views.categoryfeature_autocomplete, name='categoryfeature_autocomplete'),
     path('api/search/', views.search_suggestions, name='search_suggestions'),
+    path('comment/add/<int:product_id>/', views.add_product_comment, name='add_product_comment'),
+    path('comment/react/<int:comment_id>/', views.like_comment, name='like_comment'),
 
 ]

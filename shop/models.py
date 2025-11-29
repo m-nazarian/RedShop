@@ -1,8 +1,10 @@
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 from slugify import slugify
+from django.apps import apps
 
 
 class Category(MPTTModel):
@@ -137,9 +139,9 @@ class Image(models.Model):
         return self.title if self.title else f"تصویر {self.product.name}"
 
 
-# -------------------------------
+# ===============================
 # 🔹 مدل‌های جدید برای ویژگی‌های پویا
-# -------------------------------
+# ===============================
 class FeatureGroup(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE,
@@ -186,3 +188,92 @@ class ProductFeatureValue(models.Model):
     def __str__(self):
         return f"{self.product} - {self.feature}: {self.value}"
 
+
+
+# ===============================
+#           Likes
+# ===============================
+class CommentLike(models.Model):
+    LIKE_STATUS = (
+        (True, 'لایک'),
+        (False, 'دیس‌لایک'),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comment_likes')
+    comment = models.ForeignKey('ProductComment', on_delete=models.CASCADE, related_name='likes')
+    status = models.BooleanField(choices=LIKE_STATUS, default=True)  # فیلد جدید
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'comment')  # هر کاربر فقط یک واکنش (لایک یا دیس‌لایک)
+        verbose_name = 'واکنش به نظر'
+        verbose_name_plural = 'واکنش‌های کاربران'
+
+# ===============================
+#           Comments
+# ===============================
+class ProductComment(models.Model):
+    RATING_CHOICES = (
+        (1, 'خیلی بد'),
+        (2, 'بد'),
+        (3, 'معمولی'),
+        (4, 'خوب'),
+        (5, 'عالی'),
+    )
+
+    # ✅ تغییر مهم: تبدیل پیشنهاد به ۳ حالت
+    SUGGEST_CHOICES = (
+        ('yes', 'پیشنهاد می‌کنم'),
+        ('no', 'پیشنهاد نمی‌کنم'),
+        ('none', 'نظری ندارم'),
+    )
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='comments', verbose_name='محصول')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments',
+                             verbose_name='کاربر')
+
+    score = models.PositiveSmallIntegerField(choices=RATING_CHOICES, default=5, verbose_name='امتیاز')
+    text = models.TextField(verbose_name='متن نظر')
+
+    # ✅ فیلد پیشنهاد آپدیت شد
+    suggest = models.CharField(max_length=10, choices=SUGGEST_CHOICES, default='none', verbose_name='پیشنهاد خرید')
+
+    active = models.BooleanField(default=False, verbose_name='تایید شده')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ثبت')
+
+    # --- متدهای شمارشگر برای دسترسی راحت ---
+    @property
+    def likes_count(self):
+        return self.likes.filter(status=True).count()
+
+    @property
+    def dislikes_count(self):
+        return self.likes.filter(status=False).count()
+
+    @property
+    def is_buyer(self):
+        Order = apps.get_model('orders', 'Order')
+        OrderItem = apps.get_model('orders', 'OrderItem')
+        return OrderItem.objects.filter(
+            order__user=self.user,
+            product=self.product,
+            order__status__in=['processing', 'shipped', 'delivered']
+        ).exists()
+
+    @property
+    def is_expert(self):
+        current_category = self.product.category
+        comment_count = ProductComment.objects.filter(
+            user=self.user,
+            product__category=current_category,
+            active=True
+        ).count()
+        return comment_count >= 10
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'نظر کاربر'
+        verbose_name_plural = 'نظرات کاربران'
+
+    def __str__(self):
+        return f"{self.user} - {self.product.name}"

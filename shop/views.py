@@ -1,12 +1,14 @@
 from django.contrib.admin.views.autocomplete import AutocompleteJsonView
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import render, get_object_or_404
-from .models import Category, Product, CategoryFeature
+from .models import Category, Product, CategoryFeature, CommentLike, ProductComment
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
 import json
 from .services import sort_products, get_dynamic_features, assemble_filters, is_staff, apply_filters, global_search
+from django.views.decorators.http import require_POST
+from .forms import ProductCommentForm
 
 
 # --------------------------------------------------------------------------
@@ -56,10 +58,15 @@ def product_detail(request, id, slug):
     product = get_object_or_404(Product, id=id, slug=slug)
 
     grouped_features = product.get_grouped_features()
+    comment_form = ProductCommentForm()
+
+    active_comments = product.comments.filter(active=True)
 
     context = {
         'product': product,
         'grouped_features': grouped_features,
+        'comment_form': comment_form,
+        'comments': active_comments,
     }
     return render(request, 'shop/detail.html', context)
 
@@ -191,3 +198,55 @@ def search_suggestions(request):
 
     data = global_search(query)
     return JsonResponse(data)
+
+
+@login_required
+@require_POST
+def add_product_comment(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    form = ProductCommentForm(request.POST)
+
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.product = product
+        comment.user = request.user
+        comment.save()
+        return JsonResponse({'success': True, 'message': 'نظر شما با موفقیت ثبت شد و پس از تایید نمایش داده می‌شود.'})
+
+    return JsonResponse({'success': False, 'errors': form.errors})
+
+
+@login_required
+@require_POST
+def like_comment(request, comment_id):
+    comment = get_object_or_404(ProductComment, id=comment_id)
+
+    # نوع درخواست: 'like' یا 'dislike'
+    action_type = request.POST.get('type')  # مقداری که با AJAX میفرستیم
+    is_like = (action_type == 'like')
+
+    try:
+        # چک میکنیم آیا قبلا واکنشی داشته؟
+        existing_like = CommentLike.objects.get(user=request.user, comment=comment)
+
+        if existing_like.status == is_like:
+            # اگر دوباره روی همون دکمه زده، یعنی میخواد پس بگیره (Delete)
+            existing_like.delete()
+            action = 'removed'
+        else:
+            # اگر نظرش عوض شده (لایک بوده حالا دیس‌لایک کرده یا برعکس)
+            existing_like.status = is_like
+            existing_like.save()
+            action = 'changed'
+
+    except CommentLike.DoesNotExist:
+        # اولین بار است که واکنش نشان میدهد
+        CommentLike.objects.create(user=request.user, comment=comment, status=is_like)
+        action = 'created'
+
+    return JsonResponse({
+        'success': True,
+        'action': action,
+        'likes_count': comment.likes_count,
+        'dislikes_count': comment.dislikes_count
+    })
