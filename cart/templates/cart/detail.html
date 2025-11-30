@@ -1,119 +1,262 @@
 {% extends 'parent/base.html' %}
 {% load static %}
 {% load custom_filters %}
-{% block title %}cart{% endblock %}
+{% block title %}سبد خرید{% endblock %}
 
 {% block content %}
+<main class="bg-gray-50 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-7xl">
 
-{% if messages %}
-    <div class="messages-container" style="position: fixed; top: 20px; right: 20px; z-index: 10000;">
-        {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}"
-                 style="background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #f5c6cb;">
-                {{ message }}
+        <div class="flex items-center gap-2 mb-6">
+            <h1 class="text-xl font-bold text-gray-800">سبد خرید شما</h1>
+            <span class="text-sm text-gray-500">({{ cart|length|fa_number }} کالا)</span>
+        </div>
+
+        {% if cart|length > 0 %}
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                <div class="lg:col-span-8 space-y-4">
+
+                    {% for item in cart %}
+                        <div class="product-item bg-white border border-gray-200 rounded-xl p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row gap-6 relative group" data-item-id="{{ item.product.id }}">
+
+                            <a href="{{ item.product.get_absolute_url }}" class="shrink-0 mx-auto sm:mx-0">
+                                {% if item.product.images.first %}
+                                    <img src="{{ item.product.images.first.file.url }}" alt="{{ item.product.name }}" class="w-32 h-32 object-contain mix-blend-multiply">
+                                {% else %}
+                                    <div class="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">📷</div>
+                                {% endif %}
+                            </a>
+
+                            <div class="flex-1 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-base font-bold text-gray-800 leading-7 mb-2">
+                                        <a href="{{ item.product.get_absolute_url }}" class="hover:text-blue-600 transition-colors">
+                                            {{ item.product.name|fa_number }}
+                                        </a>
+                                    </h3>
+
+                                    <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-4">
+                                        {% if item.product.category %}
+                                            <span class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded">
+                                                📂 {{ item.product.category.name }}
+                                            </span>
+                                        {% endif %}
+                                        </div>
+                                </div>
+
+                                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 sm:mt-0">
+
+                                    <div class="flex items-center border border-gray-200 rounded-lg h-10">
+                                        <button class="quantity-add px-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 h-full text-lg font-bold transition-colors">+</button>
+                                        <span id="item-quantity-{{ item.product.id }}" class="w-10 text-center text-gray-800 font-medium select-none">{{ item.quantity|fa_number }}</span>
+                                        <button class="quantity-decrease px-3 text-gray-600 hover:text-red-500 hover:bg-gray-50 h-full text-lg font-bold transition-colors">-</button>
+                                    </div>
+
+                                    <div class="text-left">
+                                        <div class="text-xs text-gray-400 mb-1">قیمت واحد: {{ item.price|money_format }}</div>
+                                        <div class="text-lg font-bold text-gray-800">
+                                            <span id="item-total-{{ item.product.id }}">{{ item.total|money_format }}</span> <span class="text-xs font-normal">تومان</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="quantity-remove absolute top-4 left-4 text-gray-300 hover:text-red-500 transition-colors p-1" title="حذف از سبد">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="lg:col-span-4">
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sticky top-4 space-y-6">
+
+                        <h2 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-4">خلاصه سفارش</h2>
+
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            {% if cart.coupon %}
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-green-600 font-bold flex items-center gap-1">
+                                        🎟️ کد تخفیف: {{ cart.coupon.code }} ({{ cart.coupon.discount|fa_number }}%)
+                                    </span>
+                                    </div>
+                                <p class="text-xs text-gray-500 mt-2">تخفیف روی سفارش شما اعمال شد.</p>
+                            {% else %}
+                                <p class="text-xs text-gray-500 mb-2">کد تخفیف دارید؟</p>
+                                <form action="{% url 'coupons:apply' %}" method="post" class="flex gap-2">
+                                    {% csrf_token %}
+                                    <input type="text" name="code" placeholder="کد را بنویسید" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 text-center" required>
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">ثبت</button>
+                                </form>
+                            {% endif %}
+
+                            {% if messages %}
+                                <div class="mt-2 space-y-1">
+                                    {% for message in messages %}
+                                        <p class="text-xs {% if message.tags == 'success' %}text-green-600{% else %}text-red-500{% endif %}">
+                                            {{ message }}
+                                        </p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="space-y-3 text-sm text-gray-600">
+                            <div class="flex justify-between">
+                                <span>قیمت کالاها</span>
+                                <span class="font-medium text-gray-800"><span id="item-total-price">{{ cart.get_total_price|money_format }}</span> تومان</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>هزینه ارسال</span>
+                                <span class="font-medium text-gray-800"><span id="item-post-price">{{ cart.get_post_price_if_any|money_format }}</span> تومان</span>
+                            </div>
+
+                            {% if cart.coupon %}
+                                <div class="flex justify-between text-red-500">
+                                    <span>سود شما از خرید (تخفیف)</span>
+                                    <span class="font-bold"><span>{{ cart.get_discount|money_format }}</span> تومان</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center">
+                            <span class="font-bold text-gray-800">مبلغ قابل پرداخت</span>
+                            <span class="text-xl font-bold text-blue-600"><span id="item-final-price">{{ cart.get_final_price|money_format }}</span> <span class="text-sm font-normal text-gray-500">تومان</span></span>
+                        </div>
+
+                        <div class="space-y-3 pt-2">
+                            <a href="{% url 'orders:checkout_address' %}" class="block w-full bg-red-500 hover:bg-red-600 text-white text-center font-bold py-3 rounded-xl shadow-lg shadow-red-500/30 transition-all">
+                                ادامه فرآیند خرید
+                            </a>
+                            <a href="{% url 'shop:product_list' %}" class="block w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-center font-medium py-3 rounded-xl transition-colors">
+                                بازگشت به فروشگاه
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
             </div>
-        {% endfor %}
-    </div>
-{% endif %}
-    <div class="cart-detail-container">
-    
-        {% for item in cart %}
-            
-            <div class="product-item" data-item-id="{{ item.product.id }}">
-                <a href="{% url 'shop:product_detail' item.product.id item.product.slug %}">
-                    <img src="{{ item.product.images.first.file.url }}" class="img-cart">
+
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+                <div class="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-6xl">
+                    ☹️
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">سبد خرید شما خالی است!</h2>
+                <p class="text-gray-500 mb-8">می‌توانید برای مشاهده محصولات به صفحه اصلی بروید.</p>
+                <a href="{% url 'shop:product_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-600/30 transition-all">
+                    مشاهده محصولات
                 </a>
-                <div class="product-info">
-                    <h3>
-                        <a href="{% url 'shop:product_detail' item.product.id item.product.slug %}">
-                        {{ item.product.name|fa_number }}
-                        </a>
-                    </h3>
-                    <p>تعداد: <span id="item-quantity-{{ item.product.id }}">{{ item.quantity|fa_number }}</span></p>
-                    <p>قیمت هر محصول: <span>{{ item.price|money_format }} تومان</span></p>
-                    <p>قیمت کل: <span id="item-total-{{ item.product.id }}">{{ item.total|money_format }} تومان</span></p>
-                </div>
-                <div class="actions">
-                    <div class="quantity-add">+</div>
-                    <div class="quantity-decrease">-</div>
-                    <div class="quantity-remove">حذف</div>
-                </div>
             </div>
+        {% endif %}
 
-        {% endfor %}
-        <div class="total-price">
-            <p>قیمت کل: <span id="item-total-price">{{ cart.get_total_price|money_format }} تومان</span></p>
-            {% if cart|length > 0 %}
-                <p>هزینه ارسال: <span id="item-post-price">{{ cart.get_post_price_if_any|money_format }} تومان</span></p>
-                <p>مبلغ قابل پرداخت: <span id="item-final-price">{{ cart.get_final_price|money_format }} تومان</span></p>
-            {% else %}
-                <p class="empty-cart-text">سبد خرید شما خالی است</p>
-            {% endif %}
-        </div>
-        <div class="checkout-buttons">
-            <div class="continue-btn"><a href="{% url 'orders:checkout_address' %}?next={{ request.path }}">ادامه خرید</a></div>
-            <div class="back-btn"><a href="{% url 'shop:product_list' %}">برگشت به لیست خرید</a></div>
-        </div>
     </div>
+</main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-        $(document).ready(function(){
-            $('.quantity-add').on('click', function(){
-                updateQuantity($(this).closest('.product-item').data('item-id'), 'add');
-            });
-            $('.quantity-decrease').on('click', function(){
-                updateQuantity($(this).closest('.product-item').data('item-id'), 'decrease');
-            });
-            $('.quantity-remove').on('click', function(){
-                removeItem($(this).closest('.product-item').data('item-id'));
-            });
-            function updateQuantity(itemId, action){
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url 'cart:update_quantity' %}',
-                    data: {
-                        'item_id': itemId,
-                        'action': action,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                    success: function(response){
-                        if (response.success){
-                            $('#item_count').text(response.item_count);
-                            $('#total_price').text(response.total_price);
-                            $('#item-quantity-'+ itemId).text(response.quantity);
-                            $('#item-total-'+ itemId).text(response.item_total);
-                            $('#item-total-price').text(response.total_price);
-                            $('#item-final-price').text(response.final_price);
-                            $('#item-post-price').text(response.item_count > 0 ? response.post_price : 0);
-                        } else {
-                            alert('Error updating quantity!');
-                        }
-                    }
-                });
-            }
-            function removeItem(itemId){
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url 'cart:remove_item' %}',
-                    data: {
-                        'item_id': itemId,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                    success: function(response){
-                        if (response.success){
-                            $('#item_count').text(response.item_count);
-                            $('#total_price').text(response.total_price);
-                            $('#item-total-price').text(response.total_price);
-                            $('#item-final-price').text(response.final_price);
-                            $('#item-post-price').text(response.item_count > 0 ? response.post_price : 0);
-                            $(`.product-item[data-item-id=${itemId}]`).remove();
-                        } else {
-                            alert('Error updating quantity!');
-                        }
-                    }
-                });
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    // تابع تبدیل عدد به فرمت فارسی (سه‌رقم سه‌رقم)
+    function toPersianNumberWithCommas(n) {
+        if (n === null || n === undefined) return "0";
+        const numStr = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return numStr.replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
+    }
+
+    // تابع تبدیل عدد فارسی به انگلیسی برای محاسبات احتمالی
+    function toEnglishDigits(str) {
+        return str.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+    }
+
+    $(document).ready(function(){
+
+        // افزایش تعداد
+        $('.quantity-add').on('click', function(){
+            const itemContainer = $(this).closest('.product-item');
+            const itemId = itemContainer.data('item-id');
+            updateQuantity(itemId, 'add');
+        });
+
+        // کاهش تعداد
+        $('.quantity-decrease').on('click', function(){
+            const itemContainer = $(this).closest('.product-item');
+            const itemId = itemContainer.data('item-id');
+            updateQuantity(itemId, 'decrease');
+        });
+
+        // حذف آیتم
+        $('.quantity-remove').on('click', function(){
+            const itemContainer = $(this).closest('.product-item');
+            const itemId = itemContainer.data('item-id');
+            if(confirm('آیا از حذف این محصول اطمینان دارید؟')) {
+                removeItem(itemId);
             }
         });
-    </script>
+
+        function updateQuantity(itemId, action){
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'cart:update_quantity' %}',
+                data: {
+                    'item_id': itemId,
+                    'action': action,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response){
+                    if (response.success){
+                        // آپدیت تعداد و قیمت کل همان آیتم
+                        $('#item-quantity-'+ itemId).text(toPersianNumberWithCommas(response.quantity));
+                        $('#item-total-'+ itemId).text(toPersianNumberWithCommas(response.item_total));
+
+                        // آپدیت خلاصه سبد (جمع کل، هزینه پست، مبلغ نهایی)
+                        $('#item_count').text(toPersianNumberWithCommas(response.item_count));
+                        $('#item-total-price').text(toPersianNumberWithCommas(response.total_price));
+                        $('#item-post-price').text(toPersianNumberWithCommas(response.post_price));
+                        $('#item-final-price').text(toPersianNumberWithCommas(response.final_price));
+
+                        // نکته: اگر تخفیف دارید، چون درصد ثابت است، با تغییر قیمت کل، مبلغ تخفیف هم عوض می‌شود.
+                        // اگر بخواهید آن را هم آپدیت کنید، باید از سرور مبلغ جدید تخفیف را هم بفرستید.
+                        if (response.discount_amount) {
+                             $('#discount-amount-display').text(toPersianNumberWithCommas(response.discount_amount));
+                        }
+
+                    } else {
+                        // نمایش ارور زیبا با تست (Toast) یا الرت
+                        alert(response.error || 'خطا در بروزرسانی سبد خرید');
+                    }
+                }
+            });
+        }
+
+        function removeItem(itemId){
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'cart:remove_item' %}',
+                data: {
+                    'item_id': itemId,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response){
+                    if (response.success){
+                        // حذف آنی المنت از صفحه
+                        $(`.product-item[data-item-id=${itemId}]`).fadeOut(300, function(){ $(this).remove(); });
+
+                        // آپدیت خلاصه
+                        $('#item-total-price').text(toPersianNumberWithCommas(response.total_price));
+                        $('#item-post-price').text(toPersianNumberWithCommas(response.post_price));
+                        $('#item-final-price').text(toPersianNumberWithCommas(response.final_price));
+
+                        // اگر سبد خالی شد ریلود کن تا پیام "سبد خالی" بیاید
+                        if(response.item_count === 0) {
+                            setTimeout(() => location.reload(), 500);
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
