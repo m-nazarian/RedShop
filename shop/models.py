@@ -277,3 +277,17 @@ class ProductComment(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.product.name}"
+
+
+class ProductFavorite(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorites')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='favorited_by')
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')  # جلوگیری از تکرار
+        verbose_name = 'محصول مورد علاقه'
+        verbose_name_plural = 'لیست علاقه‌مندی‌ها'
+
+    def __str__(self):
+        return f"{self.user} -> {self.product}"

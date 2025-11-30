@@ -110,3 +110,11 @@ def latest_product(count=5, category_slug=None):
     return context
 
 
+@register.simple_tag
+def is_favorited(product, user):
+    """
+    بررسی می‌کند آیا کاربر محصول را لایک کرده یا نه
+    """
+    if not user.is_authenticated:
+        return False
+    return product.favorited_by.filter(user=user).exists()

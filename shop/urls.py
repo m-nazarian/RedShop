@@ -15,5 +15,5 @@ urlpatterns = [
     path('api/search/', views.search_suggestions, name='search_suggestions'),
     path('comment/add/<int:product_id>/', views.add_product_comment, name='add_product_comment'),
     path('comment/react/<int:comment_id>/', views.like_comment, name='like_comment'),
-
+    path('favorite/toggle/<int:product_id>/', views.toggle_favorite, name='toggle_favorite'),
 ]

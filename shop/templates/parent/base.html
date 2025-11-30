@@ -9,7 +9,6 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/layout.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/pages/product_list.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/pages/detail.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'css/pages/cart.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'css/pages/index.css' %}">
     <link rel="stylesheet" href="{% static 'output.css' %}">
 
@@ -25,15 +24,19 @@
     {% include 'partials/header.html' %}
     {% include 'partials/navigation.html' %}
     <div class="page-wrapper">
-        {% block content %} {% endblock %}
+
+    {% block content %} {% endblock %}
+
     </div>
     {% include 'partials/footer.html' %}
-    <script src="{% static 'js/header.js' %}" defer></script>
-    {% block extra_js %}
-        <script src="{% static 'js/jquery.min.js' %}"></script>
-        <script src="{% static 'js/header.js' %}"></script>
-        <script src="{% static 'js/detail.js' %}"></script>
 
-    {% endblock %}
+    <div id="toast-container"></div>
+
+    <script src="{% static 'js/header.js' %}" defer></script>
+    <script src="{% static 'main.js' %}"></script>
+    <script src="{% static 'js/detail.js' %}"></script>
+    <script src="{% static 'jquery.min.js' %}"></script>
+
+    {% block extra_js %} {% endblock %}
 </body>
 </html>

@@ -318,31 +318,6 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 
-//=========================================
-//-------تابع ساخت و نمایش نوتیفیکیشن------
-//=========================================
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    let icon = type === 'success' ? '✔' : '✖';
-
-    const toast = document.createElement('div');
-    toast.classList.add('toast-message', type);
-
-    toast.innerHTML = `
-        <div class="toast-content">
-            <span class="toast-icon">${icon}</span>
-            <span>${message}</span>
-        </div>
-        <span class="toast-close" onclick="this.parentElement.remove()">&times;</span>
-    `;
-
-    container.appendChild(toast);
-    setTimeout(() => { toast.classList.add('show'); }, 10);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => { toast.remove(); }, 400);
-    }, 4000);
-}
 
 //=========================================
 //---------مدیریت ارسال نظر با AJAX--------
@@ -473,7 +448,7 @@ function reactToComment(commentId, actionType) {
     .catch(err => console.error("Reaction Error:", err));
 }
 
-// توابع کمکی (اگر قبلا نداری)
+// توابع کمکی
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {

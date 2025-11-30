@@ -1,7 +1,7 @@
 from django.contrib.admin.views.autocomplete import AutocompleteJsonView
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import render, get_object_or_404
-from .models import Category, Product, CategoryFeature, CommentLike, ProductComment
+from .models import Category, Product, CategoryFeature, CommentLike, ProductComment, ProductFavorite
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
@@ -72,6 +72,9 @@ def product_detail(request, id, slug):
 
 
 def filter_products(request):
+    """
+    View مخصوص AJAX (POST request)
+    """
     if request.method != 'POST':
         return JsonResponse({"error": "Only POST requests allowed"}, status=405)
 
@@ -90,11 +93,21 @@ def filter_products(request):
     dynamic_features_data = get_dynamic_features(products)
     ordered_filters = assemble_filters(request, products, dynamic_features_data)
 
-    html_products = render_to_string("partials/product_list_partials.html", {"products": products})
-    html_filters = render_to_string("partials/all_filters_partials.html", {
-        "ordered_filters": ordered_filters,
-        "current_selections": data
-    })
+    # پاس دادن request به render_to_string
+    html_products = render_to_string(
+        "partials/product_list_partials.html",
+        {"products": products},
+        request=request
+    )
+
+    html_filters = render_to_string(
+        "partials/all_filters_partials.html",
+        {
+            "ordered_filters": ordered_filters,
+            "current_selections": data
+        },
+        request=request # اینجا هم برای اطمینان می‌فرستیم
+    )
 
     return JsonResponse({
         "html_products": html_products,
@@ -250,3 +263,22 @@ def like_comment(request, comment_id):
         'likes_count': comment.likes_count,
         'dislikes_count': comment.dislikes_count
     })
+
+
+@login_required
+@require_POST
+def toggle_favorite(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    # متد get_or_create: اگر بود می‌گیرد، اگر نبود می‌سازد
+    # created=True یعنی تازه ساخته شد (لایک شد)
+    # created=False یعنی قبلاً بوده (پس باید حذفش کنیم)
+    favorite, created = ProductFavorite.objects.get_or_create(user=request.user, product=product)
+
+    if not created:
+        favorite.delete()
+        status = 'removed'
+    else:
+        status = 'added'
+
+    return JsonResponse({'success': True, 'status': status})
