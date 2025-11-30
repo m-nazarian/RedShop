@@ -62,11 +62,19 @@ def product_detail(request, id, slug):
 
     active_comments = product.comments.filter(active=True)
 
+    # دریافت محصولات مرتبط
+    # منطق: محصولاتی که در همین دسته‌بندی هستند، به جز خودِ این محصول
+    related_products = Product.objects.filter(
+        category=product.category
+    ).exclude(id=product.id).order_by('?')[:6]
+    # order_by('?') یعنی تصادفی انتخاب کن
+
     context = {
         'product': product,
         'grouped_features': grouped_features,
         'comment_form': comment_form,
         'comments': active_comments,
+        'related_products': related_products,
     }
     return render(request, 'shop/detail.html', context)
 

@@ -6,12 +6,9 @@
     --button__color__hover: #cacaca;
     --ligth-color: #486a75;
     --dark-color: #3d575f;
-    --bg_color: #92b1bb
+    --bg_color: #f2f2f2
 }
 
-*{
-    margin: 0;
-}
 body{
     font-family: 'Shabnam', sans-serif;
     background-color: var(--bg_color);
