@@ -33,6 +33,7 @@ class ShopUserManager(BaseUserManager):
 
 class ShopUser(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=11, unique=True)
+    email = models.EmailField(unique=True, blank=True, null=True, verbose_name='ایمیل')
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     address = models.TextField(blank=True, null=True)

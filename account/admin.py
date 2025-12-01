@@ -10,15 +10,15 @@ class ShopUserAdmin(UserAdmin):
     add_form = ShopUserCreationForm
     form = ShopUserChangeForm
     model = ShopUser
-    list_display = ['phone', 'first_name', 'last_name', 'is_staff', 'is_active']
+    list_display = ['phone', 'first_name', 'last_name', 'email', 'is_staff', 'is_active']
     fieldsets = (
-        (None, {'fields': ('phone', 'password')}),
+        (None, {'fields': ('phone', 'email', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name','address')}),
         ('Permissions', {'fields': ('is_active','is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
-        (None, {'fields': ('phone', 'password1', 'password2')}),
+        (None, {'fields': ('phone', 'email', 'password1', 'password2')}),
         ('Personal info', {'fields': ('first_name', 'last_name','address')}),
         ('Permissions', {'fields': ('is_active','is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),

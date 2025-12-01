@@ -26,6 +26,13 @@
                         <input class="input__login__input" id="password" type="password" name="password" placeholder=" رمز عبور" required>
                     </div>
                     <input class="input__login__input-login" type="submit" value="ورود">
+
+                    <div class="flex justify-end mb-4">
+                        <a href="{% url 'account:password_reset' %}" class="text-sm text-blue-100 hover:underline p-5">
+                            رمز عبور خود را فراموش کرده‌اید؟
+                        </a>
+                    </div>
+
                     {% for message in messages %}
                         <p>{{ message }}</p>
                     {% endfor %}
