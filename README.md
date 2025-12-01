@@ -1,186 +1,171 @@
-# RedShop 🛒
+# 🛍️ RedShop - پلتفرم فروشگاه اینترنتی مدرن با جانگو
+
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Django](https://img.shields.io/badge/Django-5.0%2B-green)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38bdf8)
+![Status](https://img.shields.io/badge/Status-In%20Development-orange)
+
+**RedShop** یک پروژه فروشگاه اینترنتی کامل است که با تمرکز بر **معماری تمیز (Clean Architecture)**، **عملکرد بالا (High Performance)** و **تجربه کاربری روان (UX)** طراحی شده است.
+
+> 🚧 **نکته:** این پروژه در حال توسعه فعال است و هر روز با ویژگی‌های جدید و بازنویسی کدها (Refactoring) بهینه‌تر می‌شود.
 
 ---
 
-## English Version 🇺🇸
+## 👋 درباره پروژه و توسعه‌دهنده
 
-**RedShop** — An online store with Django back-end and a simple front-end (HTML/CSS/JS).  
-**Purpose:** A lightweight e-commerce project for learning, practice, or personal use. It includes product management, shopping cart, user registration, and orders.
+سلام! من توسعه‌دهنده این پروژه هستم. **RedShop** اولین پروژه حرفه‌ای و بزرگ من در دنیای جانگو است.
+هدف من در این پروژه صرفاً ساختن یک سایت که "کار کند" نبوده؛ بلکه تمرکزم روی یادگیری عمیق و پیاده‌سازی استانداردهای مهندسی نرم‌افزار بوده است.
 
-### 🚀 Features
+**اهداف اصلی من در این مسیر:**
+* رعایت اصول **Clean Code** و **DRY**.
+* بهینه‌سازی کوئری‌های دیتابیس (حل مشکل N+1).
+* پیاده‌سازی رابط کاربری مدرن و تعاملی (SPA-like) با استفاده از AJAX.
+* ساخت داشبورد مدیریت قدرتمند و سفارشی.
 
-- User management: register, login, profile  
-- Product management: add, edit, delete products  
-- Shopping cart: add/remove items and place orders  
-- Order management  
-- Modular structure: each functionality in a separate Django app (users, cart, shop, orders, etc.)  
-- Static files support: Tailwind / CSS / JS  
-- Easy to extend: add more features such as admin panel, online payment, etc.
+---
 
-### 📁 Project Structure
+## ✨ ویژگی‌های کلیدی (Features)
 
-RedShop/
-├── manage.py
-├── .gitignore
-├── shop/ # Shop app
-├── account/ # Users app
-├── cart/ # Cart app
-├── orders/ # Orders app
-├── static/ # Static files (CSS, JS, images)
-└── ... # Other apps / folders
+### 🏗️ زیرساخت و بک‌اند (Back-end)
+* **احراز هویت سفارشی:** استفاده از شماره موبایل به جای نام کاربری (Custom User Model).
+* **دسته‌بندی درختی:** پیاده‌سازی دسته‌بندی‌های تو در تو و نامحدود با `django-mptt`.
+* **ویژگی‌های پویا:** قابلیت تعریف ویژگی‌های اختصاصی برای هر دسته‌بندی (مشابه دیجی‌کالا).
+* **سبد خرید هوشمند:** سیستم سبد خرید مبتنی بر سشن (Session-based) با قابلیت محاسبه تخفیف.
+* **سیستم تخفیف (Coupon):** اعمال کدهای تخفیف با اعتبارسنجی دقیق زمان و سقف استفاده.
+* **درگاه پرداخت:** اتصال کامل به درگاه پرداخت (زرین‌پال سندباکس) با ثبت دقیق تراکنش‌ها.
 
-bash
-Copy code
+### 🎨 فرانت‌اند و تجربه کاربری (Front-end)
+* **طراحی مدرن:** استفاده از فریم‌ورک **Tailwind CSS** برای طراحی کاملاً ریسپانسیو و زیبا.
+* **تعاملات AJAX:**
+    * جستجوی زنده (Live Search) با پیشنهاد محصول و دسته‌بندی.
+    * فیلترهای پیشرفته محصولات بدون رفرش صفحه.
+    * سبد خرید و تغییر تعداد محصولات به صورت آنی.
+    * افزودن به علاقه‌مندی‌ها (Wishlist) و لایک نظرات.
+* **داشبورد کاربری SPA-like:** مدیریت پروفایل، سفارش‌ها و آدرس‌ها بدون بارگذاری مجدد صفحه.
+* **مگا منو (Mega Menu):** منوی دسته‌بندی حرفه‌ای با انیمیشن‌های نرم.
 
-### 💻 Prerequisites
+### 👮‍♂️ پنل مدیریت (Admin Panel)
+* شخصی‌سازی شده برای مدیریت آسان محصولات و سفارش‌ها.
+* استفاده از **Select2** برای فیلترهای وابسته (انتخاب ویژگی بر اساس دسته‌بندی).
+* پشتیبانی کامل از **Dark Mode**.
+* نمایش تصاویر و وضعیت‌های رنگی در لیست‌ها.
 
-- Python 3.x  
-- Django  
-- pip  
-- (Optional) Virtual environment recommended  
+---
 
-### 🛠 Installation & Run
+## 📸 اسکرین‌شات‌ها (Screenshots)
 
-```bash
-git clone https://github.com/m-nazarian/RedShop.git
-cd RedShop
+<div align="center">
+  <img src="screenshots/Cart.png" width="800" alt="سبد خرید">
+  <br><br>
+  <img src="screenshots/My_Address.png" width="800" alt="صفحه پروفایل ، سفارش های من">
+  <br><br>
+  <img src="screenshots/My_orders.png" width="800" alt="صفحه پروفایل ، آدرس های من">
+  <br><br>
+  <img src="screenshots/Category.png" width="800" alt="دسته بندی درختی">
+  <br><br>
+  <img src="screenshots/Comments.png" width="800" alt="کامنت ها">
+</div>
 
-# Optional: create and activate virtual environment
-python -m venv .venv
-# On Windows:
-.venv\Scripts\activate
-# On Linux/macOS:
-source .venv/bin/activate
+---
 
-# Install dependencies
-pip install -r requirements.txt
+## 🛠️ تکنولوژی‌های استفاده شده
 
-# Run migrations
-python manage.py migrate
+* **Zarinpal:** درگاه پرداخت
+* **Language:** Python
+* **Framework:** Django 5
+* **Database:** PostgresSQL / SQLite
+* **Frontend:** HTML5, Tailwind CSS, JavaScript (Vanilla + jQuery for AJAX)
+* **Libraries:**
+    * `asgiref`==3.9.2
+    * `certifi`==2025.11.12
+    * `charset-normalizer`==3.4.4
+    * `colorama`==0.4.6
+    * `decorator`==5.2.1
+    * `Django`==5.2.7
+    * `django-jalali`==7.4.0
+    * `django-js-asset`==3.1.2
+    * `django-mptt`==0.18.0
+    * `django-resized`==1.0.3
+    * `easy-thumbnails`==2.10.1
+    * `idna`==3.11
+    * `imageio`==2.37.0
+    * `imageio-ffmpeg`==0.6.0
+    * `jalali_core`==1.0.0
+    * `jdatetime`==5.2.0
+    * `moviepy`==2.2.1
+    * `numpy`==2.3.4
+    * `pillow`==11.3.0
+    * `proglog`==0.1.12
+    * `psycopg2-binary`==2.9.11
+    * `python-dotenv`==1.2.1
+    * `python-slugify`==8.0.4
+    * `requests`==2.32.5
+    * `sqlparse`==0.5.3
+    * `text-unidecode`==1.3
+    * `tqdm`==4.67.1
+    * `tzdata`==2025.2
+    * `urllib3`==2.5.0
+---
 
-# Optional: create superuser
-python manage.py createsuperuser
+## 🚀 نصب و راه‌اندازی (Installation)
 
-# Start server
-python manage.py runserver
-Visit http://127.0.0.1:8000/ to see the store.
+برای اجرای این پروژه روی سیستم خودتان، مراحل زیر را طی کنید:
 
-📈 Current Status
-Back-end: ~80% complete
+1.  **کلون کردن مخزن:**
+    ```bash
+    git clone [https://github.com/your-username/RedShop.git](https://github.com/your-username/RedShop.git)
+    cd RedShop
+    ```
 
-Front-end: under development
+2.  **ساخت محیط مجازی (Virtual Environment):**
+    ```bash
+    python -m venv venv
+    # ویندوز:
+    venv\Scripts\activate
+    # مک/لینوکس:
+    source venv/bin/activate
+    ```
 
-Some features like online payment and full admin panel are not implemented yet
+3.  **نصب وابستگی‌ها:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-🤝 Contributing
-Fork the repository
+4.  **اعمال مایگریشن‌ها:**
+    ```bash
+    python manage.py migrate
+    ```
 
-Work in a separate branch (e.g., feature-xyz)
+5.  **ساخت سوپریوزر (ادمین):**
+    ```bash
+    python manage.py createsuperuser
+    ```
 
-Commit changes and submit a pull request
+6.  **اجرای سرور:**
+    ```bash
+    python manage.py runserver
+    ```
 
-Suggested features to add:
+---
 
-Improved frontend UI
+## 🗺️ نقشه راه آینده (Roadmap)
 
-Online payment integration
+این ویژگی‌ها در حال توسعه هستند یا به زودی اضافه خواهند شد:
 
-REST API / mobile-friendly support
+- [x] سیستم جستجو و فیلتر پیشرفته
+- [x] درگاه پرداخت و کیف پول
+- [ ] **ورود با پیامک (OTP)** 📲
+- [ ] **سیستم مقایسه محصولات** ⚖️
+- [ ] **سیستم تیکت پشتیبانی** 🎫
+- [ ] **انبارداری پیشرفته و رزرو کالا** 📦
 
-Unit and automated tests
+---
 
-📄 License
-MIT License — free to use, modify, and distribute.
+## 🤝 ارتباط با من
 
-نسخه فارسی 🇮🇷
-RedShop — یک فروشگاه آنلاین با بک‌اند نوشته‌شده با Django و فرانت‌آند ساده (HTML/CSS/JS).
-هدف: پروژه‌ای سبک برای یادگیری و تمرین یا استفاده شخصی که شامل مدیریت محصولات، سبد خرید، ثبت نام کاربران و سفارشات است.
+اگر پیشنهادی برای بهتر شدن کدهای من دارید یا باگی پیدا کردید، خیلی خوشحال می‌شوم که به من اطلاع دهید. من مشتاق یادگیری هستم!
 
-🚀 ویژگی‌ها
-مدیریت کاربران: ثبت‌نام، ورود، پروفایل
+* 📧 ایمیل: pythonnazarian@gmail.com
 
-مدیریت محصولات: افزودن، ویرایش، حذف محصولات
-
-سبد خرید: اضافه/حذف محصول و ثبت سفارش
-
-مدیریت سفارشات
-
-ساختار ماژولار: هر بخش در یک اپلیکیشن جداگانه Django (کاربران، سبد خرید، فروشگاه، سفارشات و غیره)
-
-پشتیبانی از فایل‌های ایستا: Tailwind / CSS / JS
-
-امکان توسعه راحت: افزودن قابلیت‌هایی مانند پنل ادمین، پرداخت آنلاین و غیره
-
-📁 ساختار پروژه
-csharp
-Copy code
-RedShop/
-├── manage.py
-├── .gitignore
-├── shop/          # اپ فروشگاه
-├── account/       # اپ کاربران
-├── cart/          # اپ سبد خرید
-├── orders/        # اپ سفارشات
-├── static/        # فایل‌های ایستا (CSS، JS، تصاویر)
-└── ...            # سایر اپ‌ها یا پوشه‌ها
-💻 پیش‌نیازها
-Python 3.x
-
-Django
-
-pip
-
-(اختیاری) استفاده از محیط مجازی پیشنهاد می‌شود
-
-🛠 نصب و اجرا
-bash
-Copy code
-git clone https://github.com/m-nazarian/RedShop.git
-cd RedShop
-
-# (اختیاری) ساخت و فعال‌سازی محیط مجازی
-python -m venv .venv
-# ویندوز:
-.venv\Scripts\activate
-# لینوکس/macOS:
-source .venv/bin/activate
-
-# نصب وابستگی‌ها
-pip install -r requirements.txt
-
-# اجرای مایگریشن‌ها
-python manage.py migrate
-
-# (اختیاری) ساخت superuser
-python manage.py createsuperuser
-
-# اجرای سرور
-python manage.py runserver
-به آدرس http://127.0.0.1:8000/ برو تا فروشگاه را ببینی.
-
-📈 وضعیت فعلی پروژه
-بک‌اند تقریباً کامل (~ 80٪)
-
-فرانت‌اند در حال توسعه
-
-قابلیت‌هایی مانند پرداخت آنلاین و پنل ادمین کامل هنوز آماده نیستند
-
-🤝 مشارکت در توسعه
-پروژه را fork کن
-
-در یک branch جدا کار کن (مثلاً feature-xyz)
-
-تغییرات را commit و pull request بده
-
-قابلیت‌های پیشنهادی برای توسعه:
-
-طراحی بهتر Frontend
-
-افزودن پرداخت آنلاین
-
-ایجاد REST API و بهینه‌سازی برای موبایل
-
-تست‌های واحد و خودکار
-
-📄 مجوز
-MIT License — اجازه استفاده، تغییر و توزیع آزاد را می‌دهد.
+---
+⭐️ **اگر از این پروژه خوشتان آمد، لطفاً به آن ستاره دهید!**

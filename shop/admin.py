@@ -123,7 +123,7 @@ class ProductCommentAdmin(admin.ModelAdmin):
     list_display = ('user', 'product', 'score', 'suggest', 'show_likes', 'show_dislikes', 'active', 'created')
     list_filter = ('active', 'score', 'suggest', 'created')
     search_fields = ('user__phone', 'product__name', 'text')
-    list_editable = ('active',)
+    list_editable = ('active', 'suggest')
     actions = ['approve_comments']
 
     # اضافه کردن اینلاین
