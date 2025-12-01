@@ -68,6 +68,27 @@
                                    <span class="mr-auto text-gray-400 text-xs">❮</span>
                                 </a>
                             </li>
+                            <li>
+                                <a href="#"
+                                   class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 group"
+                                   data-url="{% url 'shop:user_favorites_partial' %}"
+                                   data-target="lists">
+                                   <span class="text-xl group-hover:scale-110 transition-transform">❤️</span>
+                                   <span class="font-medium">لیست‌های من</span>
+                                   <span class="mr-auto text-gray-400 text-xs">❮</span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="#"
+                                   class="tab-link flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 group"
+                                   data-url="{% url 'shop:user_reviews_partial' %}"
+                                   data-target="reviews">
+                                   <span class="text-xl group-hover:scale-110 transition-transform">💬</span>
+                                   <span class="font-medium">دیدگاه‌های من</span>
+                                   <span class="mr-auto text-gray-400 text-xs">❮</span>
+                                </a>
+                            </li>
                             <li class="border-t border-gray-100 my-2"></li>
                             <li>
                                 <a href="{% url 'account:logout' %}"

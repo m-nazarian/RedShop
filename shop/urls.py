@@ -16,4 +16,6 @@ urlpatterns = [
     path('comment/add/<int:product_id>/', views.add_product_comment, name='add_product_comment'),
     path('comment/react/<int:comment_id>/', views.like_comment, name='like_comment'),
     path('favorite/toggle/<int:product_id>/', views.toggle_favorite, name='toggle_favorite'),
+    path('api/my-favorites/', views.user_favorites_partial, name='user_favorites_partial'),
+    path('api/my-reviews/', views.user_reviews_partial, name='user_reviews_partial'),
 ]

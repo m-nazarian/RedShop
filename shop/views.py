@@ -290,3 +290,17 @@ def toggle_favorite(request, product_id):
         status = 'added'
 
     return JsonResponse({'success': True, 'status': status})
+
+
+@login_required
+def user_favorites_partial(request):
+    # از طریق related_name='favorites' در مدل ProductFavorite
+    favorites = request.user.favorites.select_related('product').all()
+    return render(request, 'partials/favorites_list.html', {'favorites': favorites})
+
+
+
+@login_required
+def user_reviews_partial(request):
+    reviews = request.user.comments.select_related('product').order_by('-created')
+    return render(request, 'partials/reviews_list.html', {'reviews': reviews})

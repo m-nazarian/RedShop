@@ -1,0 +1,33 @@
+{% load custom_filters %}
+
+<div class="space-y-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2">لیست علاقه‌مندی‌ها ❤️</h3>
+
+    {% if favorites %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for fav in favorites %}
+                <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow relative group" id="fav-item-{{ fav.product.id }}">
+
+                    <button onclick="toggleFavorite('{{ fav.product.id }}', this); removeFavCard('{{ fav.product.id }}')"
+                            class="absolute top-2 left-2 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors z-10 shadow-sm" title="حذف از لیست">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+
+                    <a href="{{ fav.product.get_absolute_url }}">
+                        <div class="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-3">
+                            <img src="{{ fav.product.images.first.file.url }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform">
+                        </div>
+                        <h4 class="text-sm font-bold text-gray-800 line-clamp-2 h-10">{{ fav.product.name|fa_number }}</h4>
+                        <div class="mt-2 text-blue-600 font-bold text-sm text-left">
+                            {{ fav.product.new_price|money_format }} تومان
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <p class="text-gray-500">لیست علاقه‌مندی‌های شما خالی است.</p>
+        </div>
+    {% endif %}
+</div>

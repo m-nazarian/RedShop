@@ -2,364 +2,149 @@
 {% load custom_filters %}
 {% load mptt_tags %}
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b border-gray-100 font-sans">
+<header id="main-header" class="fixed top-0 left-0 right-0 z-50 font-sans">
 
-    <div class="container mx-auto px-4 lg:px-8">
-        <div class="flex items-center justify-between h-20 gap-4 lg:gap-8">
+    <div id="top-nav" class="relative z-50 bg-white transition-shadow duration-300">
+        <div class="container mx-auto px-4 lg:px-8">
+            <div class="flex items-center justify-between h-20 gap-4 lg:gap-8">
 
-            <a href="{% url 'shop:index' %}" class="flex items-center gap-2 shrink-0 group">
-                <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110 duration-300">
-                    🛍️
+                <a href="{% url 'shop:index' %}" class="flex items-center gap-2 shrink-0 group">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110 duration-300">
+                        🛍️
+                    </div>
+                    <span class="text-xl font-bold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">
+                        فروشگاه من
+                    </span>
+                </a>
+
+                <div class="hidden lg:flex flex-1 max-w-2xl relative group">
+                    <input type="text" id="main-search-input" placeholder="جستجو در هزاران محصول..."
+                           class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-12 pl-4 text-sm text-gray-700 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm">
+                    <span class="absolute right-4 top-3 text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <div id="search-results-box" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 hidden overflow-hidden z-50"></div>
                 </div>
-                <span class="text-xl font-bold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">
-                    فروشگاه من
-                </span>
-            </a>
 
-            <div class="hidden lg:flex flex-1 max-w-2xl relative group">
-                <input type="text" id="main-search-input" placeholder="جستجو در هزاران محصول..."
-                       class="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pr-12 pl-4 text-sm text-gray-700 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm">
-                <span class="absolute right-4 top-3 text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </span>
-                <div id="search-results-box" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 hidden overflow-hidden z-50"></div>
-            </div>
-
-            <div class="flex items-center gap-3 lg:gap-4">
-
-                {% if request.user.is_authenticated %}
-                    <div class="relative hover-trigger" data-target="profile-dropdown">
-                        <a href="{% url 'account:profile' %}" class="relative p-2.5 rounded-xl border border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-600 bg-white transition-all block group">
-                            <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                        </a>
-
-                        <div id="profile-dropdown" class="absolute left-0 top-full pt-2 w-64 hidden transition-all duration-300 ease-out transform opacity-0 translate-y-2 origin-top-left z-50">
-                            <div class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden mt-2">
-                                <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                                    <p class="text-sm font-bold text-gray-800">{{ request.user.account.display_name|default:"کاربر گرامی" }}</p>
-                                    <p class="text-xs text-gray-500 dir-ltr text-right">{{ request.user.phone|fa_number }}</p>
-                                </div>
-                                <div class="py-2">
-                                    <a href="{% url 'account:profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                        <span>👤</span> پروفایل من
-                                    </a>
-                                    <a href="{% url 'orders:user_orders' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                        <span>📦</span> سفارش‌های من
-                                    </a>
-                                    <div class="h-px bg-gray-100 my-1"></div>
-                                    <form method="post" action="{% url 'account:logout' %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                            <span>🚪</span> خروج
-                                        </button>
-                                    </form>
+                <div class="flex items-center gap-3 lg:gap-4">
+                    {% if request.user.is_authenticated %}
+                        <div class="relative hover-trigger" data-target="profile-dropdown">
+                            <a href="{% url 'account:profile' %}" class="relative p-2.5 rounded-xl border border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-600 bg-white transition-all block group">
+                                <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            </a>
+                            <div id="profile-dropdown" class="absolute left-0 top-full pt-2 w-64 hidden transition-all duration-300 ease-out transform opacity-0 translate-y-2 origin-top-left z-50">
+                                <div class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden mt-2">
+                                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-100">
+                                        <p class="text-sm font-bold text-gray-800">{{ request.user.account.display_name|default:"کاربر گرامی" }}</p>
+                                        <p class="text-xs text-gray-500 dir-ltr text-right">{{ request.user.phone|fa_number }}</p>
+                                    </div>
+                                    <div class="py-2">
+                                        <a href="{% url 'account:profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"><span>👤</span> پروفایل من</a>
+                                        <a href="{% url 'orders:user_orders' %}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"><span>📦</span> سفارش‌های من</a>
+                                        <div class="h-px bg-gray-100 my-1"></div>
+                                        <form method="post" action="{% url 'account:logout' %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"><span>🚪</span> خروج</button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                {% else %}
-                    <a href="{% url 'account:login' %}" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-blue-600 border border-gray-200 hover:border-blue-200 rounded-xl transition-all hover:bg-blue-50">
-                        <span class="hidden sm:inline">ورود / ثبت‌نام</span>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-                    </a>
-                {% endif %}
+                    {% else %}
+                        <a href="{% url 'account:login' %}" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-blue-600 border border-gray-200 hover:border-blue-200 rounded-xl transition-all hover:bg-blue-50">
+                            <span class="hidden sm:inline">ورود / ثبت‌نام</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                        </a>
+                    {% endif %}
 
-                {% with item_count=cart|length %}
-                <div class="relative hover-trigger" data-target="cart-dropdown">
-                    <a href="{% url 'cart:cart_detail' %}" class="relative p-2.5 rounded-xl border border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-600 bg-white transition-all block group">
-                        <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                        {% if item_count > 0 %}
-                            <span class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm border-2 border-white">
-                                {{ item_count|fa_number }}
-                            </span>
-                        {% endif %}
-                    </a>
-
-                    <div id="cart-dropdown" class="absolute left-0 top-full pt-2 w-80 hidden transition-all duration-300 ease-out transform opacity-0 translate-y-2 origin-top-left z-50">
-                        <div class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden mt-2">
+                    {% with item_count=cart|length %}
+                    <div class="relative hover-trigger" data-target="cart-dropdown">
+                        <a href="{% url 'cart:cart_detail' %}" class="relative p-2.5 rounded-xl border border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-600 bg-white transition-all block group">
+                            <svg class="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                             {% if item_count > 0 %}
-                                <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                                    <span class="text-sm font-bold text-gray-700">{{ item_count|fa_number }} کالا در سبد</span>
-                                    <a href="{% url 'cart:cart_detail' %}" class="text-xs text-blue-600 hover:underline">مشاهده</a>
-                                </div>
-                                <div class="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                                    {% for item in cart %}
-                                        <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                            {% if item.product.images.first %}
-                                                <img src="{{ item.product.images.first.file.url }}" class="w-10 h-10 object-contain border border-gray-100 rounded bg-white">
-                                            {% else %}
-                                                <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xs">📦</div>
-                                            {% endif %}
-                                            <div class="flex-1 min-w-0">
-                                                <h4 class="text-xs font-medium text-gray-800 truncate">{{ item.product.name|fa_number }}</h4>
-                                                <div class="text-[10px] text-gray-500">
-                                                    {{ item.quantity|fa_number }} × {{ item.price|money_format }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <div class="p-3 border-t border-gray-100">
-                                    <div class="flex justify-between items-center mb-3 text-sm">
-                                        <span class="text-gray-500">مبلغ قابل پرداخت:</span>
-                                        <span class="font-bold text-gray-900">{{ cart.get_final_price|money_format }} تومان</span>
-                                    </div>
-                                    <a href="{% url 'orders:checkout_address' %}" class="block w-full bg-red-500 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/20">
-                                        ثبت سفارش
-                                    </a>
-                                </div>
-                            {% else %}
-                                <div class="p-8 text-center">
-                                    <div class="text-4xl mb-2 opacity-50">🛒</div>
-                                    <p class="text-sm text-gray-500">سبد خرید خالی است!</p>
-                                </div>
+                                <span class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm border-2 border-white">
+                                    {{ item_count|fa_number }}
+                                </span>
                             {% endif %}
+                        </a>
+                        <div id="cart-dropdown" class="absolute left-0 top-full pt-2 w-80 hidden transition-all duration-300 ease-out transform opacity-0 translate-y-2 origin-top-left z-50">
+                            <div class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden mt-2">
+                                {% if item_count > 0 %}
+                                    <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center"><span class="text-sm font-bold text-gray-700">{{ item_count|fa_number }} کالا</span><a href="{% url 'cart:cart_detail' %}" class="text-xs text-blue-600 hover:underline">مشاهده</a></div>
+                                    <div class="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                                        {% for item in cart %}
+                                            <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                                {% if item.product.images.first %}<img src="{{ item.product.images.first.file.url }}" class="w-10 h-10 object-contain border border-gray-100 rounded bg-white">{% else %}<div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xs">📦</div>{% endif %}
+                                                <div class="flex-1 min-w-0"><h4 class="text-xs font-medium text-gray-800 truncate">{{ item.product.name|fa_number }}</h4><div class="text-[10px] text-gray-500">{{ item.quantity|fa_number }} × {{ item.price|money_format }}</div></div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="p-3 border-t border-gray-100"><div class="flex justify-between items-center mb-3 text-sm"><span class="text-gray-500">مبلغ قابل پرداخت:</span><span class="font-bold text-gray-900">{{ cart.get_final_price|money_format }} تومان</span></div><a href="{% url 'orders:checkout_address' %}" class="block w-full bg-red-500 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/20">ثبت سفارش</a></div>
+                                {% else %}
+                                    <div class="p-8 text-center"><div class="text-4xl mb-2 opacity-50">🛒</div><p class="text-sm text-gray-500">سبد خرید خالی است!</p></div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
+                    {% endwith %}
                 </div>
-                {% endwith %}
-
             </div>
         </div>
     </div>
 
-    <div class="border-t border-gray-100 bg-white relative">
+    <div id="bottom-nav" class="bg-white relative z-40 transition-transform duration-300 ease-in-out transform translate-y-0 shadow-md">
         <div class="container mx-auto px-4 lg:px-8">
             <nav class="hidden lg:flex items-center gap-1 text-sm font-medium text-gray-600">
-
                 <div class="relative py-3 hover-trigger" data-target="mega-menu">
                     <button class="flex items-center gap-2 px-2 hover:text-blue-600 transition-colors cursor-pointer font-bold text-gray-800 h-full">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                         دسته‌بندی کالاها
                     </button>
-
                     <div id="mega-menu" class="absolute top-full right-0 w-[900px] bg-white rounded-b-2xl shadow-2xl border-t border-gray-100 hidden transition-all duration-300 ease-out transform opacity-0 translate-y-2 origin-top z-40">
                         <div class="flex h-[450px]">
                             <ul class="w-1/4 bg-gray-50 overflow-y-auto custom-scrollbar border-l border-gray-100 py-2">
                                 {% recursetree categories_tree %}
                                     {% if node.is_root_node %}
                                         <li class="category-item group/item" data-id="{{ node.id }}">
-                                            <a href="{{ node.get_absolute_url }}" class="flex justify-between items-center px-4 py-3 text-gray-700 hover:bg-white hover:text-blue-600 border-r-4 border-transparent hover:border-blue-600 transition-all cursor-pointer">
-                                                <span class="text-sm">{{ node.name }}</span>
-                                                {% if not node.is_leaf_node %}
-                                                    <span class="text-xs text-gray-400">❮</span>
-                                                {% endif %}
-                                            </a>
+                                            <a href="{{ node.get_absolute_url }}" class="flex justify-between items-center px-4 py-3 text-gray-700 hover:bg-white hover:text-blue-600 border-r-4 border-transparent hover:border-blue-600 transition-all cursor-pointer"><span class="text-sm">{{ node.name }}</span>{% if not node.is_leaf_node %}<span class="text-xs text-gray-400">❮</span>{% endif %}</a>
                                         </li>
                                     {% endif %}
                                 {% endrecursetree %}
                             </ul>
-
                             <div class="w-3/4 p-6 overflow-y-auto bg-white relative">
                                 {% recursetree categories_tree %}
                                     {% if node.is_root_node %}
                                         <div id="cat-content-{{ node.id }}" class="subcategory-content hidden absolute inset-0 p-6 overflow-y-auto animate-fade-in-fast">
-                                            <div class="flex items-center gap-2 mb-6 border-b border-gray-100 pb-3">
-                                                <h3 class="text-lg font-bold text-gray-800">
-                                                    <a href="{{ node.get_absolute_url }}" class="hover:text-blue-600 flex items-center gap-1">
-                                                        همه کالاهای {{ node.name }}
-                                                        <span class="text-xs">❮</span>
-                                                    </a>
-                                                </h3>
-                                            </div>
-
+                                            <div class="flex items-center gap-2 mb-6 border-b border-gray-100 pb-3"><h3 class="text-lg font-bold text-gray-800"><a href="{{ node.get_absolute_url }}" class="hover:text-blue-600 flex items-center gap-1">همه کالاهای {{ node.name }}<span class="text-xs">❮</span></a></h3></div>
                                             {% if not node.is_leaf_node %}
                                                 <div class="grid grid-cols-3 gap-y-8 gap-x-6">
                                                     {% for child in node.children.all %}
-                                                        <div>
-                                                            <a href="{{ child.get_absolute_url }}" class="font-bold text-sm text-gray-900 hover:text-blue-600 block mb-2 border-r-2 border-blue-500 pr-2">
-                                                                {{ child.name }}
-                                                            </a>
-                                                            {% if not child.is_leaf_node %}
-                                                                <ul class="space-y-1.5 pr-3">
-                                                                    {% for subchild in child.children.all|slice:":5" %}
-                                                                        <li>
-                                                                            <a href="{{ subchild.get_absolute_url }}" class="text-xs text-gray-500 hover:text-gray-800 transition-colors block">
-                                                                                {{ subchild.name }}
-                                                                            </a>
-                                                                        </li>
-                                                                    {% endfor %}
-                                                                    {% if child.children.count > 5 %}
-                                                                        <li><a href="{{ child.get_absolute_url }}" class="text-[10px] text-blue-500 hover:underline">مشاهده همه...</a></li>
-                                                                    {% endif %}
-                                                                </ul>
-                                                            {% endif %}
-                                                        </div>
+                                                        <div><a href="{{ child.get_absolute_url }}" class="font-bold text-sm text-gray-900 hover:text-blue-600 block mb-2 border-r-2 border-blue-500 pr-2">{{ child.name }}</a>{% if not child.is_leaf_node %}<ul class="space-y-1.5 pr-3">{% for subchild in child.children.all|slice:":5" %}<li><a href="{{ subchild.get_absolute_url }}" class="text-xs text-gray-500 hover:text-gray-800 transition-colors block">{{ subchild.name }}</a></li>{% endfor %}{% if child.children.count > 5 %}<li><a href="{{ child.get_absolute_url }}" class="text-[10px] text-blue-500 hover:underline">مشاهده همه...</a></li>{% endif %}</ul>{% endif %}</div>
                                                     {% endfor %}
                                                 </div>
-                                            {% else %}
-                                                <div class="flex flex-col items-center justify-center h-64 text-gray-400">
-                                                    <span class="text-3xl mb-2">📂</span>
-                                                    <p class="text-sm">زیردسته‌ای وجود ندارد.</p>
-                                                </div>
-                                            {% endif %}
+                                            {% else %}<div class="flex flex-col items-center justify-center h-64 text-gray-400"><span class="text-3xl mb-2">📂</span><p class="text-sm">زیردسته‌ای وجود ندارد.</p></div>{% endif %}
                                         </div>
                                     {% endif %}
                                 {% endrecursetree %}
-
-                                <div id="cat-default" class="flex flex-col items-center justify-center h-full text-gray-400">
-                                    <span class="text-5xl mb-4 opacity-50">👆</span>
-                                    <p>برای مشاهده زیرمجموعه‌ها، ماوس را روی دسته‌ها نگه دارید.</p>
-                                </div>
+                                <div id="cat-default" class="flex flex-col items-center justify-center h-full text-gray-400"><span class="text-5xl mb-4 opacity-50">👆</span><p>برای مشاهده زیرمجموعه‌ها، ماوس را روی دسته‌ها نگه دارید.</p></div>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <div class="w-px h-5 bg-gray-300 mx-2"></div>
                 <a href="#" class="px-3 py-3 hover:text-blue-600 transition-colors flex items-center gap-1 text-sm"><span class="text-lg">🔥</span> پرفروش‌ترین‌ها</a>
                 <a href="#" class="px-3 py-3 hover:text-blue-600 transition-colors flex items-center gap-1 text-sm"><span class="text-lg">🏷️</span> تخفیف‌ها</a>
-
             </nav>
         </div>
     </div>
 </header>
 
-<div class="h-32 lg:h-36"></div>
+<div id="header-spacer" class="h-32 lg:h-36"></div>
 
 <style>
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 4px; }
-
-    @keyframes fadeInFast {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInFast { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     .animate-fade-in-fast { animation: fadeInFast 0.2s ease-out forwards; }
+    .nav-slide-up { transform: translateY(-100%) !important; z-index: 40 !important; }
 </style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-
-        // نگهدارنده تمام تایمرها برای جلوگیری از تداخل
-        const menuTimers = {};
-        const activeMenus = new Set();
-
-        // تابع بستن فوری یک منو (بدون انیمیشن، برای وقتی که میریم روی منوی دیگه)
-        function closeMenuImmediately(content) {
-            content.classList.add('hidden');
-            content.classList.remove('opacity-100', 'translate-y-0');
-            content.classList.add('opacity-0', 'translate-y-2');
-        }
-
-        // مدیریت تمام تریگرها (پروفایل، سبد خرید، مگا منو)
-        const triggers = document.querySelectorAll('.hover-trigger');
-
-        triggers.forEach(trigger => {
-            const targetId = trigger.dataset.target;
-            const content = document.getElementById(targetId);
-
-            if (!content) return;
-
-            const showMenu = () => {
-                // 1. کنسل کردن تایمر بسته شدنِ همین منو
-                if (menuTimers[targetId]) {
-                    clearTimeout(menuTimers[targetId]);
-                    delete menuTimers[targetId];
-                }
-
-                // 2. بستن سایر منوهای باز (برای جلوگیری از تداخل وقتی سریع جابجا میشیم)
-                triggers.forEach(otherTrigger => {
-                    const otherId = otherTrigger.dataset.target;
-                    if (otherId !== targetId) {
-                        const otherContent = document.getElementById(otherId);
-                        if (otherContent && !otherContent.classList.contains('hidden')) {
-                            // تایمرش رو پاک کن و سریع ببندش
-                            if (menuTimers[otherId]) clearTimeout(menuTimers[otherId]);
-                            closeMenuImmediately(otherContent);
-                        }
-                    }
-                });
-
-                // 3. نمایش منوی فعلی
-                content.classList.remove('hidden');
-
-                // مجبور کردن مرورگر به رندر مجدد برای اجرای انیمیشن
-                void content.offsetWidth;
-
-                content.classList.remove('opacity-0', 'translate-y-2');
-                content.classList.add('opacity-100', 'translate-y-0');
-            };
-
-            const hideMenu = () => {
-                // تاخیر برای خروج موس
-                menuTimers[targetId] = setTimeout(() => {
-
-                    // شروع انیمیشن محو شدن
-                    content.classList.remove('opacity-100', 'translate-y-0');
-                    content.classList.add('opacity-0', 'translate-y-2');
-
-                    // بعد از تمام شدن انیمیشن (300ms) کلاس hidden اضافه بشه
-                    // اما یک چک ایمنی میذاریم:
-                    setTimeout(() => {
-                        if (content.classList.contains('opacity-0')) {
-                            content.classList.add('hidden');
-                        }
-                    }, 300);
-
-                }, 200); // 200 میلی‌ثانیه صبر قبل از شروع عملیات بستن
-            };
-
-            // اتصال رویدادها
-            trigger.addEventListener('mouseenter', showMenu);
-            trigger.addEventListener('mouseleave', hideMenu);
-
-            content.addEventListener('mouseenter', showMenu);
-            content.addEventListener('mouseleave', hideMenu);
-        });
-
-
-        // ===================================
-        // 2. مدیریت مگا منو
-        // ===================================
-        const categoryItems = document.querySelectorAll('.category-item');
-        const contents = document.querySelectorAll('.subcategory-content');
-        const defaultContent = document.getElementById('cat-default');
-        let catTimeout;
-
-        categoryItems.forEach(item => {
-            item.addEventListener('mouseenter', function() {
-                const id = this.dataset.id;
-                const targetContent = document.getElementById(`cat-content-${id}`);
-
-                if (catTimeout) clearTimeout(catTimeout);
-
-                // استایل‌دهی
-                categoryItems.forEach(i => {
-                    const link = i.querySelector('a');
-                    if(link) link.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
-                });
-
-                const currentLink = this.querySelector('a');
-                if(currentLink) currentLink.classList.add('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
-
-                // نمایش محتوا
-                contents.forEach(c => c.classList.add('hidden'));
-                if(defaultContent) defaultContent.classList.add('hidden');
-
-                if (targetContent) {
-                    targetContent.classList.remove('hidden');
-                    // انیمیشن نرم برای زیرمنو
-                    targetContent.classList.remove('animate-fade-in-fast');
-                    void targetContent.offsetWidth; // ریست انیمیشن
-                    targetContent.classList.add('animate-fade-in-fast');
-                }
-            });
-        });
-
-        // وقتی موس کلاً از مگا منو خارج شد، حالت پیش‌فرض رو برگردون
-        const megaMenu = document.getElementById('mega-menu');
-        if(megaMenu){
-            megaMenu.addEventListener('mouseleave', () => {
-                // پاک کردن هایلایت‌ها
-                categoryItems.forEach(i => {
-                    const link = i.querySelector('a');
-                    if(link) link.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
-                });
-                // برگرداندن به حالت دیفالت
-                contents.forEach(c => c.classList.add('hidden'));
-                if(defaultContent) defaultContent.classList.remove('hidden');
-            });
-        }
-    });
-</script>

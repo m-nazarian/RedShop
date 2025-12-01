@@ -1,0 +1,63 @@
+{% load custom_filters %}
+
+<div class="space-y-6 animate-fade-in">
+
+    <div class="flex justify-between items-center border-b border-gray-200 pb-4">
+        <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold text-gray-800">جزئیات سفارش <span class="text-blue-600">#{{ order.order_number }}</span></h2>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+
+        <button onclick="loadProfileContent('{% url 'orders:user_orders_partial' %}')"
+                class="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium text-sm">
+            <span>بازگشت به لیست</span>
+            <span>➔</span>
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+        <div>
+            <span class="text-xs text-gray-400 block mb-1">تاریخ ثبت:</span>
+            <span class="text-gray-800 font-bold">{{ order.created|date:"Y/m/d"|fa_number }}</span>
+        </div>
+        <div>
+            <span class="text-xs text-gray-400 block mb-1">تحویل گیرنده:</span>
+            <span class="text-gray-800 font-bold">{{ order.first_name }} {{ order.last_name }}</span>
+        </div>
+        <div>
+            <span class="text-xs text-gray-400 block mb-1">شماره تماس:</span>
+            <span class="text-gray-800 font-bold">{{ order.phone|fa_number }}</span>
+        </div>
+        <div class="md:col-span-3 mt-2 pt-2 border-t border-gray-200">
+            <span class="text-xs text-gray-400">آدرس:</span>
+            <span class="text-gray-700 text-sm">{{ order.province }}، {{ order.city }}، {{ order.address_line|fa_number }}</span>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+        {% for item in order.items.all %}
+            <div class="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-sm transition-shadow">
+                <a href="{{ item.product.get_absolute_url }}" class="shrink-0">
+                    <img src="{{ item.product.images.first.file.url }}" class="w-16 h-16 object-cover rounded-lg border border-gray-100">
+                </a>
+                <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-800 truncate">{{ item.product.name|fa_number }}</h4>
+                        <p class="text-xs text-gray-500 mt-1">تعداد: {{ item.quantity|fa_number }} عدد</p>
+                    </div>
+                    <div class="text-left md:text-right">
+                        <p class="text-sm font-bold text-gray-800">{{ item.price|multiply:item.quantity|money_format }} تومان</p>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="bg-blue-50 p-4 rounded-xl flex justify-between items-center border border-blue-100">
+        <span class="text-gray-700 font-bold">مبلغ کل پرداختی:</span>
+        <span class="text-lg font-black text-blue-700">{{ order.total|money_format }} تومان</span>
+    </div>
+
+</div>

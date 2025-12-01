@@ -61,9 +61,10 @@
                     <div class="text-gray-800">
                         مبلغ کل: <span class="font-bold text-lg">{{ order.get_total_cost|money_format }} تومان</span>
                     </div>
-                    <a href="{% url 'orders:order_detail' order.id %}" class="w-full sm:w-auto text-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                    <button onclick="loadProfileContent('{% url 'orders:order_detail_partial' order.id %}')"
+                            class="w-full sm:w-auto text-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 cursor-pointer">
                         مشاهده جزئیات
-                    </a>
+                    </button>
                </div>
 
             </div>

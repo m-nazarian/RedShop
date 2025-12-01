@@ -1,0 +1,46 @@
+{% load custom_filters %}
+
+<div class="space-y-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-6 border-b pb-2">دیدگاه‌های ثبت شده 💬</h3>
+
+    {% if reviews %}
+        <div class="space-y-4">
+            {% for review in reviews %}
+                <div class="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center gap-3">
+                            <img src="{{ review.product.images.first.file.url }}" class="w-10 h-10 rounded border border-gray-100 object-cover">
+                            <div>
+                                <a href="{{ review.product.get_absolute_url }}" class="text-sm font-bold text-gray-800 hover:text-blue-600">
+                                    {{ review.product.name|fa_number }}
+                                </a>
+                                <div class="text-xs text-gray-400 mt-0.5">{{ review.created|date:"Y/m/d"|fa_number }}</div>
+                            </div>
+                        </div>
+
+                        {% if review.active %}
+                            <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100">تایید شده</span>
+                        {% else %}
+                            <span class="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded border border-yellow-100">در انتظار تایید</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded">امتیاز: {{ review.score|fa_number }}</span>
+                        {% if review.suggest == 'yes' %}
+                            <span class="text-green-600 text-xs">👍 پیشنهاد می‌کنم</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg">
+                        {{ review.text }}
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <p class="text-gray-500">هنوز دیدگاهی ثبت نکرده‌اید.</p>
+        </div>
+    {% endif %}
+</div>

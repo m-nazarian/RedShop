@@ -12,7 +12,7 @@ from shop.models import Product
 @login_required
 def user_orders(request):
     orders = Order.objects.filter(user=request.user).order_by('-created')
-    return render(request, 'orders/user_orders.html', {
+    return render(request, 'partials/orders_list.html', {
         'orders': orders,
         'active_tab': 'orders'
     })
@@ -61,13 +61,20 @@ def order_detail(request, order_id):
     # جمع نهایی
     final_total = total_items + post_price
 
-    return render(request, "orders/order_detail.html", {
+    return render(request, "partials/orders_list.html", {
         "order": order,
         "items": items,
         "total_items": total_items,
         "post_price": post_price,
         "final_total": final_total,
     })
+
+
+@login_required
+def order_detail_partial(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'partials/order_detail_content.html', {'order': order})
+
 
 
 def generate_order_number():
