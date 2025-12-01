@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'account.apps.AccountConfig',
     'payment.apps.PaymentConfig',
     'coupons.apps.CouponsConfig',
+    'compare.apps.CompareConfig',
     'easy_thumbnails',
     'mptt',
     'django_jalali',

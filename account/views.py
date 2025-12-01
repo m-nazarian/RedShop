@@ -127,7 +127,6 @@ def add_address(request):
             }, request=request)
             return JsonResponse({'html_form': html_form})
 
-    # --- اگر درخواست معمولی بود (مثلاً از صفحه چک‌اوت) ---
     next_page = request.GET.get('next', 'account:profile')
     if request.method == 'POST':
         form = AddressForm(request.POST)
@@ -195,3 +194,35 @@ def user_addresses_partial(request):
     """
     addresses = Address.objects.filter(user=request.user)
     return render(request, 'partials/addresses_list.html', {'addresses': addresses})
+
+
+
+@login_required
+def edit_profile_partial(request):
+    user = request.user
+    account, created = Account.objects.get_or_create(user=user)
+
+    if request.method == 'POST':
+        user_form = UserEditForm(request.POST, instance=user)
+        account_form = AccountEditForm(request.POST, request.FILES, instance=account)
+
+        if user_form.is_valid() and account_form.is_valid():
+            user_form.save()
+            account_form.save()
+            return JsonResponse({'success': True})
+        else:
+            # فرم نامعتبر است -> رندر مجدد با ارورها
+            html_form = render_to_string('partials/edit_profile.html', {
+                'user_form': user_form,
+                'account_form': account_form
+            }, request=request)
+            return JsonResponse({'success': False, 'html_form': html_form})
+
+    else:
+        user_form = UserEditForm(instance=user)
+        account_form = AccountEditForm(instance=account)
+
+    return render(request, 'partials/edit_profile.html', {
+        'user_form': user_form,
+        'account_form': account_form
+    })

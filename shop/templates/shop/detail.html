@@ -33,7 +33,11 @@
                             <span class="discounted-price-d">قیمت پس از تخفیف{{ product.new_price|money_format }} تومان</span>
                         </div>
 
-                        <button type="button" id="add_cart" class="add-cart__button">افزودن به سبد خرید🛒</button>
+                        <button type="button" id="add_cart"
+                            data-url="{% url 'cart:add_to_cart' product.id %}"
+                            class="add-cart__button">
+                            افزودن به سبد خرید🛒
+                        </button>
 
                 <button onclick="toggleFavorite('{{ product.id }}', this)"
                         class="border border-gray-200 rounded-xl p-3 hover:bg-red-50 hover:border-red-200 transition-all group">
@@ -87,9 +91,6 @@
             </div>
 
         </div>
-
-
-
 
     </div>
 
@@ -193,52 +194,4 @@
     </div>
 </div>
 {% endif %}
-
-
-<script src="{% static 'jquery.min.js' %}"></script>
-
-<script src="{% static 'js/detail.js' %}"></script>
-
-<script>
-    $(document).ready(function(){
-        $('#add_cart').click(function(){
-            const button = $(this);
-
-            button.prop('disabled', true).text('در حال پردازش...');
-
-            $.ajax({
-               type: 'POST',
-                url: '{% url 'cart:add_to_cart' product.id %}',
-                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'},
-
-                success: function(data){
-                    // 1. آپدیت اعداد هدر
-                    $('#item_count').text(data.item_count);
-                    $('#total_price').text(data.total_price);
-
-                    // 2. نمایش پیام موفقیت
-                    showToast('محصول با موفقیت به سبد خرید اضافه شد', 'success');
-                },
-
-                error: function(xhr, status, error) {
-                    // اگر سرور ارور داد (مثلا موجودی کافی نیست یا ارور 500)
-                    // سعی میکنیم متن ارور سرور رو بخونیم، اگر نبود پیام پیش‌فرض میدیم
-                    let errorMsg = 'متاسفانه مشکلی رخ داده است.';
-
-                    if(xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMsg = xhr.responseJSON.error; //پیامی که از ویو جانگو فرستادیم
-                    }
-
-                    showToast(errorMsg, 'error');
-                },
-
-                complete: function() {
-                    // برگرداندن دکمه به حالت اول
-                    button.prop('disabled', false).text('افزودن به سبد خرید🛒');
-                }
-            });
-        });
-    });
-</script>
-
 {% endblock %}

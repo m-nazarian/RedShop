@@ -1,0 +1,44 @@
+{% load custom_filters %}
+
+<div class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden mt-2">
+    {% if cart|length > 0 %}
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+            <span class="text-sm font-bold text-gray-700">{{ cart|length|fa_number }} کالا</span>
+            <a href="{% url 'cart:cart_detail' %}" class="text-xs text-blue-600 hover:underline">مشاهده سبد</a>
+        </div>
+
+        <div class="max-h-60 overflow-y-auto custom-scrollbar p-2 space-y-1">
+            {% for item in cart %}
+                <div class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                    {% if item.product.images.first %}
+                        <img src="{{ item.product.images.first.file.url }}" class="w-10 h-10 object-contain border border-gray-100 rounded bg-white">
+                    {% else %}
+                        <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xs">📦</div>
+                    {% endif %}
+
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-medium text-gray-800 truncate">{{ item.product.name|fa_number }}</h4>
+                        <div class="text-[10px] text-gray-500">
+                            {{ item.quantity|fa_number }} × {{ item.price|money_format }}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="p-3 border-t border-gray-100 bg-white">
+            <div class="flex justify-between items-center mb-3 text-sm">
+                <span class="text-gray-500">مبلغ قابل پرداخت:</span>
+                <span class="font-bold text-gray-900">{{ cart.get_final_price|money_format }} تومان</span>
+            </div>
+            <a href="{% url 'orders:checkout_address' %}" class="block w-full bg-red-500 hover:bg-red-600 text-white text-center py-2 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-red-500/20">
+                ثبت سفارش
+            </a>
+        </div>
+    {% else %}
+        <div class="p-8 text-center">
+            <div class="text-4xl mb-2 opacity-50">🛒</div>
+            <p class="text-sm text-gray-500">سبد خرید شما خالی است!</p>
+        </div>
+    {% endif %}
+</div>

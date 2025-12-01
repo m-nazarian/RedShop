@@ -1,0 +1,91 @@
+{% load custom_filters %}
+
+<div class="p-4">
+    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">افزودن کالا به مقایسه</h3>
+
+    <div class="relative mb-4">
+        <input type="text"
+               id="modal-search-input"
+               placeholder="نام محصول را جستجو کنید..."
+               class="w-full border border-gray-300 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+               autocomplete="off">
+        <span class="absolute right-3 top-2.5 text-gray-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </span>
+    </div>
+
+    <div id="suggestion-list-container">
+        {% if products %}
+            <div class="space-y-3 max-h-[350px] overflow-y-auto custom-scrollbar">
+                {% for product in products %}
+                    <div class="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <img src="{{ product.images.first.file.url }}" class="w-12 h-12 object-contain bg-white border border-gray-200 rounded-lg group-hover:scale-105 transition-transform">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800 line-clamp-1">{{ product.name|fa_number }}</h4>
+                                <span class="text-xs text-blue-600 font-medium">{{ product.new_price|money_format }} تومان</span>
+                            </div>
+                        </div>
+
+                        <button onclick="addFromModal('{{ product.id }}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 text-xs px-3 py-1.5 rounded-lg transition-all font-bold">
+                            افزودن ＋
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <p class="text-gray-500 text-sm">محصولی یافت نشد.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // اسکریپت جستجو داخل مودال
+    (function() {
+        const input = document.getElementById('modal-search-input');
+        const container = document.getElementById('suggestion-list-container');
+        let timer;
+
+        if(input) {
+            // فوکوس خودکار روی اینپوت برای راحتی کاربر
+            setTimeout(() => input.focus(), 100);
+
+            input.addEventListener('input', function() {
+                const query = this.value.trim();
+
+                clearTimeout(timer);
+
+                // نمایش لودینگ کوچک
+                container.style.opacity = '0.5';
+
+                timer = setTimeout(() => {
+                    fetch(`/compare/suggestions/?q=${encodeURIComponent(query)}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.html_form) {
+                            // ترفند: پارس کردن HTML برگشتی برای پیدا کردن فقط لیست جدید
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(data.html_form, 'text/html');
+                            const newList = doc.getElementById('suggestion-list-container');
+
+                            if (newList) {
+                                container.innerHTML = newList.innerHTML;
+                            } else {
+                                // اگر ساختار عوض شده بود، کل محتوا رو بذار (ریسک پریدن فوکوس)
+                                container.innerHTML = data.html_form;
+                            }
+                        }
+                    })
+                    .catch(err => console.error(err))
+                    .finally(() => {
+                        container.style.opacity = '1';
+                    });
+                }, 500); // نیم ثانیه تاخیر
+            });
+        }
+    })();
+</script>

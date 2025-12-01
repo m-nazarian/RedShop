@@ -38,8 +38,8 @@
                         {{ request.user.phone|fa_number }}
                     </span>
 
-                    <button onclick="window.location.href='{% url 'account:edit_account' %}'"
-                            class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 transition-colors">
+                    <button onclick="loadProfileContent('{% url 'account:edit_profile_partial' %}')"
+                            class="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 transition-colors cursor-pointer">
                         <span>✏️</span>
                         <span>ویرایش مشخصات</span>
                     </button>
@@ -110,39 +110,4 @@
         </div>
     </div>
 </main>
-
-<div id="general-modal" class="fixed inset-0 z-[9999] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-
-        <div id="modal-backdrop"
-             class="fixed inset-0 transition-opacity duration-300 ease-out opacity-0"
-             style="background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);"
-             aria-hidden="true"
-             onclick="closeModal()">
-        </div>
-
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div id="modal-panel"
-             class="inline-block align-middle bg-white rounded-2xl text-right overflow-hidden shadow-2xl transform transition-all duration-300 ease-out opacity-0 scale-95 sm:my-8 sm:max-w-md w-full relative border border-gray-200">
-
-            <button onclick="closeModal()" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 z-10 p-2 bg-gray-50 hover:bg-red-50 rounded-full transition-all duration-200">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-
-            <div class="bg-white px-6 pt-8 pb-6">
-                <div id="modal-content">
-                    <div class="flex justify-center py-10">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-</div>
-
 {% endblock %}

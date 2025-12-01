@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from shop.models import Product
 from .cart import Cart
 from coupons.forms import CouponApplyForm
+from django.template.loader import render_to_string
 
 
 
@@ -28,9 +29,13 @@ def add_to_cart(request, product_id):
     # اگر همه چی اوکی بود، اضافه کن
     try:
         cart.add(product)
+
+        html_cart = render_to_string('partials/nav_cart.html', {'cart': cart}, request=request)
+
         context = {
             'item_count': len(cart),
-            'total_price': cart.get_total_price()
+            'total_price': cart.get_total_price(),
+            'html_cart': html_cart,
         }
         return JsonResponse(context, status=200)
     except Exception as e:

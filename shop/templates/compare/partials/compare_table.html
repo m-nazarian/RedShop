@@ -1,0 +1,89 @@
+{% load custom_filters %}
+
+<div id="compare-wrapper" class="overflow-x-auto pb-4">
+    {% if products %}
+        <table class="w-full text-sm text-gray-700 min-w-[800px]">
+
+            <thead>
+                <tr>
+                    <th class="p-4 w-48 bg-gray-50 border-b border-gray-200 text-right sticky right-0 z-10">
+                        <span class="text-gray-400 font-normal">مشخصات</span>
+                    </th>
+                    {% for product in products %}
+                        <th class="p-4 w-64 border-b border-gray-200 align-top relative group">
+                            <button onclick="removeFromCompare('{{ product.id }}')"
+                                    class="absolute top-2 left-2 text-gray-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full shadow-sm border border-gray-100 z-20">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+
+                            <a href="{{ product.get_absolute_url }}" class="block">
+                                <div class="h-40 flex items-center justify-center mb-3">
+                                    <img src="{{ product.images.first.file.url }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                </div>
+                                <h3 class="text-base font-bold text-gray-800 line-clamp-2 h-10 mb-2 hover:text-blue-600 transition-colors">
+                                    {{ product.name|fa_number }}
+                                </h3>
+                                <div class="text-blue-600 font-bold text-lg">
+                                    {{ product.new_price|money_format }} <span class="text-xs font-normal">تومان</span>
+                                </div>
+                            </a>
+                            <div class="mt-3">
+                                <a href="{{ product.get_absolute_url }}" class="block w-full py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-bold transition-colors">
+                                    مشاهده و خرید
+                                </a>
+                            </div>
+                        </th>
+                    {% endfor %}
+                    {% if products|length < 4 %}
+                        <th class="p-4 w-64 border-b border-gray-200 align-middle">
+                            <div class="h-64 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-all cursor-pointer group"
+                                 onclick="openCompareModal()">
+                                <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">＋</span>
+                                <span class="text-sm font-medium">افزودن کالا</span>
+                            </div>
+                        </th>
+                    {% endif %}
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for group in comparison_table %}
+                    <tr>
+                        <td colspan="{{ products|length|add:1 }}" class="bg-gray-100 text-gray-800 font-bold px-4 py-2 text-xs border-y border-gray-200 mt-4">
+                            {{ group.group }}
+                        </td>
+                    </tr>
+
+                    {% for row in group.rows %}
+                        <tr class="hover:bg-gray-50 transition-colors odd:bg-white even:bg-gray-50/50">
+                            <td class="p-4 border-b border-gray-100 font-medium text-gray-500 bg-white sticky right-0">
+                                {{ row.name }}
+                            </td>
+
+                            {% for value in row.values %}
+                                <td class="p-4 border-b border-gray-100 text-center text-gray-800 font-medium border-l border-gray-50 last:border-l-0">
+                                    {% if value == True %}
+                                        <span class="text-green-500">✔</span>
+                                    {% elif value == False %}
+                                        <span class="text-red-500">✖</span>
+                                    {% else %}
+                                        {{ value|fa_number }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            <div class="text-6xl mb-4 opacity-50">⚖️</div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">لیست مقایسه خالی است!</h2>
+            <p class="text-gray-500 mb-6">برای مقایسه، به صفحه محصولات بروید و دکمه مقایسه را بزنید.</p>
+            <a href="{% url 'shop:product_list' %}" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                مشاهده محصولات
+            </a>
+        </div>
+    {% endif %}
+</div>
