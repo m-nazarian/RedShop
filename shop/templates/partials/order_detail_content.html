@@ -15,6 +15,12 @@
             <span>بازگشت به لیست</span>
             <span>➔</span>
         </button>
+
+        <a href="{% url 'orders:order_pdf' order.id %}" target="_blank"
+           class="flex items-center gap-2 text-blue-600 hover:text-blue-800 border border-blue-200 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors font-medium text-sm">
+            <span>📄</span> دانلود فاکتور PDF
+        </a>
+
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">

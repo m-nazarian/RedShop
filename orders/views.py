@@ -5,14 +5,13 @@ from django.template.loader import render_to_string
 from django.utils.crypto import get_random_string
 from django.db import transaction
 from django.contrib import messages
-
 from .emails import send_order_confirmation
 from .models import Order,OrderItem
 from cart.cart import Cart
 from account.models import Address
 from shop.models import Product
 from django.http import HttpResponse
-# import weasyprint
+import weasyprint
 
 @login_required
 def user_orders(request):
@@ -239,13 +238,19 @@ def checkout_complete(request):
 def order_pdf(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # رندر کردن تمپلیت HTML به استرینگ
-    html = render_to_string('orders/pdf/invoice.html', {'order': order})
+    # تنظیمات برای پیدا کردن فایل‌های استاتیک (مثل فونت و لوگو) توسط WeasyPrint
+    # چون WeasyPrint یک مرورگر نیست، باید آدرس فایل‌ها را دقیق بهش بدیم
 
-    # تبدیل HTML به PDF
+    html = render_to_string('orders/pdf/invoice.html', {
+        'order': order
+    }, request=request)
+
     response = HttpResponse(content_type='application/pdf')
+    # attachment یعنی دانلود شود، inline یعنی در مرورگر باز شود
     response['Content-Disposition'] = f'filename=order_{order.order_number}.pdf'
 
-    # نوشتن PDF در پاسخ
-    weasyprint.HTML(string=html).write_pdf(response)
+    # تبدیل به PDF
+    # base_url برای این است که عکس‌ها و استایل‌ها پیدا شوند
+    weasyprint.HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(response)
+
     return response

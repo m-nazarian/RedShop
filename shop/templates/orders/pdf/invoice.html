@@ -1,0 +1,162 @@
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>فاکتور فروش - {{ order.order_number }}</title>
+    <style>
+        /* تعریف فونت برای PDF */
+        @font-face {
+            font-family: 'Vazir';
+            src: url('{% static "fonts/Shabnam-FD.woff2" %}');
+        }
+
+        body {
+            font-family: 'Vazir', Tahoma, sans-serif;
+            font-size: 14px;
+            color: #333;
+            direction: rtl;
+        }
+
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            line-height: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .info-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .info-table td {
+            padding: 5px;
+            vertical-align: top;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .items-table th {
+            background: #f3f4f6;
+            padding: 10px;
+            text-align: right;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .total-row td {
+            border-top: 2px solid #333;
+            font-weight: bold;
+            padding-top: 15px;
+        }
+
+        /* رنگ‌بندی */
+        .text-blue { color: #2563eb; }
+        .text-gray { color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="invoice-box">
+
+        <div class="header">
+            <table style="width: 100%;">
+                <tr>
+                    <td class="title">
+                        فروشگاه من 🛍️
+                    </td>
+                    <td style="text-align: left;">
+                        شماره فاکتور: <strong>{{ order.order_number }}</strong><br>
+                        تاریخ: {{ order.created|date:"Y/m/d"|fa_number }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <table class="info-table">
+            <tr>
+                <td style="width: 50%;">
+                    <strong>فروشنده:</strong><br>
+                    فروشگاه اینترنتی ردشاپ<br>
+                    تهران، خیابان ولیعصر...<br>
+                    تلفن: ۰۲۱-۱۲۳۴۵۶۷۸
+                </td>
+                <td style="width: 50%;">
+                    <strong>خریدار:</strong><br>
+                    {{ order.first_name }} {{ order.last_name }}<br>
+                    {{ order.province }}، {{ order.city }}<br>
+                    {{ order.address_line|fa_number }}<br>
+                    تلفن: {{ order.phone|fa_number }}
+                </td>
+            </tr>
+        </table>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>محصول</th>
+                    <th style="width: 15%;">تعداد</th>
+                    <th style="width: 20%;">قیمت واحد</th>
+                    <th style="width: 20%;">قیمت کل</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td>{{ item.product.name|fa_number }}</td>
+                    <td>{{ item.quantity|fa_number }}</td>
+                    <td>{{ item.price|money_format }}</td>
+                    <td>{{ item.price|multiply:item.quantity|money_format }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+            <tr class="total-row">
+                <td colspan="2"></td>
+                <td>جمع کل کالاها:</td>
+                <td>{{ order.get_total_cost|money_format }} تومان</td>
+            </tr>
+            <tr>
+                <td colspan="2"></td>
+                <td>هزینه ارسال:</td>
+                <td>{{ order.post_price|money_format }} تومان</td>
+            </tr>
+            <tr style="font-size: 16px; color: #2563eb;">
+                <td colspan="2"></td>
+                <td><strong>مبلغ نهایی:</strong></td>
+                <td><strong>{{ order.total|money_format }} تومان</strong></td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #888;">
+            <p>این فاکتور به صورت سیستمی صادر شده و نیاز به مهر و امضا ندارد.</p>
+        </div>
+    </div>
+</body>
+</html>

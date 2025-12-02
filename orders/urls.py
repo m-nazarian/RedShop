@@ -13,4 +13,5 @@ urlpatterns = [
     path('api/my-orders/', views.user_orders_partial, name='user_orders_partial'),
     path('<int:order_id>/', views.order_detail, name='order_detail'),
     path('api/order-detail/<int:order_id>/', views.order_detail_partial, name='order_detail_partial'),
+    path('pdf/<int:order_id>/', views.order_pdf, name='order_pdf'),
 ]
