@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
+from orders.emails import send_order_confirmation
 from orders.models import Order, Transaction
 from .zarinpal_service import ZarinPalService
 
@@ -65,6 +67,8 @@ def payment_verify(request):
         order.paid = True
         order.status = 'processing' # تغییر وضعیت به "در حال پردازش"
         order.save()
+
+        send_order_confirmation(order)
 
         # پاک کردن سشن سفارش
         if 'order_id' in request.session:

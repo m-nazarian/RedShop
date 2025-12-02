@@ -1,13 +1,18 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.utils.crypto import get_random_string
 from django.db import transaction
 from django.contrib import messages
+
+from .emails import send_order_confirmation
 from .models import Order,OrderItem
 from cart.cart import Cart
 from account.models import Address
 from shop.models import Product
+from django.http import HttpResponse
+# import weasyprint
 
 @login_required
 def user_orders(request):
@@ -207,6 +212,7 @@ def checkout_create_order(request):
                 # هدایت به پردازش پرداخت
                 return redirect('payment:process')
             else:
+                send_order_confirmation(order)
                 # پرداخت در محل (COD) -> صفحه تشکر معمولی
                 return redirect("orders:checkout_complete")
 
@@ -227,3 +233,19 @@ def checkout_complete(request):
     request.session.pop("order_created", None)
 
     return render(request, "orders/checkout_complete.html")
+
+
+@login_required
+def order_pdf(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    # رندر کردن تمپلیت HTML به استرینگ
+    html = render_to_string('orders/pdf/invoice.html', {'order': order})
+
+    # تبدیل HTML به PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'filename=order_{order.order_number}.pdf'
+
+    # نوشتن PDF در پاسخ
+    weasyprint.HTML(string=html).write_pdf(response)
+    return response

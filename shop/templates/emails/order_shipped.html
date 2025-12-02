@@ -1,0 +1,29 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; background-color: #f6f6f6; padding: 20px; direction: rtl; text-align: right; }
+        .container { background-color: #ffffff; border-radius: 10px; padding: 30px; max-width: 600px; margin: 0 auto; border-top: 4px solid #10b981; }
+        .title { color: #10b981; font-size: 22px; font-weight: bold; }
+        .btn { display: inline-block; background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🚚 سفارش شما ارسال شد</h1>
+
+        <p>سلام {{ order.first_name }} عزیز،</p>
+        <p>خوشحالیم به اطلاع برسانیم که سفارش شماره <strong>{{ order.order_number }}</strong> بسته‌بندی و تحویل پست شد.</p>
+
+        <p>بسته شما به زودی به آدرس زیر تحویل داده خواهد شد:</p>
+        <div style="background: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0;">
+            {{ order.province }}، {{ order.city }}، {{ order.address_line|fa_number }}
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="http://127.0.0.1:8000{% url 'orders:order_detail' order.id %}" class="btn">مشاهده جزئیات سفارش</a>
+        </div>
+    </div>
+</body>
+</html>

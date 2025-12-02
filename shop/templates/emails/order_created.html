@@ -1,0 +1,55 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; background-color: #f6f6f6; padding: 20px; direction: rtl; text-align: right; }
+        .container { background-color: #ffffff; border-radius: 10px; padding: 30px; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; }
+        .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 20px; }
+        .title { color: #3b82f6; font-size: 24px; font-weight: bold; margin: 0; }
+
+        /* استایل جدول اقلام */
+        .item-row { display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .item-img { width: 60px; height: 60px; object-fit: contain; border-radius: 5px; background: #fff; border: 1px solid #ddd; margin-left: 15px; }
+        .item-details h4 { margin: 0 0 5px 0; font-size: 14px; color: #333; }
+        .item-details p { margin: 0; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎉 سفارش شما ثبت شد!</h1>
+        </div>
+
+        <p>سلام {{ order.first_name }} عزیز،</p>
+        <p>سفارش شما با موفقیت ثبت شد.</p>
+
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p><strong>شماره سفارش:</strong> {{ order.order_number }}</p>
+            <p><strong>مبلغ نهایی:</strong> {{ order.total|money_format }} تومان</p>
+        </div>
+
+        <h3>📦 اقلام سفارش:</h3>
+        <div>
+            {% for item in order.items.all %}
+                <div class="item-row">
+                    {% if item.product.images.first %}
+                        <img src="{{ domain }}{{ item.product.images.first.file.url }}" class="item-img" alt="product">
+                    {% else %}
+                        <div class="item-img" style="display:flex;align-items:center;justify-content:center;">📷</div>
+                    {% endif %}
+
+                    <div class="item-details">
+                        <h4>{{ item.product.name|fa_number }}</h4>
+                        <p>{{ item.quantity|fa_number }} عدد × {{ item.price|money_format }} تومان</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{{ domain }}{% url 'orders:order_detail' order.id %}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">پیگیری سفارش</a>
+        </div>
+    </div>
+</body>
+</html>
