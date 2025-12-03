@@ -32,14 +32,14 @@ class ShopUserManager(BaseUserManager):
 
 
 class ShopUser(AbstractBaseUser, PermissionsMixin):
-    phone = models.CharField(max_length=11, unique=True)
+    phone = models.CharField(max_length=11, unique=True, verbose_name='موبایل')
     email = models.EmailField(unique=True, blank=True, null=True, verbose_name='ایمیل')
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    address = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    first_name = models.CharField(max_length=30, verbose_name='نام')
+    last_name = models.CharField(max_length=30, verbose_name='نام خانوادگی')
+    address = models.TextField(blank=True, null=True, verbose_name='آدرس')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    is_staff = models.BooleanField(default=False, verbose_name='کارمند')
+    date_joined = models.DateTimeField(default=timezone.now, verbose_name='زمان پیوستن')
 
     objects = ShopUserManager()
 
@@ -48,6 +48,11 @@ class ShopUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.phone
+
+    class Meta:
+
+        verbose_name = "کاربر"
+        verbose_name_plural = "کاربر ها"
 
 
 

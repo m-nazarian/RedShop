@@ -1,0 +1,67 @@
+/* 1. تعریف فونت فقط برای اعداد (Numbers Only) 🔢 */
+@font-face {
+    font-family: 'JustNumbers';
+    /* لینک مستقیم به فایل فونت وزیر نسخه FD (اعداد فارسی) */
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Regular.woff2') format('woff2');
+    /* 🚨 جادو اینجاست: این فونت فقط روی اعداد 0 تا 9 اعمال می‌شود */
+    unicode-range: U+0030-0039, U+0600-06FF;
+}
+
+/* 2. تزریق فونت به متغیرهای اصلی Unfold */
+:root {
+    /* ترتیب مهم است: اول اعداد، بعد فونت پیش‌فرض سیستم */
+    --font-family-sans: 'JustNumbers', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    --font-family-mono: 'JustNumbers', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* 3. اعمال به کل بادی */
+body {
+    font-family: var(--font-family-sans);
+}
+
+/* 4. اصلاحات چیدمان RTL (برای اینکه جدول‌ها و فاصله‌ها درست بشن) */
+table thead th {
+    text-align: right !important;
+}
+
+table th, table td {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+td, th {
+    text-align: right;
+}
+
+.actions {
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* 5. استثنا برای فیلدهایی که باید حتماً انگلیسی بمانند */
+input[type="email"],
+input[type="password"],
+input[name*="slug"],
+input[name*="code"],
+input[name*="username"],
+input[name*="hex_code"],
+.formatted-code {
+    font-family: 'Courier New', monospace !important;
+    direction: ltr !important;
+    text-align: left !important;
+}
+
+/* 6. اصلاح جهت باز شدن منوهای هدر (که قبلاً درست کردیم) */
+nav.absolute,
+header nav.absolute,
+.relative > nav.absolute {
+    right: auto !important;
+    left: 0 !important;
+    transform-origin: top left !important;
+    margin-left: 5px !important;
+}
+
+.-right-2,
+.right-0 {
+    right: auto;
+}

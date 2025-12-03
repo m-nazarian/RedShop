@@ -31,7 +31,7 @@ class Order(models.Model):
         null=True, blank=True,
         verbose_name='کاربر'
     )
-    order_number = models.CharField(max_length=20, unique=True, db_index=True)
+    order_number = models.CharField(max_length=20, unique=True, db_index=True, verbose_name='شماره سفارش')
     first_name = models.CharField(max_length=50, verbose_name='نام')
     last_name = models.CharField(max_length=50, verbose_name='نام خانوادگی')
     phone = models.CharField(max_length=20, verbose_name='شماره تماس')
@@ -39,21 +39,21 @@ class Order(models.Model):
     province = models.CharField(max_length=100, verbose_name='استان')
     city = models.CharField(max_length=100, verbose_name='شهر')
     postal_code = models.CharField(max_length=20, verbose_name='کد پستی')
-    address_line = models.TextField(blank=True, null=True)
+    address_line = models.TextField(blank=True, null=True, verbose_name='آدرس کامل')
 
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cod')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cod', verbose_name='روش پرداخت')
     paid = models.BooleanField(default=False, verbose_name='پرداخت شده')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
 
-    subtotal = models.PositiveIntegerField(default=0)
-    shipping_price = models.PositiveIntegerField(default=0)
-    post_price = models.PositiveIntegerField(default=0)
-    total = models.PositiveIntegerField(default=0)
+    subtotal = models.PositiveIntegerField(default=0, verbose_name='قیمت')
+    shipping_price = models.PositiveIntegerField(default=0, verbose_name='هزینه حمل و نقل')
+    post_price = models.PositiveIntegerField(default=0, verbose_name='هزینه پست')
+    total = models.PositiveIntegerField(default=0, verbose_name='قیمت کل')
 
     created = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ثبت')
     updated = models.DateTimeField(auto_now=True, verbose_name='آخرین بروزرسانی')
 
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True, verbose_name='یادداشت')
 
     def __str__(self):
         return f"سفارش {self.id} از {self.first_name} {self.last_name} - {self.order_number}"
@@ -99,12 +99,12 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items')
-    title = models.CharField(max_length=255)  # نگهداری عنوان برای تاریخچه
-    price = models.PositiveIntegerField(default=0)
-    quantity = models.PositiveIntegerField(default=1)
-    weight = models.DecimalField(max_digits=12, decimal_places=0,default=0)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name='سفارش')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items', verbose_name='محصول')
+    title = models.CharField(max_length=255, verbose_name='عنوان')  # نگهداری عنوان برای تاریخچه
+    price = models.PositiveIntegerField(default=0, verbose_name='قیمت')
+    quantity = models.PositiveIntegerField(default=1, verbose_name='تعداد')
+    weight = models.DecimalField(max_digits=12, decimal_places=0,default=0, verbose_name='وزن محصول')
 
 
     def __str__(self):
@@ -118,16 +118,26 @@ class OrderItem(models.Model):
     def get_weight(self):
         return self.weight * self.quantity
 
+    class Meta:
+
+        verbose_name = "آیتم سفارش"
+        verbose_name_plural = "آیتم‌های سفارش"
+
 
 class Transaction(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='transactions')
-    transaction_id = models.CharField(max_length=255, blank=True, null=True)
-    ref_id = models.CharField(max_length=255, blank=True, null=True)
-    provider = models.CharField(max_length=50, default='cod')
-    amount = models.PositiveIntegerField()
-    success = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    raw_response = models.JSONField(blank=True, null=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='transactions', verbose_name='سفارش')
+    transaction_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='شناسه تراکنش (Authority)')
+    ref_id = models.CharField(max_length=255, blank=True, null=True, verbose_name='کد پیگیری (RefID)')
+    provider = models.CharField(max_length=50, default='cod', verbose_name='درگاه پرداخت')
+    amount = models.PositiveIntegerField(verbose_name='مبلغ (تومان)')
+    success = models.BooleanField(default=False, verbose_name='موفق')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    raw_response = models.JSONField(blank=True, null=True, verbose_name='پاسخ خام بانک')
+
+    class Meta:
+        verbose_name = 'تراکنش'
+        verbose_name_plural = 'تراکنش‌ها'
+        ordering = ['-created_at'] # مرتب‌سازی بر اساس جدیدترین
 
     def __str__(self):
-        return f"{self.order.order_number} - {self.provider} - {self.amount}"
+        return f"{self.order.order_number} - {self.amount}"

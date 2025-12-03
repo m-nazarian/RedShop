@@ -64,6 +64,10 @@
   <img src="screenshots/Category.png" width="800" alt="دسته بندی درختی">
   <br><br>
   <img src="screenshots/Comments.png" width="800" alt="کامنت ها">
+  <br><br>
+  <img src="screenshots/admin1.png" width="800" alt="پنل ادمین سفارشی">
+  <br><br>
+  <img src="screenshots/admin2.png" width="800" alt="پنل ادمین سفارشی">
 </div>
 
 ---
@@ -75,36 +79,50 @@
 * **Framework:** Django 5
 * **Database:** PostgresSQL / SQLite
 * **Frontend:** HTML5, Tailwind CSS, JavaScript (Vanilla + jQuery for AJAX)
-* **Libraries:**
-    * `asgiref`==3.9.2
+  * **Libraries:**
+    * `asgiref`==3.11.0
+    * `brotli`==1.2.0
     * `certifi`==2025.11.12
+    * `cffi`==2.0.0
     * `charset-normalizer`==3.4.4
     * `colorama`==0.4.6
+    * `cssselect2`==0.8.0
     * `decorator`==5.2.1
-    * `Django`==5.2.7
+    * `Django`==5.2.9
     * `django-jalali`==7.4.0
     * `django-js-asset`==3.1.2
     * `django-mptt`==0.18.0
     * `django-resized`==1.0.3
+    * `django-unfold`==1.0.0
     * `easy-thumbnails`==2.10.1
+    * `fonttools`==4.61.0
     * `idna`==3.11
-    * `imageio`==2.37.0
+    * `ImageIO`==2.37.2
     * `imageio-ffmpeg`==0.6.0
     * `jalali_core`==1.0.0
     * `jdatetime`==5.2.0
     * `moviepy`==2.2.1
-    * `numpy`==2.3.4
-    * `pillow`==11.3.0
+    * `numpy`==2.3.5
+    * `pillow`==12.0.0
     * `proglog`==0.1.12
     * `psycopg2-binary`==2.9.11
+    * `pycparser`==2.23
+    * `pydyf`==0.12.1
+    * `pyphen`==0.17.2
     * `python-dotenv`==1.2.1
     * `python-slugify`==8.0.4
     * `requests`==2.32.5
-    * `sqlparse`==0.5.3
+    * `sqlparse`==0.5.4
     * `text-unidecode`==1.3
+    * `tinycss2`==1.5.1
+    * `tinyhtml5`==2.0.0
     * `tqdm`==4.67.1
     * `tzdata`==2025.2
     * `urllib3`==2.5.0
+    * `weasyprint`==67.0
+    * `webencodings`==0.5.1
+    * `zopfli`==0.4.0
+
 ---
 
 ## 🚀 نصب و راه‌اندازی (Installation)
@@ -155,7 +173,7 @@
 - [x] سیستم جستجو و فیلتر پیشرفته
 - [x] درگاه پرداخت و کیف پول
 - [ ] **ورود با پیامک (OTP)** 📲
-- [ ] **سیستم مقایسه محصولات** ⚖️
+- [x] **سیستم مقایسه محصولات** ⚖️
 - [ ] **سیستم تیکت پشتیبانی** 🎫
 - [ ] **انبارداری پیشرفته و رزرو کالا** 📦
 

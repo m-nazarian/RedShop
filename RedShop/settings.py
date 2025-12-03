@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from django.contrib import staticfiles
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.templatetags.static import static
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +35,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold",
+    "unfold.contrib.filters",  # فیلترهای پیشرفته
+    "unfold.contrib.forms",    # فرم‌های زیبا
+    "unfold.contrib.inlines",  # اینلاین‌های مدرن
+    "unfold.contrib.import_export", # import-export استفاده
+    "unfold.contrib.guardian",      # guardian استفاده می‌کنی
+    "unfold.contrib.simple_history", # تاریخچه تغییرات
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -179,3 +189,109 @@ EMAIL_USE_TLS = True  # پروتکل امنیتی گوگل
 EMAIL_HOST_USER = 'pythonnazarian@gmail.com'
 
 EMAIL_HOST_PASSWORD = 'araxhmssntiwefhq'
+
+
+
+UNFOLD = {
+    "SITE_TITLE": "مدیریت فروشگاه ردشاپ",
+    "SITE_HEADER": "RedShop Admin",
+    "SITE_URL": "/",
+    # "SITE_ICON": lambda request: static("images/logo.png"),  # لوگوی سایت
+
+    "STYLES": [
+        lambda request: static("css/unfold_rtl_fix.css"),  # فایل اصلاحی که الان می‌سازیم
+    ],
+    "SCRIPTS": [],
+    "COLORS": {
+        "primary": {
+            "50": "239 246 255",
+            "100": "219 234 254",
+            "200": "191 219 254",
+            "300": "147 197 253",
+            "400": "96 165 250",
+            "500": "59 130 246",
+            "600": "37 99 235",
+            "700": "29 78 216",
+            "800": "30 64 175",
+            "900": "30 58 138",
+        },
+    },
+
+    # گروه‌بندی منوی سمت راست (Sidebar)
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+
+        "navigation": [
+
+            {
+                "title": "سفارشات و مالی",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "سفارش‌ها",
+                        "icon": "shopping_cart",  # آیکون سبد
+                        "link": reverse_lazy("admin:orders_order_changelist"),
+                    },
+                    {
+                        "title": "تراکنش‌ها",
+                        "icon": "receipt_long",  # آیکون فاکتور
+                        "link": reverse_lazy("admin:orders_transaction_changelist"),
+                    },
+                    {
+                        "title": "کدهای تخفیف",
+                        "icon": "local_offer",
+                        "link": reverse_lazy("admin:coupons_coupon_changelist"),
+                    },
+                ],
+            },
+
+            {
+                "title": "مدیریت فروشگاه",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "محصولات",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:shop_product_changelist"),
+                    },
+                    {
+                        "title": "دسته‌بندی‌ها",
+                        "icon": "category",
+                        "link": reverse_lazy("admin:shop_category_changelist"),
+                    },
+                    {
+                        "title": "برندها",
+                        "icon": "branding_watermark",
+                        "link": reverse_lazy("admin:shop_brand_changelist"),
+                    },
+                    {
+                        "title": "ویژگی‌های پویا",
+                        "icon": "tune",
+                        "link": reverse_lazy("admin:shop_categoryfeature_changelist"),
+                    },
+                ],
+            },
+
+            {
+                "title": "کاربران و تعاملات",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "لیست کاربران",
+                        "icon": "group",
+                        "link": reverse_lazy("admin:account_shopuser_changelist"),
+                    },
+                    {
+                        "title": "نظرات کاربران",
+                        "icon": "rate_review",
+                        "link": reverse_lazy("admin:shop_productcomment_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
+}
