@@ -78,17 +78,6 @@
   <br><br>
   <img src="screenshots/admin5.png" width="800" alt="داشبورد پنل ادمین دارک مود">
   <br><br>
-  
-  <h3>👤 پنل کاربری (AJAX)</h3>
-  <img src="screenshots/profile_dashboard.png" width="800" alt="داشبورد کاربری">
-  <br><br>
-  <img src="screenshots/compare_modal.png" width="800" alt="سیستم مقایسه و مودال">
-  <br><br>
-
-  <h3>👮‍♂️ پنل مدیریت (Unfold)</h3>
-  <img src="screenshots/admin_dashboard.png" width="800" alt="داشبورد مدیریتی و نمودارها">
-  <br><br>
-  <img src="screenshots/admin_list.png" width="800" alt="لیست سفارشات در ادمین">
 </div>
 
 ---
