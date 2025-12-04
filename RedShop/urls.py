@@ -20,14 +20,14 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 urlpatterns = [
-       path('admin/', admin.site.urls),
-       path('',include('shop.urls', namespace='shop')),
-       path('cart/',include('cart.urls', namespace='cart')),
-       path('account/', include('account.urls', namespace='account')),
-       path('orders/', include('orders.urls', namespace='orders')),
-       path('payment/', include('payment.urls', namespace='payment')),
-       path('coupons/', include('coupons.urls', namespace='coupons')),
-       path('compare/', include('compare.urls', namespace='compare')),
+    path('admin/', admin.site.urls),
+    path('',include('shop.urls', namespace='shop')),
+    path('cart/',include('cart.urls', namespace='cart')),
+    path('account/', include('account.urls', namespace='account')),
+    path('orders/', include('orders.urls', namespace='orders')),
+    path('payment/', include('payment.urls', namespace='payment')),
+    path('coupons/', include('coupons.urls', namespace='coupons')),
+    path('compare/', include('compare.urls', namespace='compare')),
 
 ]
 

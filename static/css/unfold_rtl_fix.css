@@ -3,7 +3,7 @@
     font-family: 'JustNumbers';
     /* لینک مستقیم به فایل فونت وزیر نسخه FD (اعداد فارسی) */
     src: url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/misc/Farsi-Digits/fonts/webfonts/Vazirmatn-FD-Regular.woff2') format('woff2');
-    /* 🚨 جادو اینجاست: این فونت فقط روی اعداد 0 تا 9 اعمال می‌شود */
+    /*  این فونت فقط روی اعداد 0 تا 9 اعمال می‌شود */
     unicode-range: U+0030-0039, U+0600-06FF;
 }
 
@@ -51,7 +51,7 @@ input[name*="hex_code"],
     text-align: left !important;
 }
 
-/* 6. اصلاح جهت باز شدن منوهای هدر (که قبلاً درست کردیم) */
+/* 6. اصلاح جهت باز شدن منوهای هدر */
 nav.absolute,
 header nav.absolute,
 .relative > nav.absolute {

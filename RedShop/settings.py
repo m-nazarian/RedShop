@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "unfold.contrib.import_export", # import-export استفاده
     "unfold.contrib.guardian",      # guardian استفاده می‌کنی
     "unfold.contrib.simple_history", # تاریخچه تغییرات
-    'django.contrib.admin',
+    "django.contrib.admin",
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -76,8 +76,10 @@ ROOT_URLCONF = 'RedShop.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'shop/templates']
-        ,
+        'DIRS': [
+            BASE_DIR / 'shop/templates',
+            BASE_DIR / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -196,10 +198,15 @@ UNFOLD = {
     "SITE_TITLE": "مدیریت فروشگاه ردشاپ",
     "SITE_HEADER": "RedShop Admin",
     "SITE_URL": "/",
-    # "SITE_ICON": lambda request: static("images/logo.png"),  # لوگوی سایت
+    "SITE_ICON": {
+            "light": lambda request: static("images/logo-dark.png"),  # آدرس لوگو
+            "dark": lambda request: static("images/logo-light.png"),
+        },
+
+    "DASHBOARD_CALLBACK": "RedShop.dashboard.dashboard_callback",
 
     "STYLES": [
-        lambda request: static("css/unfold_rtl_fix.css"),  # فایل اصلاحی که الان می‌سازیم
+        lambda request: static("css/unfold_rtl_fix.css"),
     ],
     "SCRIPTS": [],
     "COLORS": {

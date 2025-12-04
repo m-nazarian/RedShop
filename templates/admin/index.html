@@ -1,0 +1,170 @@
+{% extends 'unfold/layouts/base.html' %} {% load i18n unfold static %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block title %}
+    {% trans 'Dashboard' %} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-8">
+
+        {% if kpi %}
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 rtl:space-x-reverse">
+                {% for stat in kpi %}
+                    <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-transparent dark:border-gray-700 hover:shadow-md transition-shadow group">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                    {{ stat.title }}
+                                </p>
+                                <p class="text-3xl font-extrabold text-gray-900 dark:text-white font-sans tracking-tight">
+                                    {{ stat.metric }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-xl bg-blue-50 p-3 dark:bg-gray-800 group-hover:scale-110 transition-transform border border-transparent dark:border-gray-700">
+                                {% if "درآمد" in stat.title %}
+                                    <svg class="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {% elif "سفارشات" in stat.title %}
+                                    <svg class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                                {% else %}
+                                    <svg class="h-8 w-8 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if stat.footer %}
+                            <div class="mt-4 flex items-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-50 dark:border-gray-700 pt-3">
+                                {{ stat.footer }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if chart %}
+            <div class="bg-white dark:bg-transparent p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white font-sans flex items-center gap-2">
+                        <span class="w-1 h-6 bg-blue-500 rounded-full"></span>
+                        {{ chart_title|default:"روند فروش ۷ روز گذشته" }}
+                    </h3>
+                </div>
+                <div class="relative h-96 w-full">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    let salesChart = null;
+                    const ctx = document.getElementById('salesChart').getContext('2d');
+                    const chartData = JSON.parse('{{ chart|safe }}');
+
+                    function getColors() {
+                        const isDark = document.documentElement.classList.contains('dark') ||
+                                       window.matchMedia('(prefers-color-scheme: dark)').matches;
+                        return {
+                            text: isDark ? '#ffffff' : '#374151',
+                            grid: isDark ? '#374151' : '#e5e7eb',
+                            tooltipBg: isDark ? '#ffffff' : '#111827',
+                            tooltipText: isDark ? '#000000' : '#ffffff',
+                            borderColor: isDark ? '#60a5fa' : '#3b82f6',
+                            gradientStart: isDark ? 'rgba(96, 165, 250, 0.5)' : 'rgba(59, 130, 246, 0.5)',
+                            gradientEnd: isDark ? 'rgba(96, 165, 250, 0.0)' : 'rgba(59, 130, 246, 0.0)'
+                        };
+                    }
+
+                    function createChart() {
+                        if (salesChart) salesChart.destroy();
+                        const colors = getColors();
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                        gradient.addColorStop(0, colors.gradientStart);
+                        gradient.addColorStop(1, colors.gradientEnd);
+
+                        Chart.defaults.font.family = "'Vazirmatn FD', 'Tahoma', sans-serif";
+                        Chart.defaults.color = colors.text;
+
+                        salesChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: chartData.labels,
+                                datasets: [{
+                                    label: chartData.datasets[0].label,
+                                    data: chartData.datasets[0].data,
+                                    borderColor: colors.borderColor,
+                                    backgroundColor: gradient,
+                                    borderWidth: 3,
+                                    pointBackgroundColor: colors.text,
+                                    pointBorderColor: colors.borderColor,
+                                    pointBorderWidth: 2,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 7,
+                                    fill: true,
+                                    tension: 0.4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: colors.tooltipBg,
+                                        titleColor: colors.tooltipText,
+                                        bodyColor: colors.tooltipText,
+                                        titleFont: { family: 'Vazirmatn FD', size: 14 },
+                                        bodyFont: { family: 'Vazirmatn FD', size: 14 },
+                                        padding: 12,
+                                        cornerRadius: 8,
+                                        displayColors: false,
+                                        rtl: true,
+                                        callbacks: {
+                                            label: function(context) {
+                                                return ' فروش: ' + new Intl.NumberFormat('fa-IR').format(context.parsed.y) + ' تومان';
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: colors.grid, borderDash: [5, 5] },
+                                        ticks: {
+                                            color: colors.text,
+                                            font: { family: 'Vazirmatn FD' },
+                                            callback: function(value) {
+                                                return new Intl.NumberFormat('fa-IR', { notation: "compact" }).format(value);
+                                            }
+                                        }
+                                    },
+                                    x: {
+                                        grid: { display: false },
+                                        ticks: {
+                                            color: colors.text,
+                                            font: { family: 'Vazirmatn FD' }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    createChart();
+                    const observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(mutation) {
+                            if (mutation.attributeName === "class") {
+                                createChart();
+                            }
+                        });
+                    });
+                    observer.observe(document.documentElement, { attributes: true });
+                });
+            </script>
+        {% endif %}
+
+    </div>
+{% endblock %}
