@@ -4,8 +4,6 @@
     --background__color: #fff;
     --button__color: #eee;
     --button__color__hover: #cacaca;
-    --ligth-color: #486a75;
-    --dark-color: #3d575f;
     --bg_color: #f2f2f2
 }
 
@@ -104,3 +102,12 @@ a:link, a:visited{
     .toast-close:hover { color: #000; }
 
 
+/* جلوگیری از انتخاب و درگ عکس‌ها در کل اسلایدرها */
+.product-slider img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+}

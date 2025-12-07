@@ -168,3 +168,36 @@ def global_search(query):
         'suggested_category': suggested_category,
         'query': query
     }
+
+
+def get_frequently_bought_products(user, limit=10):
+    """
+    محصولاتی که کاربر بیش از یک بار خریده است (به ترتیب تعداد خرید)
+    """
+    if not user.is_authenticated:
+        return []
+
+    # پیدا کردن محصولاتی که در سفارش‌های موفق کاربر هستند
+    # و تعداد تکرارشان در OrderItem ها بیشتر از 1 است
+    products = Product.objects.filter(
+        order_items__order__user=user,
+        order_items__order__paid=True  # فقط خریدهای موفق
+    ).annotate(
+        buy_count=Count('order_items')
+    ).filter(
+        buy_count__gt=1  # حداقل 2 بار خریده شده باشد
+    ).order_by('-buy_count')[:limit]
+
+    return products
+
+
+def get_wishlist_products(user, limit=10):
+    """
+    محصولات موجود در لیست علاقه‌مندی‌های کاربر
+    """
+    if not user.is_authenticated:
+        return []
+
+    return Product.objects.filter(
+        favorited_by__user=user
+    ).order_by('-favorited_by__created')[:limit]

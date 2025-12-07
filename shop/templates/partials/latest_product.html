@@ -1,22 +1,54 @@
-{% load jformat %}
 {% load custom_filters %}
 
+<div class="mt-16">
+    <div class="flex items-center justify-between mb-8">
+        <h3 class="text-2xl font-bold text-gray-800 border-r-4 border-blue-500 pr-4">
+            جدیدترین محصولات
+        </h3>
+        <a href="{% url 'shop:product_list' %}" class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors">
+            مشاهده همه
+            <span>←</span>
+        </a>
+    </div>
 
-<div class="latest-product">
-    <h2>آخرین محصول ها</h2>
-    <div class="latest-product_wrapper">
-            {% for product in l_products %}
-        <div class="latest-product__div">
-            <a href="{{ product.get_absolute_url }}">
-                {% if product.images.first %}
-                    <img class="latest-product-img" src="{{ product.images.first.file.url }}" alt="{{ product.name }}">
-                {% endif %}
-            </a>
-            <a href="{{ product.get_absolute_url }}">
-                {{ product.name|fa_number }}: {{ product.created|jformat:"%Y/%m/%d-%H:%M"|fa_number }}
-            </a>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        {% for product in l_products %}
+            <div class="bg-white border border-gray-200 rounded-2xl p-4 hover:shadow-xl transition-all duration-300 group relative flex flex-col">
 
-        </div>
-    {% endfor %}
+                <a href="{{ product.get_absolute_url }}" class="block mb-4 relative aspect-square bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center">
+                    {% if product.images.first %}
+                        <img src="{{ product.images.first.file.url }}" alt="{{ product.name }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500">
+                    {% else %}
+                        <span class="text-4xl opacity-30">📷</span>
+                    {% endif %}
+
+                    <span class="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                        جدید
+                    </span>
+                </a>
+
+                <div class="flex-1 flex flex-col">
+                    <h4 class="text-sm font-bold text-gray-800 leading-6 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors">
+                        <a href="{{ product.get_absolute_url }}">{{ product.name|fa_number }}</a>
+                    </h4>
+
+                    <div class="mt-auto pt-4 flex items-center justify-between border-t border-gray-50">
+                        <div class="flex flex-col">
+                            {% if product.off %}
+                                <span class="text-xs text-gray-400 line-through decoration-red-500">{{ product.price|money_format }}</span>
+                            {% endif %}
+                            <span class="text-lg font-bold text-gray-900">
+                                {{ product.new_price|money_format }} <span class="text-xs font-normal text-gray-500">تومان</span>
+                            </span>
+                        </div>
+
+                        <button onclick="window.location.href='{{ product.get_absolute_url }}'" class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-md">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        {% endfor %}
     </div>
 </div>

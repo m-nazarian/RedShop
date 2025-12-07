@@ -1,0 +1,62 @@
+{% load custom_filters %}
+
+{% if products %}
+<div class="my-8 bg-white rounded-xl border border-gray-100 shadow-sm p-6 relative group/slider">
+
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-gray-800 border-r-4 border-red-500 pr-3">
+            {{ title }}
+        </h3>
+    </div>
+
+    <button class="slider-next absolute top-1/2 left-2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-white transition-all opacity-0 group-hover/slider:opacity-100 cursor-pointer">
+        ❮
+    </button>
+    <button class="slider-prev absolute top-1/2 right-2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 shadow-lg border border-gray-200 flex items-center justify-center text-gray-600 hover:text-blue-600 hover:bg-white transition-all opacity-0 group-hover/slider:opacity-100 cursor-pointer">
+        ❯
+    </button>
+
+    <div class="product-slider flex gap-4 overflow-x-auto pb-4 px-1 hide-scrollbar cursor-grab active:cursor-grabbing select-none relative z-0">
+
+        {% for product in products %}
+            <div class="w-[180px] sm:w-[220px] flex-shrink-0 bg-white border border-gray-100 rounded-xl p-3 hover:shadow-md transition-shadow duration-300 group relative">
+                <a href="{{ product.get_absolute_url }}" draggable="false" class="block h-full">
+                    <div class="aspect-square mb-3 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center relative">
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.file.url }}" alt="{{ product.name }}" class="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300 pointer-events-none">
+                        {% else %}
+                            <span class="text-3xl">📷</span>
+                        {% endif %}
+                    </div>
+                    <h4 class="text-sm font-bold text-gray-800 line-clamp-2 h-10 mb-2 group-hover:text-blue-600 transition-colors">
+                        {{ product.name|fa_number }}
+                    </h4>
+                    <div class="flex items-end justify-between mt-auto">
+                        <span class="text-blue-600 font-bold text-base">{{ product.new_price|money_format }}</span>
+                        <div class="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors shadow-sm">
+                            +
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+
+        <div class="w-[120px] flex-shrink-0 flex items-center justify-center">
+            <a href="#" class="flex flex-col items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors group">
+                <div class="w-12 h-12 rounded-full border-2 border-gray-200 flex items-center justify-center group-hover:border-blue-600 group-hover:bg-blue-50">
+                    ➜
+                </div>
+                <span class="text-sm font-medium">مشاهده همه</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* جلوگیری از آبی شدن */
+    .product-slider * { user-select: none; -webkit-user-drag: none; }
+</style>
+{% endif %}

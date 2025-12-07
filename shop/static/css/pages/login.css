@@ -10,7 +10,7 @@ html{
 }
 .body_login{
     font-family: "poppins", sans-serif;
-    background-color: var(--dark-color);
+    background-color: #3d575f;
     display: flex;
     align-items: center;
     justify-content: center;

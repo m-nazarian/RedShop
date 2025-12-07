@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
 import json
-from .services import sort_products, get_dynamic_features, assemble_filters, is_staff, apply_filters, global_search
+from .services import *
 from django.views.decorators.http import require_POST
 from .forms import ProductCommentForm
 
@@ -304,3 +304,19 @@ def user_favorites_partial(request):
 def user_reviews_partial(request):
     reviews = request.user.comments.select_related('product').order_by('-created')
     return render(request, 'partials/reviews_list.html', {'reviews': reviews})
+
+
+def index(request):
+    """ نمایش صفحه اصلی. """
+    parent_categories = Category.objects.filter(parent=None)
+
+    # دریافت لیست‌های هوشمند
+    frequent_products = get_frequently_bought_products(request.user)
+    wishlist_products = get_wishlist_products(request.user)
+
+    context = {
+        'parent_categories': parent_categories,
+        'frequent_products': frequent_products,
+        'wishlist_products': wishlist_products,
+    }
+    return render(request, "shop/index.html", context)
