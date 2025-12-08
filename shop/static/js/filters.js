@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let rangeInput = null;
     let priceValueDisplay = null;
 
-    // تابع Debounce برای جلوگیری از درخواست‌های مکرر (مثل رنج قیمت)
+    // تابع Debounce برای جلوگیری از درخواست‌های مکرر
     const debounce = (func, delay) => {
         let timeoutId;
         return function(...args) {
@@ -27,7 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // ------------------------------------------------------------------
     const getSelectedFilters = () => {
         const selected = {};
-        // باید فیلترها را هر بار دوباره بگیریم چون نوار کناری ممکن است آپدیت شود.
+
+        // جمع‌آوری فیلترهای کاربر (برند، رنگ، قیمت و...)
         const filters = document.querySelectorAll(".filter-input");
 
         filters.forEach(f => {
@@ -44,11 +45,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 selected[key] = f.value;
             }
 
-            // برای رنج قیمت (که data-filter='max_price' دارد)
+            // برای رنج قیمت
             if (f.type === 'range') {
                 selected[key] = f.value;
             }
         });
+
+        // ✅✅✅ تغییر حیاتی اینجاست: ✅✅✅
+        // خواندن اسلاگ دسته‌بندی از اینپوت مخفی و اضافه کردن به درخواست
+        const catInput = document.getElementById("page-category-slug");
+        if (catInput && catInput.value) {
+            selected['category_slug'] = catInput.value;
+        }
 
         return selected;
     };
@@ -58,6 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ------------------------------------------------------------------
     const updateProducts = () => {
         const selected = getSelectedFilters();
+
+        // اضافه کردن لودینگ (اختیاری ولی خوبه)
+        productContainer.style.opacity = '0.5';
 
         fetch("/products/filter/", {
             method: "POST",
@@ -69,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(res => res.json())
         .then(data => {
+            productContainer.style.opacity = '1';
+
             // 1. به‌روزرسانی لیست محصولات
             if (data.html_products) {
                 productContainer.innerHTML = data.html_products;
@@ -82,7 +95,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 reinitializeListeners();
             }
         })
-        .catch(err => console.error("خطا در فیلتر محصولات:", err));
+        .catch(err => {
+            console.error("خطا در فیلتر محصولات:", err);
+            productContainer.style.opacity = '1';
+        });
     };
 
     // ------------------------------------------------------------------
@@ -111,7 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll(".filter-input").forEach(f => {
             // فقط به چک‌باکس‌ها و select شنونده 'change' فوری می‌دهیم
             if (f.type === 'checkbox' || f.tagName === 'SELECT') {
-                f.removeEventListener("change", updateProducts); // حذف قبلی (جلوگیری از تکرار)
+                // پاک کردن لیسنرهای احتمالی قبلی برای جلوگیری از تکرار
+                f.removeEventListener("change", updateProducts);
                 f.addEventListener("change", updateProducts);
             }
         });
@@ -121,16 +138,18 @@ document.addEventListener("DOMContentLoaded", () => {
         priceValueDisplay = document.getElementById("price-value");
 
         if (rangeInput && priceValueDisplay) {
+            // آپدیت عدد قیمت هنگام کشیدن (بدون درخواست سرور)
             rangeInput.removeEventListener("input", updatePriceDisplay);
             rangeInput.addEventListener("input", updatePriceDisplay);
 
-            rangeInput.removeEventListener("change", debouncedUpdateProducts);
-            rangeInput.addEventListener("change", debouncedUpdateProducts);
+            // ارسال درخواست سرور فقط وقتی موس رها شد (change)
+            rangeInput.removeEventListener("change", updateProducts);
+            rangeInput.addEventListener("change", updateProducts);
         }
 
         // ج) فعال‌سازی Collapsible برای بخش‌های جدید نوار کناری
         document.querySelectorAll('.filter-group h3').forEach(header => {
-            header.removeEventListener('click', toggleCollapsible); // حذف قبلی
+            header.removeEventListener('click', toggleCollapsible);
             header.classList.add('collapsible-header');
             header.addEventListener('click', toggleCollapsible);
         });
@@ -150,4 +169,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // فراخوانی اولیه برای متصل کردن شنوندگان به فیلترهای بارگذاری اولیه
     reinitializeListeners();
+
+    // اتصال رویداد به دراپ‌داون مرتب‌سازی (که بیرون از سایدبار بود)
+    const sortSelect = document.getElementById("sort-select");
+    if(sortSelect) {
+        sortSelect.addEventListener("change", updateProducts);
+    }
 });

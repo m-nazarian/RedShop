@@ -6,6 +6,8 @@
 {% block content %}
 <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
+<input type="hidden" id="page-category-slug" value="{{ category.slug|default:'' }}">
+
 <div class="products-page">
     <div class="filters-sidebar">
         <div id="all-filters-container">
@@ -25,10 +27,10 @@
             </select>
         </div>
     </div>
+
     <div class="product-grid" id="product-container">
         {% include 'partials/product_list_partials.html' with products=products %}
     </div>
-
 
 </div>
 

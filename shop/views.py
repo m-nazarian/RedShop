@@ -1,24 +1,42 @@
-from django.contrib.admin.views.autocomplete import AutocompleteJsonView
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.shortcuts import render, get_object_or_404
-from .models import Category, Product, CategoryFeature, CommentLike, ProductComment, ProductFavorite
-from django.template.loader import render_to_string
-from django.http import JsonResponse
-from django.contrib.admin.views.decorators import staff_member_required
 import json
-from .services import *
+from collections import OrderedDict
+from django.contrib.admin.views.autocomplete import AutocompleteJsonView
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_POST
 from .forms import ProductCommentForm
+from .models import (
+    Category, Product, CategoryFeature, CommentLike,
+    ProductComment, ProductFavorite
+)
+from .services import (
+    sort_products, get_dynamic_features, assemble_filters,
+    apply_filters, global_search, get_frequently_bought_products,
+    get_wishlist_products
+)
 
 
 # --------------------------------------------------------------------------
-# Views اصلی
+# Views اصلی صفحات
 # --------------------------------------------------------------------------
+
 def index(request):
-    """ نمایش صفحه اصلی. """
+    """
+    نمایش صفحه اصلی به همراه اسلایدرهای هوشمند.
+    """
     parent_categories = Category.objects.filter(parent=None)
+
+    # دریافت لیست‌های هوشمند (خرید پرتکرار و علاقه‌مندی)
+    frequent_products = get_frequently_bought_products(request.user)
+    wishlist_products = get_wishlist_products(request.user)
+
     context = {
         'parent_categories': parent_categories,
+        'frequent_products': frequent_products,
+        'wishlist_products': wishlist_products,
     }
     return render(request, "shop/index.html", context)
 
@@ -28,6 +46,7 @@ def product_list(request, category_slug=None):
     نمایش لیست محصولات برای بارگذاری اولیه صفحه (GET request).
     """
     category = None
+    # کوئری‌ست پایه
     products = Product.objects.prefetch_related('colors', 'images').all()
     categories = Category.objects.all()
 
@@ -35,9 +54,11 @@ def product_list(request, category_slug=None):
         category = get_object_or_404(Category, slug=category_slug)
         products = products.filter(category__in=category.get_descendants(include_self=True))
 
+    # مرتب‌سازی پیش‌فرض
     sort_option = request.GET.get('sort', 'newest')
     products = sort_products(products, sort_option)
 
+    # فیلترها
     dynamic_features_data = get_dynamic_features(products)
 
     current_selections = {}
@@ -53,21 +74,23 @@ def product_list(request, category_slug=None):
     }
     return render(request, 'shop/list.html', context)
 
+
 def product_detail(request, id, slug):
-    """ نمایش جزئیات یک محصول. """
+    """
+    نمایش جزئیات محصول، نظرات و محصولات مرتبط.
+    """
     product = get_object_or_404(Product, id=id, slug=slug)
 
     grouped_features = product.get_grouped_features()
     comment_form = ProductCommentForm()
 
+    # فقط نظرات فعال
     active_comments = product.comments.filter(active=True)
 
-    # دریافت محصولات مرتبط
-    # منطق: محصولاتی که در همین دسته‌بندی هستند، به جز خودِ این محصول
+    # محصولات مرتبط (هم‌دسته، به جز خود محصول، تصادفی)
     related_products = Product.objects.filter(
         category=product.category
     ).exclude(id=product.id).order_by('?')[:6]
-    # order_by('?') یعنی تصادفی انتخاب کن
 
     context = {
         'product': product,
@@ -81,7 +104,8 @@ def product_detail(request, id, slug):
 
 def filter_products(request):
     """
-    View مخصوص AJAX (POST request)
+    View مخصوص AJAX برای فیلتر کردن محصولات.
+    نکته مهم: لیست فیلترها (سایدبار) نباید با انتخاب کاربر محدود شود.
     """
     if request.method != 'POST':
         return JsonResponse({"error": "Only POST requests allowed"}, status=405)
@@ -91,20 +115,33 @@ def filter_products(request):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    products = Product.objects.prefetch_related('colors', 'images').all()
+    # 1. لیست پایه (فقط بر اساس دسته‌بندی فیلتر شده، نه انتخاب کاربر)
+    base_products = Product.objects.prefetch_related('colors', 'images').all()
 
-    products = apply_filters(products, data)
+    # اگر اسلاگ دسته ارسال شده بود، لیست پایه را محدود به آن دسته کن
+    category_slug = data.get('category_slug')
+    if category_slug:
+        try:
+            category = Category.objects.get(slug=category_slug)
+            base_products = base_products.filter(category__in=category.get_descendants(include_self=True))
+        except Category.DoesNotExist:
+            pass
 
+    # 2. لیست نهایی (برای نمایش کارت‌های محصول) -> فیلترهای کاربر روی این اعمال می‌شود
+    filtered_products = apply_filters(base_products, data)
+
+    # 3. مرتب‌سازی
     sort_option = data.get('sort', 'newest')
-    products = sort_products(products, sort_option)
+    filtered_products = sort_products(filtered_products, sort_option)
 
-    dynamic_features_data = get_dynamic_features(products)
-    ordered_filters = assemble_filters(request, products, dynamic_features_data)
+    # 4. ساخت گزینه‌های فیلتر (سایدبار)
+    base_dynamic_features = get_dynamic_features(base_products)
+    ordered_filters = assemble_filters(request, base_products, base_dynamic_features)
 
-    # پاس دادن request به render_to_string
+    # 5. رندر کردن پارشیال‌ها
     html_products = render_to_string(
         "partials/product_list_partials.html",
-        {"products": products},
+        {"products": filtered_products},
         request=request
     )
 
@@ -114,7 +151,7 @@ def filter_products(request):
             "ordered_filters": ordered_filters,
             "current_selections": data
         },
-        request=request # اینجا هم برای اطمینان می‌فرستیم
+        request=request
     )
 
     return JsonResponse({
@@ -123,29 +160,50 @@ def filter_products(request):
     }, safe=False)
 
 
+# --------------------------------------------------------------------------
+# API جستجو و اتوکامپلیت
+# --------------------------------------------------------------------------
+
+def search_suggestions(request):
+    """
+    API برای جستجوی زنده (Live Search) در هدر.
+    """
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return JsonResponse({'products': [], 'suggested_category': None})
+
+    data = global_search(query)
+    return JsonResponse(data)
 
 
-@user_passes_test(is_staff, login_url=None)
-def get_category_features(request, category_id):
-    print("user is staff : ", request.user.is_staff)
-    if category_id is None or category_id == 0:
-        return JsonResponse({'features': []})
+@staff_member_required
+def categoryfeature_autocomplete(request):
+    """
+    Autocomplete برای انتخاب ویژگی‌ها در پنل ادمین.
+    """
+    category_id = request.GET.get('category_id')
+    term = request.GET.get('term', '')
+
+    if not category_id:
+        return JsonResponse({'results': []})
 
     try:
-        current_category = Category.objects.get(id=category_id)
-        ancestors_and_self = current_category.get_ancestors(include_self=True)
-        features = CategoryFeature.objects.filter(
-            category__in=ancestors_and_self
-        ).values('id', 'name').distinct()
+        category = Category.objects.get(id=category_id)
+        relevant_categories = category.get_ancestors(include_self=True)
 
-        feature_list = list(features)
-        return JsonResponse({'features': feature_list})
+        features = CategoryFeature.objects.filter(category__in=relevant_categories)
+
+        if term:
+            features = features.filter(name__icontains=term)
+
+        results = [
+            {'id': f.id, 'text': f"{f.group.name if f.group else 'عمومی'} - {f.name} ({f.category.name})"}
+            for f in features
+        ]
+        return JsonResponse({'results': results})
 
     except Category.DoesNotExist:
-        return JsonResponse({'features': []})
-    except Exception as e:
-        return JsonResponse({'error': f"Internal Server Error: {str(e)}"}, status=500)
-
+        return JsonResponse({'results': []})
 
 
 class FilteredAutocompleteJsonView(AutocompleteJsonView):
@@ -153,7 +211,6 @@ class FilteredAutocompleteJsonView(AutocompleteJsonView):
         qs = super().get_queryset()
         term = self.term
         category_id = self.request.GET.get('category_id')
-        print("Autocomplete request GET:", self.request.GET)
 
         if category_id:
             try:
@@ -166,60 +223,36 @@ class FilteredAutocompleteJsonView(AutocompleteJsonView):
                 qs = qs.none()
         else:
             qs = qs.none()
-
-        print("Filtered QS names:", list(qs.values_list('name', flat=True)))
         return qs
 
 
-@staff_member_required
-def categoryfeature_autocomplete(request):
-    """
-    Autocomplete هوشمند با پشتیبانی از ارث‌بری دسته‌ها.
-    """
-    category_id = request.GET.get('category_id')
-    term = request.GET.get('term', '')  # Select2 پارامتر term میفرسته برای جستجو
+def is_staff(user):
+    return user.is_staff
 
-    if not category_id:
-        return JsonResponse({'results': []})
+
+@user_passes_test(is_staff, login_url=None)
+def get_category_features(request, category_id):
+    if category_id is None or category_id == 0:
+        return JsonResponse({'features': []})
 
     try:
-        # ۱. پیدا کردن دسته انتخاب شده
-        category = Category.objects.get(id=category_id)
-
-        # ۲. گرفتن لیست خود دسته و تمام پدرانش (Ancestors)
-        relevant_categories = category.get_ancestors(include_self=True)
-
-        # ۳. فیلتر کردن ویژگی‌ها
+        current_category = Category.objects.get(id=category_id)
+        ancestors_and_self = current_category.get_ancestors(include_self=True)
         features = CategoryFeature.objects.filter(
-            category__in=relevant_categories
-        )
+            category__in=ancestors_and_self
+        ).values('id', 'name').distinct()
 
-        # ۴. اگر کاربر چیزی تایپ کرده، فیلتر کن
-        if term:
-            features = features.filter(name__icontains=term)
-
-        # ۵. فرمت استاندارد Select2
-        results = [
-            {'id': f.id, 'text': f"{f.group.name if f.group else 'عمومی'} - {f.name} ({f.category.name})"}
-            for f in features
-        ]
-        return JsonResponse({'results': results})
+        return JsonResponse({'features': list(features)})
 
     except Category.DoesNotExist:
-        return JsonResponse({'results': []})
+        return JsonResponse({'features': []})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
-def search_suggestions(request):
-    """
-    API برای جستجوی زنده (Live Search)
-    """
-    query = request.GET.get('q', '')
-    if len(query) < 2:  # اگر کمتر از ۲ حرف بود جستجو نکن (فشار نیاد)
-        return JsonResponse({'products': [], 'suggested_category': None})
-
-    data = global_search(query)
-    return JsonResponse(data)
-
+# --------------------------------------------------------------------------
+# تعاملات کاربر (نظر، لایک، علاقه‌مندی)
+# --------------------------------------------------------------------------
 
 @login_required
 @require_POST
@@ -241,27 +274,20 @@ def add_product_comment(request, product_id):
 @require_POST
 def like_comment(request, comment_id):
     comment = get_object_or_404(ProductComment, id=comment_id)
-
-    # نوع درخواست: 'like' یا 'dislike'
-    action_type = request.POST.get('type')  # مقداری که با AJAX میفرستیم
+    action_type = request.POST.get('type')
     is_like = (action_type == 'like')
 
     try:
-        # چک میکنیم آیا قبلا واکنشی داشته؟
         existing_like = CommentLike.objects.get(user=request.user, comment=comment)
-
         if existing_like.status == is_like:
-            # اگر دوباره روی همون دکمه زده، یعنی میخواد پس بگیره (Delete)
-            existing_like.delete()
+            existing_like.delete()  # حذف لایک/دیس‌لایک قبلی
             action = 'removed'
         else:
-            # اگر نظرش عوض شده (لایک بوده حالا دیس‌لایک کرده یا برعکس)
-            existing_like.status = is_like
+            existing_like.status = is_like  # تغییر نظر
             existing_like.save()
             action = 'changed'
 
     except CommentLike.DoesNotExist:
-        # اولین بار است که واکنش نشان میدهد
         CommentLike.objects.create(user=request.user, comment=comment, status=is_like)
         action = 'created'
 
@@ -277,10 +303,6 @@ def like_comment(request, comment_id):
 @require_POST
 def toggle_favorite(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-
-    # متد get_or_create: اگر بود می‌گیرد، اگر نبود می‌سازد
-    # created=True یعنی تازه ساخته شد (لایک شد)
-    # created=False یعنی قبلاً بوده (پس باید حذفش کنیم)
     favorite, created = ProductFavorite.objects.get_or_create(user=request.user, product=product)
 
     if not created:
@@ -292,31 +314,17 @@ def toggle_favorite(request, product_id):
     return JsonResponse({'success': True, 'status': status})
 
 
+# --------------------------------------------------------------------------
+# پارشیال‌های داشبورد کاربر (AJAX)
+# --------------------------------------------------------------------------
+
 @login_required
 def user_favorites_partial(request):
-    # از طریق related_name='favorites' در مدل ProductFavorite
     favorites = request.user.favorites.select_related('product').all()
     return render(request, 'partials/favorites_list.html', {'favorites': favorites})
-
 
 
 @login_required
 def user_reviews_partial(request):
     reviews = request.user.comments.select_related('product').order_by('-created')
     return render(request, 'partials/reviews_list.html', {'reviews': reviews})
-
-
-def index(request):
-    """ نمایش صفحه اصلی. """
-    parent_categories = Category.objects.filter(parent=None)
-
-    # دریافت لیست‌های هوشمند
-    frequent_products = get_frequently_bought_products(request.user)
-    wishlist_products = get_wishlist_products(request.user)
-
-    context = {
-        'parent_categories': parent_categories,
-        'frequent_products': frequent_products,
-        'wishlist_products': wishlist_products,
-    }
-    return render(request, "shop/index.html", context)
