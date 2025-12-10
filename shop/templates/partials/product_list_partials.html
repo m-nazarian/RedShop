@@ -42,6 +42,18 @@
         <a href="{{ product.get_absolute_url }}">
             <h4 class="list-name">{{ product.name|fa_number }}</h4>
         </a>
+
+
+            <div class="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                {% with avg=product.get_average_score count=product.get_review_count %}
+                    {% if count > 0 %}
+                        <span class="text-yellow-400 text-sm">★</span>
+                        <span class="font-bold text-gray-700">{{ avg|fa_number }}</span>
+                        <span class="text-gray-400">({{ count|fa_number }})</span>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
         <div class="price-section">
              {% if product.off > 0 %}
                 <div class="old-price">{{ product.price | money_format }} تومان</div>

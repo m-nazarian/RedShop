@@ -5,6 +5,7 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 from slugify import slugify
 from django.apps import apps
+from django.db.models import Avg
 
 
 class Category(MPTTModel):
@@ -102,6 +103,19 @@ class Product(models.Model):
                 'value': fv.value
             })
         return grouped_features
+
+
+    def get_average_score(self):
+        """ محاسبه میانگین امتیاز نظرات تایید شده """
+        avg = self.comments.filter(active=True).aggregate(Avg('score'))['score__avg']
+        if avg is not None:
+            return round(avg, 1)  # تا یک رقم اعشار گرد کن (مثلاً 4.5)
+        return 0
+
+    def get_review_count(self):
+        """ تعداد نظرات تایید شده """
+        return self.comments.filter(active=True).count()
+
 
     class Meta:
         ordering = ['-created']
