@@ -1,10 +1,8 @@
-// ===========================================
-// بخش اول: کدهایی که باید بعد از لود صفحه اجرا شوند
-// (جستجو، منو، اسلایدر، فرم‌ها)
-// ===========================================
 document.addEventListener("DOMContentLoaded", function() {
 
-    // 1. مدیریت جستجوی هوشمند
+    // ===========================================
+    // 1. 🔍 مدیریت جستجوی هوشمند (Live Search)
+    // ===========================================
     const searchInput = document.getElementById("main-search-input");
     const resultsBox = document.getElementById("search-results-box");
     let debounceTimer;
@@ -15,35 +13,65 @@ document.addEventListener("DOMContentLoaded", function() {
         searchInput.addEventListener("input", function() {
             const query = this.value.trim();
             clearTimeout(debounceTimer);
+
             if (query.length < 2) {
                 resultsBox.style.display = "none";
                 resultsBox.innerHTML = "";
                 return;
             }
+
             debounceTimer = setTimeout(() => {
                 fetch(`/api/search/?q=${encodeURIComponent(query)}`)
-                    .then(res => { if (!res.ok) throw new Error("Network response was not ok"); return res.json(); })
-                    .then(data => { renderResults(data, query); })
+                    .then(res => {
+                        if (!res.ok) throw new Error("Network response was not ok");
+                        return res.json();
+                    })
+                    .then(data => {
+                        renderResults(data, query);
+                    })
                     .catch(err => console.error("Search Error:", err));
             }, 300);
         });
 
         function renderResults(data, query) {
             resultsBox.innerHTML = "";
+
             if (data.products.length === 0 && !data.suggested_category) {
                 resultsBox.style.display = "none";
                 return;
             }
+
             let htmlContent = "";
+
             if (data.suggested_category) {
-                htmlContent += `<a href="${data.suggested_category.url}" class="block px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm border-b border-gray-100">🔍 جستجو برای «<strong>${query}</strong>» در دسته‌ی <strong>${data.suggested_category.name}</strong></a>`;
+                htmlContent += `
+                    <a href="${data.suggested_category.url}" class="block px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm border-b border-gray-100">
+                        🔍 جستجو برای «<strong>${query}</strong>» در دسته‌ی 
+                        <strong>${data.suggested_category.name}</strong>
+                    </a>
+                `;
             }
+
             data.products.forEach(p => {
-                htmlContent += `<a href="${p.url}" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"><img src="${p.image}" alt="${p.name}" class="w-10 h-10 object-cover rounded-lg border border-gray-200"><div class="flex-1 min-w-0"><span class="block text-sm font-bold text-gray-800 truncate">${p.name}</span><div class="flex items-center gap-2 text-xs text-gray-500 mt-1"><span class="bg-gray-100 px-1.5 py-0.5 rounded">${p.category_name}</span><span>|</span><span class="text-blue-600 font-medium">${formatMoney(p.price)}</span></div></div></a>`;
+                htmlContent += `
+                    <a href="${p.url}" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0">
+                        <img src="${p.image}" alt="${p.name}" class="w-10 h-10 object-cover rounded-lg border border-gray-200">
+                        <div class="flex-1 min-w-0">
+                            <span class="block text-sm font-bold text-gray-800 truncate">${p.name}</span>
+                            <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                <span class="bg-gray-100 px-1.5 py-0.5 rounded">${p.category_name}</span>
+                                <span>|</span>
+                                <span class="text-blue-600 font-medium">${formatMoney(p.price)}</span>
+                            </div>
+                        </div>
+                    </a>
+                `;
             });
+
             resultsBox.innerHTML = htmlContent;
             resultsBox.style.display = "block";
         }
+
         document.addEventListener("click", function(e) {
             if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
                 resultsBox.style.display = "none";
@@ -51,7 +79,9 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // 2. مدیریت منوها و مگا منو
+    // ===========================================
+    // 2. 🧬 مدیریت منوها (Menu Logic)
+    // ===========================================
     const menuTimers = {};
     const triggers = document.querySelectorAll('.hover-trigger');
 
@@ -65,10 +95,14 @@ document.addEventListener("DOMContentLoaded", function() {
         triggers.forEach(trigger => {
             const targetId = trigger.dataset.target;
             const content = document.getElementById(targetId);
+
             if (!content) return;
 
             const showMenu = () => {
-                if (menuTimers[targetId]) { clearTimeout(menuTimers[targetId]); delete menuTimers[targetId]; }
+                if (menuTimers[targetId]) {
+                    clearTimeout(menuTimers[targetId]);
+                    delete menuTimers[targetId];
+                }
                 triggers.forEach(otherTrigger => {
                     const otherId = otherTrigger.dataset.target;
                     if (otherId !== targetId) {
@@ -90,10 +124,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     content.classList.remove('opacity-100', 'translate-y-0');
                     content.classList.add('opacity-0', 'translate-y-2');
                     setTimeout(() => {
-                        if (content.classList.contains('opacity-0')) { content.classList.add('hidden'); }
+                        if (content.classList.contains('opacity-0')) {
+                            content.classList.add('hidden');
+                        }
                     }, 300);
                 }, 200);
             };
+
             trigger.addEventListener('mouseenter', showMenu);
             trigger.addEventListener('mouseleave', hideMenu);
             content.addEventListener('mouseenter', showMenu);
@@ -101,6 +138,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    // مدیریت تب‌های مگا منو
     const categoryItems = document.querySelectorAll('.category-item');
     const contents = document.querySelectorAll('.subcategory-content');
     const defaultContent = document.getElementById('cat-default');
@@ -111,12 +149,20 @@ document.addEventListener("DOMContentLoaded", function() {
             item.addEventListener('mouseenter', function() {
                 const id = this.dataset.id;
                 const targetContent = document.getElementById(`cat-content-${id}`);
+
                 if (catTimeout) clearTimeout(catTimeout);
-                categoryItems.forEach(i => { const link = i.querySelector('a'); if(link) link.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm'); });
+
+                categoryItems.forEach(i => {
+                    const link = i.querySelector('a');
+                    if (link) link.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
+                });
+
                 const currentLink = this.querySelector('a');
-                if(currentLink) currentLink.classList.add('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
+                if (currentLink) currentLink.classList.add('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
+
                 contents.forEach(c => c.classList.add('hidden'));
-                if(defaultContent) defaultContent.classList.add('hidden');
+                if (defaultContent) defaultContent.classList.add('hidden');
+
                 if (targetContent) {
                     targetContent.classList.remove('hidden');
                     targetContent.classList.remove('animate-fade-in-fast');
@@ -125,15 +171,28 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
         });
+
         const megaMenu = document.getElementById('mega-menu');
-        if(megaMenu){ megaMenu.addEventListener('mouseleave', () => { categoryItems.forEach(i => { const link = i.querySelector('a'); if(link) link.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm'); }); contents.forEach(c => c.classList.add('hidden')); if(defaultContent) defaultContent.classList.remove('hidden'); }); }
+        if (megaMenu) {
+            megaMenu.addEventListener('mouseleave', () => {
+                categoryItems.forEach(i => {
+                    const link = i.querySelector('a');
+                    if (link) link.classList.remove('bg-white', 'text-blue-600', 'border-blue-600', 'shadow-sm');
+                });
+                contents.forEach(c => c.classList.add('hidden'));
+                if (defaultContent) defaultContent.classList.remove('hidden');
+            });
+        }
     }
 
-    // 3. اسکرول نرم هدر
+
+    // ===========================================
+    // 3. 🚀 اسکرول نرم هدر
+    // ===========================================
     let lastScrollTop = 0;
     const bottomNav = document.getElementById('bottom-nav');
     const topNav = document.getElementById('top-nav');
-    
+
     if (bottomNav && topNav) {
         window.addEventListener("scroll", function() {
             let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -162,7 +221,9 @@ document.addEventListener("DOMContentLoaded", function() {
         }, { passive: true });
     }
 
+    // =========================================
     // 4. اسلایدرها (Drag Scroll)
+    // =========================================
     const sliders = document.querySelectorAll('.product-slider');
     sliders.forEach(slider => {
         let isDown = false;
@@ -208,7 +269,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-}); // پایان DOMContentLoaded
+});
 
 
 // =========================================================
@@ -216,12 +277,11 @@ document.addEventListener("DOMContentLoaded", function() {
 // =========================================================
 
 // لایک و دیس‌لایک
-function reactToComment(commentId, actionType) {
+window.reactToComment = function(commentId, actionType) {
     const likeBtn = document.getElementById(`like-btn-${commentId}`);
     const dislikeBtn = document.getElementById(`dislike-btn-${commentId}`);
     const likeCountSpan = document.getElementById(`like-count-${commentId}`);
     const dislikeCountSpan = document.getElementById(`dislike-count-${commentId}`);
-
     const url = `/comment/react/${commentId}/`;
 
     fetch(url, {
@@ -259,14 +319,14 @@ function reactToComment(commentId, actionType) {
             }
         }
     })
-    .catch(err => console.error("Reaction Error:", err));
-}
+    .catch(console.error);
+};
 
-// افزودن به علاقه‌مندی
-function toggleFavorite(productId, btnElement) {
+window.toggleFavorite = function(productId, btnElement) {
     const url = `/favorite/toggle/${productId}/`;
     const svg = btnElement.querySelector('svg');
-    btn.style.transform = "scale(0.8)";
+
+    btnElement.style.transform = "scale(0.8)";
     setTimeout(() => btnElement.style.transform = "scale(1)", 200);
 
     fetch(url, {
@@ -297,53 +357,59 @@ function toggleFavorite(productId, btnElement) {
         }
     })
     .catch(console.error);
-}
+};
 
-// توابع کمکی
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+// سیستم مقایسه (جهانی شده)
+window.addToCompare = function(productId) {
+    const url = `/compare/add/${productId}/`;
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (typeof showToast === "function") showToast(data.message, 'success');
+        } else {
+            if (typeof showToast === "function") showToast(data.message, 'error');
         }
-    }
-    return cookieValue;
-}
+    })
+    .catch(console.error);
+};
 
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return;
-    
-    let icon = type === 'success' ? '✔' : '✖';
-    const toast = document.createElement('div');
-    toast.classList.add('toast-message', type);
-    toast.innerHTML = `<div class="toast-content"><span class="toast-icon">${icon}</span><span>${message}</span></div>`;
-    container.appendChild(toast);
-    setTimeout(() => toast.classList.add('show'), 10);
-    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
-}
+window.removeFromCompare = function(productId) {
+    const url = `/compare/remove/${productId}/`;
+    const container = document.getElementById('compare-container');
+    if(container) container.style.opacity = '0.5';
 
-function toPersianNum(num) {
-    if (num === undefined || num === null) return "";
-    return num.toString().replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
-}
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) return fetch('/compare/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    })
+    .then(res => res ? res.text() : null)
+    .then(html => {
+        if (html && container) {
+            container.innerHTML = html;
+            container.style.opacity = '1';
+            if (typeof showToast === "function") showToast('محصول حذف شد.', 'success');
+        }
+    })
+    .catch(err => { console.error(err); if(container) container.style.opacity = '1'; });
+};
 
-// توابع سیستم مقایسه
-function openCompareModal() {
+window.openCompareModal = function() {
     if (typeof window.openModal === "function") {
         window.openModal('/compare/suggestions/');
     }
-}
+};
 
-function addFromModal(productId) {
+window.addFromModal = function(productId) {
     const url = `/compare/add/${productId}/`;
     if (typeof window.closeModal === "function") window.closeModal();
-
     const container = document.getElementById('compare-container');
     if(container) container.style.opacity = '0.5';
 
@@ -369,78 +435,9 @@ function addFromModal(productId) {
         }
     })
     .catch(console.error);
-}
-
-function removeFromCompare(productId) {
-    const url = `/compare/remove/${productId}/`;
-    const container = document.getElementById('compare-container');
-    if(container) container.style.opacity = '0.5';
-
-    fetch(url, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) return fetch('/compare/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-    })
-    .then(res => res ? res.text() : null)
-    .then(html => {
-        if (html) {
-            container.innerHTML = html;
-            container.style.opacity = '1';
-            if (typeof showToast === "function") showToast('محصول حذف شد.', 'success');
-        }
-    })
-    .catch(console.error);
-}
-
-// مدیریت مودال جهانی
-window.closeModal = function() {
-    const modal = document.getElementById('general-modal');
-    if (!modal) return;
-    const modalBackdrop = document.getElementById('modal-backdrop');
-    const modalPanel = document.getElementById('modal-panel');
-    
-    if (modalPanel) { modalPanel.classList.add('opacity-0', 'scale-95'); modalPanel.classList.remove('opacity-100', 'scale-100'); }
-    if (modalBackdrop) { modalBackdrop.classList.add('opacity-0'); modalBackdrop.classList.remove('opacity-100'); }
-    setTimeout(() => { modal.classList.add('hidden'); }, 300);
 };
 
-window.openModal = function(url) {
-    const modal = document.getElementById('general-modal');
-    if (!modal) return;
-    const modalBackdrop = document.getElementById('modal-backdrop');
-    const modalPanel = document.getElementById('modal-panel');
-    const modalContent = document.getElementById('modal-content');
-
-    if (modalContent) modalContent.innerHTML = `<div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>`;
-    
-    modal.classList.remove('hidden');
-    setTimeout(() => {
-        if (modalBackdrop) { modalBackdrop.classList.remove('opacity-0'); modalBackdrop.classList.add('opacity-100'); }
-        if (modalPanel) { modalPanel.classList.remove('opacity-0', 'scale-95'); modalPanel.classList.add('opacity-100', 'scale-100'); }
-    }, 10);
-
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-    .then(res => res.json())
-    .then(data => {
-        if (data.html_form && modalContent) {
-            modalContent.innerHTML = data.html_form;
-            modalContent.querySelectorAll("script").forEach(script => {
-                const newScript = document.createElement("script");
-                newScript.textContent = script.textContent;
-                document.body.appendChild(newScript);
-            });
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        if (modalContent) modalContent.innerHTML = '<p class="text-red-500 text-center py-4">خطا در بارگذاری.</p>';
-    });
-};
-
-// تابع حذف کارت علاقه‌مندی
+// حذف کارت علاقه‌مندی
 window.removeFavCard = function(pid) {
     const card = document.getElementById(`fav-item-${pid}`);
     if (card) {
@@ -455,4 +452,76 @@ window.removeFavCard = function(pid) {
             }
         }, 300);
     }
+};
+
+// توابع کمکی
+window.getCookie = function(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+};
+
+window.showToast = function(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    let icon = type === 'success' ? '✔' : '✖';
+    const toast = document.createElement('div');
+    toast.classList.add('toast-message', type);
+    toast.innerHTML = `<div class="toast-content"><span class="toast-icon">${icon}</span><span>${message}</span></div>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 4000);
+};
+
+window.toPersianNum = function(num) {
+    if (num === undefined || num === null) return "";
+    return num.toString().replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
+};
+
+// مودال جهانی
+window.closeModal = function() {
+    const modal = document.getElementById('general-modal');
+    if (!modal) return;
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalPanel = document.getElementById('modal-panel');
+    if (modalPanel) { modalPanel.classList.add('opacity-0', 'scale-95'); modalPanel.classList.remove('opacity-100', 'scale-100'); }
+    if (modalBackdrop) { modalBackdrop.classList.add('opacity-0'); modalBackdrop.classList.remove('opacity-100'); }
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+};
+
+window.openModal = function(url) {
+    const modal = document.getElementById('general-modal');
+    if (!modal) return;
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalPanel = document.getElementById('modal-panel');
+    const modalContent = document.getElementById('modal-content');
+    if (modalContent) modalContent.innerHTML = `<div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>`;
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        if (modalBackdrop) { modalBackdrop.classList.remove('opacity-0'); modalBackdrop.classList.add('opacity-100'); }
+        if (modalPanel) { modalPanel.classList.remove('opacity-0', 'scale-95'); modalPanel.classList.add('opacity-100', 'scale-100'); }
+    }, 10);
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(res => res.json())
+    .then(data => {
+        if (data.html_form && modalContent) {
+            modalContent.innerHTML = data.html_form;
+            modalContent.querySelectorAll("script").forEach(script => {
+                const newScript = document.createElement("script");
+                newScript.textContent = script.textContent;
+                document.body.appendChild(newScript);
+            });
+        }
+    })
+    .catch(err => { console.error(err); if (modalContent) modalContent.innerHTML = '<p class="text-red-500 text-center py-4">خطا در بارگذاری.</p>'; });
 };

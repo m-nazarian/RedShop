@@ -150,13 +150,20 @@
                             <div class="mb-6 text-left">
                                 {% if product.off %}
                                     <div class="flex items-center justify-end gap-2 mb-1">
-                                        <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{{ product.off|fa_number }}%</span>
-                                        <span class="text-gray-400 text-xs line-through decoration-gray-400">{{ product.price|money_format }}</span>
+                                        <span class="bg-red-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-red-200">
+                                            {{ product.get_discount_percent|fa_number }}%
+                                        </span>
+                                        <span class="text-gray-400 text-sm line-through decoration-gray-400">
+                                            {{ product.price|money_format }}
+                                        </span>
                                     </div>
                                 {% endif %}
-                                <div class="flex items-center justify-end gap-1 flex-wrap">
-                                    <span class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ product.new_price|money_format }}</span>
-                                    <span class="text-xs font-bold text-gray-500 mt-1">تومان</span>
+
+                                <div class="flex items-center justify-end gap-1">
+                                    <span class="text-3xl font-extrabold text-gray-900 tracking-tight">
+                                        {{ product.new_price|money_format }}
+                                    </span>
+                                    <span class="text-xs font-bold text-gray-500 mt-2">تومان</span>
                                 </div>
                             </div>
 

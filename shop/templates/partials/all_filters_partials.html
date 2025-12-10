@@ -1,66 +1,80 @@
 {% load custom_filters %}
-{% for filter in ordered_filters %}
-    <div class="filter-group">
 
-        <h3 class="filter-header__h3">{{ filter.title }}</h3>
+<div class="space-y-4">
+    {% for filter in ordered_filters %}
+        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden group/filter">
 
-        <div class="filter-content">
+            <h3 class="filter-header__h3 flex justify-between items-center px-4 py-3 bg-gray-50 cursor-pointer select-none font-bold text-gray-700 text-sm hover:bg-gray-100 transition-colors">
+                {{ filter.title }}
+                <span class="text-gray-400 text-xs transition-transform transform group-[.active]/filter:rotate-180">▼</span>
+            </h3>
 
-            {% if filter.key == 'price' %}
-                {% with current_price=current_selections.max_price|default:filter.data.max %}
-                <input type="range"
-                       id="price-range"
-                       class="filter-input"
-                       data-filter="max_price"
-                       min="{{ filter.data.min }}"
-                       max="{{ filter.data.max }}"
-                       value="{{ current_price }}"
-                       step="10000">
-                <span id="price-value">تا {{ current_price|money_format }} تومان</span>
-                {% endwith %}
-                <hr>
-            {% elif filter.key == 'brand' %}
-                {% for brand in filter.data %}
-                    <label>
-                        <input type="checkbox"
-                               class="filter-input"
-                               data-filter="brand"
-                               value="{{ brand.id }}"
-                               {% if brand.id|is_in_list:current_selections.brand %}checked{% endif %}
-                        >
-                        {{ brand.name }}
-                    </label>
-                {% endfor %}
-                <hr>
-            {% elif filter.key == 'color' %}
-                {% for color in filter.data %}
-                    <label class="filter-label">
-                        <input type="checkbox"
-                               class="filter-input"
-                               data-filter="color"
-                               value="{{ color.id }}"
-                               {% if color.id|is_in_list:current_selections.color %}checked{% endif %}
-                        >
-                        {{ color.name }}
-                    </label>
-                {% endfor %}
+            <div class="filter-content px-4 py-3 space-y-2 border-t border-gray-100">
 
-            {% elif filter.type == 'dynamic' %}
-                {% for value in filter.data %}
+                {% if filter.key == 'price' %}
+                    {% with current_price=current_selections.max_price|default:filter.data.max %}
+                    <div class="space-y-3">
+                        <input type="range"
+                               id="price-range"
+                               class="filter-input w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                               data-filter="max_price"
+                               min="{{ filter.data.min }}"
+                               max="{{ filter.data.max }}"
+                               value="{{ current_price }}"
+                               step="10000">
+                        <div class="flex justify-between text-xs text-gray-600 font-medium">
+                            <span>0 تومان</span>
+                            <span id="price-value" class="text-blue-600 font-bold">تا {{ current_price|money_format }}</span>
+                        </div>
+                    </div>
+                    {% endwith %}
 
-                    <label>
-                        <input type="checkbox"
-                               class="filter-input"
-                               data-filter="{{ filter.key }}" value="{{ value }}"
-                               {% if value|is_in_list:current_selections|get_item:filter.key %}checked{% endif %}
-                        >
-                        {{ value }}
+                {% elif filter.key == 'brand' %}
+                    <div class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                        {% for brand in filter.data %}
+                            <label class="flex items-center gap-2 cursor-pointer group/item">
+                                <input type="checkbox"
+                                       class="filter-input w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                       data-filter="brand"
+                                       value="{{ brand.id }}"
+                                       {% if brand.id|is_in_list:current_selections.brand %}checked{% endif %}>
+                                <span class="text-sm text-gray-600 group-hover/item:text-gray-900 transition-colors">{{ brand.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
 
-                    </label>
+                {% elif filter.key == 'color' %}
+                    <div class="flex flex-wrap gap-2">
+                        {% for color in filter.data %}
+                            <label class="cursor-pointer group/color relative" title="{{ color.name }}">
+                                <input type="checkbox"
+                                       class="filter-input peer sr-only"
+                                       data-filter="color"
+                                       value="{{ color.id }}"
+                                       {% if color.id|is_in_list:current_selections.color %}checked{% endif %}>
+                                <div class="w-6 h-6 rounded-full border border-gray-200 shadow-sm peer-checked:ring-2 peer-checked:ring-offset-1 peer-checked:ring-blue-500 transition-all"
+                                     style="background-color: #{{ color.hex_code }}"></div>
+                                <span class="absolute inset-0 flex items-center justify-center text-white text-xs opacity-0 peer-checked:opacity-100 drop-shadow-md">✓</span>
+                            </label>
+                        {% endfor %}
+                    </div>
 
-                {% endfor %}
+                {% elif filter.type == 'dynamic' %}
+                    <div class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                        {% for value in filter.data %}
+                            <label class="flex items-center gap-2 cursor-pointer group/item">
+                                <input type="checkbox"
+                                       class="filter-input w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                       data-filter="{{ filter.key }}"
+                                       value="{{ value }}"
+                                       {% if value|is_in_list:current_selections|get_item:filter.key %}checked{% endif %}>
+                                <span class="text-sm text-gray-600 group-hover/item:text-gray-900 transition-colors">{{ value }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
 
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
-    </div>
-{% endfor %}
+    {% endfor %}
+</div>

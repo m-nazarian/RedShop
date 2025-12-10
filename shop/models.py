@@ -117,6 +117,17 @@ class Product(models.Model):
         return self.comments.filter(active=True).count()
 
 
+    def get_discount_percent(self):
+        """
+        محاسبه درصد تخفیف بر اساس قیمت اصلی و مبلغ تخفیف
+        """
+        if self.price > 0 and self.off > 0:
+            # فرمول: (تخفیف تقسیم بر قیمت) ضرب در ۱۰۰
+            percent = (self.off / self.price) * 100
+            return int(percent)  # برگرداندن عدد صحیح (مثلا 20)
+        return 0
+
+
     class Meta:
         ordering = ['-created']
         indexes = [

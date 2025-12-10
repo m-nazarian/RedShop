@@ -1,66 +1,82 @@
 {% load custom_filters %}
+{% load comment_tags %}
 
-{% for product in products %}
-    <div class="product-card">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for product in products %}
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 hover:shadow-xl transition-all duration-300 group relative flex flex-col h-full overflow-hidden">
 
-        <div class="product-item ... relative group">
-            <button onclick="toggleFavorite('{{ product.id }}', this)"
-                class="absolute top-3 left-3 p-2 rounded-full bg-white/50 hover:bg-white shadow-sm transition-all duration-200 z-10 group/heart">
+            <div class="relative mb-4 aspect-square bg-gray-50 rounded-xl overflow-hidden group/img">
 
-                {% is_favorited product request.user as favorited %}
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="w-6 h-6 transition-colors duration-300 {% if favorited %}text-red-500 fill-red-500{% else %}text-gray-400 hover:text-red-400{% endif %}"
-                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-            </button>
-        </div>
-        <button onclick="addToCompare('{{ product.id }}')" class="..." title="مقایسه">⚖️</button>
-
-        <div class="product-image-container">
-            <a href="{{ product.get_absolute_url }}">
-                {% if product.images.first %}
-                    <img class="list-img" src="{{ product.images.first.file.url }}" alt="{{ product.name }}">
-                {% endif %}
-            </a>
-
-            {% if product.colors.exists %}
-            <div class="product-colors-badge">
-                {% for color in product.colors.all|slice:":4" %} <span class="color-dot__list"
-                          style="background-color: {{ '#' |add:color.hex_code }};"
-                          title="{{ color.name }}">
-                    </span>
-                {% endfor %}
-                {% if product.colors.count > 4 %}
-                    <span class="color-plus__list">+</span>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-
-        <a href="{{ product.get_absolute_url }}">
-            <h4 class="list-name">{{ product.name|fa_number }}</h4>
-        </a>
-
-
-            <div class="flex items-center gap-1 text-xs text-gray-500 mb-2">
-                {% with avg=product.get_average_score count=product.get_review_count %}
-                    {% if count > 0 %}
-                        <span class="text-yellow-400 text-sm">★</span>
-                        <span class="font-bold text-gray-700">{{ avg|fa_number }}</span>
-                        <span class="text-gray-400">({{ count|fa_number }})</span>
+                <a href="{{ product.get_absolute_url }}" class="flex items-center justify-center w-full h-full">
+                    {% if product.images.first %}
+                        <img src="{{ product.images.first.file.url }}" alt="{{ product.name }}" class="w-full h-full object-contain mix-blend-multiply group-hover/img:scale-105 transition-transform duration-500">
+                    {% else %}
+                        <span class="text-4xl opacity-30">📷</span>
                     {% endif %}
-                {% endwith %}
+                </a>
+
+                {% if product.off %}
+                    <span class="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm z-10 pointer-events-none">
+                        {{ product.get_discount_percent|fa_number }}%
+                    </span>
+                {% endif %}
+
+                <div class="absolute top-2 left-2 flex flex-col gap-2 z-20">
+
+                    <button onclick="event.stopPropagation(); toggleFavorite('{{ product.id }}', this);"
+                            class="p-2 rounded-full bg-white/90 hover:bg-white shadow-sm transition-all duration-200 opacity-0 group-hover/img:opacity-100 -translate-x-4 group-hover/img:translate-x-0 cursor-pointer text-gray-400 hover:text-red-500"
+                            title="افزودن به علاقه‌مندی‌ها">
+                        {% is_favorited product request.user as favorited %}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-colors {% if favorited %}text-red-500 fill-red-500{% else %}fill-none{% endif %}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </button>
+
+                    <button onclick="event.stopPropagation(); addToCompare('{{ product.id }}');"
+                            class="p-2 rounded-full bg-white/90 hover:bg-white shadow-sm transition-all duration-200 opacity-0 group-hover/img:opacity-100 -translate-x-4 group-hover/img:translate-x-0 delay-75 cursor-pointer text-gray-400 hover:text-blue-600"
+                            title="مقایسه محصول">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                        </svg>
+                    </button>
+
+                </div>
             </div>
 
-        <div class="price-section">
-             {% if product.off > 0 %}
-                <div class="old-price">{{ product.price | money_format }} تومان</div>
-             {% endif %}
-            <p class="discounted-price">{{ product.new_price | money_format }} تومان</p>
+            <div class="flex-1 flex flex-col px-1">
+                <h4 class="text-sm font-bold text-gray-800 leading-6 line-clamp-2 mb-2 group-hover:text-blue-600 transition-colors h-12 pt-1">
+                    <a href="{{ product.get_absolute_url }}">{{ product.name|fa_number }}</a>
+                </h4>
+
+                <div class="flex items-center gap-1 text-xs text-gray-400 mb-3">
+                    {% with avg=product.get_average_score count=product.get_review_count %}
+                        {% if count > 0 %}
+                            <span class="text-yellow-400 text-sm">★</span>
+                            <span class="font-bold text-gray-600">{{ avg|fa_number }}</span>
+                            <span class="text-gray-300">({{ count|fa_number }})</span>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <div class="mt-auto pt-3 flex flex-col border-t border-gray-50">
+                    <div class="flex flex-col items-end">
+                        <span class="text-lg font-bold text-gray-900">
+                            {{ product.new_price|money_format }} <span class="text-xs font-normal text-gray-500">تومان</span>
+                        </span>
+                        {% if product.off %}
+                            <span class="text-xs text-gray-400 line-through decoration-gray-300 mt-0.5">
+                                {{ product.price|money_format }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
-{% empty %}
-    <p class="no-result">هیچ محصولی مطابق فیلترها یافت نشد.</p>
-{% endfor %}
+    {% empty %}
+        <div class="col-span-full text-center py-20 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 w-full">
+            <div class="text-6xl mb-4 opacity-50">🔍</div>
+            <p class="text-gray-500">هیچ محصولی با این مشخصات یافت نشد.</p>
+        </div>
+    {% endfor %}
+</div>

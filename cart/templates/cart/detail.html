@@ -157,45 +157,41 @@
     </div>
 </main>
 
-<script src="{% static 'jquery.min.js' %}"></script>
+<script src="{% static '/jquery.min.js' %}"></script>
 <script>
-    // تابع تبدیل عدد به فرمت فارسی (سه‌رقم سه‌رقم)
+    // توابع کمکی تبدیل عدد
     function toPersianNumberWithCommas(n) {
         if (n === null || n === undefined) return "0";
         const numStr = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         return numStr.replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
     }
 
-    // تابع تبدیل عدد فارسی به انگلیسی برای محاسبات احتمالی
-    function toEnglishDigits(str) {
-        return str.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+    // تابع ساده فقط برای تبدیل رقم (برای بج هدر)
+    function toPersianNum(num) {
+        return num.toString().replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
     }
 
     $(document).ready(function(){
 
-        // افزایش تعداد
+        // هندل کردن دکمه‌ها
         $('.quantity-add').on('click', function(){
             const itemContainer = $(this).closest('.product-item');
-            const itemId = itemContainer.data('item-id');
-            updateQuantity(itemId, 'add');
+            updateQuantity(itemContainer.data('item-id'), 'add');
         });
 
-        // کاهش تعداد
         $('.quantity-decrease').on('click', function(){
             const itemContainer = $(this).closest('.product-item');
-            const itemId = itemContainer.data('item-id');
-            updateQuantity(itemId, 'decrease');
+            updateQuantity(itemContainer.data('item-id'), 'decrease');
         });
 
-        // حذف آیتم
         $('.quantity-remove').on('click', function(){
-            const itemContainer = $(this).closest('.product-item');
-            const itemId = itemContainer.data('item-id');
+            const itemId = $(this).closest('.product-item').data('item-id');
             if(confirm('آیا از حذف این محصول اطمینان دارید؟')) {
                 removeItem(itemId);
             }
         });
 
+        // تابع اصلی آپدیت تعداد
         function updateQuantity(itemId, action){
             $.ajax({
                 type: 'POST',
@@ -207,30 +203,51 @@
                 },
                 success: function(response){
                     if (response.success){
-                        // آپدیت تعداد و قیمت کل همان آیتم
+                        // 1. آپدیت المان‌های داخل صفحه سبد خرید
                         $('#item-quantity-'+ itemId).text(toPersianNumberWithCommas(response.quantity));
                         $('#item-total-'+ itemId).text(toPersianNumberWithCommas(response.item_total));
 
-                        // آپدیت خلاصه سبد (جمع کل، هزینه پست، مبلغ نهایی)
-                        $('#item_count').text(toPersianNumberWithCommas(response.item_count));
+                        // آپدیت خلاصه فاکتور
                         $('#item-total-price').text(toPersianNumberWithCommas(response.total_price));
                         $('#item-post-price').text(toPersianNumberWithCommas(response.post_price));
                         $('#item-final-price').text(toPersianNumberWithCommas(response.final_price));
 
-                        // نکته: اگر تخفیف دارید، چون درصد ثابت است، با تغییر قیمت کل، مبلغ تخفیف هم عوض می‌شود.
-                        // اگر بخواهید آن را هم آپدیت کنید، باید از سرور مبلغ جدید تخفیف را هم بفرستید.
                         if (response.discount_amount) {
                              $('#discount-amount-display').text(toPersianNumberWithCommas(response.discount_amount));
                         }
 
+                        // 2. آپدیت بج قرمز رنگ در هدر (هماهنگ با main.js)
+                        const headerBadge = $('#header-cart-count');
+                        if(headerBadge.length) {
+                            headerBadge.text(toPersianNum(response.item_count));
+                            if(response.item_count > 0) headerBadge.removeClass('hidden');
+                            else headerBadge.addClass('hidden');
+                        }
+
+                        // 3. آپدیت تعداد در تیتر سبد خرید
+                        $('#item_count').text(toPersianNumberWithCommas(response.item_count));
+
+
                     } else {
-                        // نمایش ارور زیبا با تست (Toast) یا الرت
-                        alert(response.error || 'خطا در بروزرسانی سبد خرید');
+                        // نمایش پیام خطا با showToast یا آلرت
+                        if (typeof showToast === 'function') {
+                            showToast(response.error || 'خطا در بروزرسانی سبد خرید', 'error');
+                        } else {
+                            alert(response.error || 'خطا در بروزرسانی سبد خرید');
+                        }
                     }
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    // تلاش برای نمایش پیام خطای سرور
+                    let msg = 'خطایی رخ داد.';
+                    if(xhr.responseJSON && xhr.responseJSON.error) msg = xhr.responseJSON.error;
+                    if (typeof showToast === 'function') showToast(msg, 'error');
                 }
             });
         }
 
+        // تابع حذف آیتم
         function removeItem(itemId){
             $.ajax({
                 type: 'POST',
@@ -241,15 +258,22 @@
                 },
                 success: function(response){
                     if (response.success){
-                        // حذف آنی المنت از صفحه
+                        // حذف بصری
                         $(`.product-item[data-item-id=${itemId}]`).fadeOut(300, function(){ $(this).remove(); });
 
-                        // آپدیت خلاصه
+                        // آپدیت خلاصه فاکتور
                         $('#item-total-price').text(toPersianNumberWithCommas(response.total_price));
                         $('#item-post-price').text(toPersianNumberWithCommas(response.post_price));
                         $('#item-final-price').text(toPersianNumberWithCommas(response.final_price));
 
-                        // اگر سبد خالی شد ریلود کن تا پیام "سبد خالی" بیاید
+                        // آپدیت بج هدر
+                        const headerBadge = $('#header-cart-count');
+                        if(headerBadge.length) {
+                            headerBadge.text(toPersianNum(response.item_count));
+                            if(response.item_count === 0) headerBadge.addClass('hidden');
+                        }
+
+                        // ریلود اگر خالی شد
                         if(response.item_count === 0) {
                             setTimeout(() => location.reload(), 500);
                         }
