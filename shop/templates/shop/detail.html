@@ -1,197 +1,272 @@
 {% extends 'parent/base.html' %}
 {% load static %}
 {% load custom_filters %}
-{% block title %}product detail{% endblock %}
+{% load comment_tags %}
+
+{% block title %}{{ product.name }} | فروشگاه من{% endblock %}
 
 {% block content %}
-    <div class="product-container">
+<main class="bg-gray-50 min-h-screen py-8">
+    <div class="w-full max-w-[1440px] mx-auto px-4 lg:px-6 xl:px-8">
 
-        <div class="product-wrapper">
-            <div class="product-detail">
-                <h2>{{ product.name|fa_number }}</h2>
-                <p class="product-detail-category">دسته بندی: {{ product.category }}</p>
+        <nav class="text-sm text-gray-500 mb-6 flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <a href="{% url 'shop:index' %}" class="hover:text-blue-600 transition-colors">خانه</a>
+            <span class="text-gray-300">/</span>
+            <a href="{% url 'shop:product_list' %}" class="hover:text-blue-600 transition-colors">محصولات</a>
+            <span class="text-gray-300">/</span>
+            <a href="{{ product.category.get_absolute_url }}" class="hover:text-blue-600 transition-colors">{{ product.category.name }}</a>
+            <span class="text-gray-300">/</span>
+            <span class="text-gray-800 font-medium truncate max-w-[200px]">{{ product.name }}</span>
+        </nav>
 
-                <div class="product-colors">
-                    <div class="product-colors__div">
-                        {% for color in product.colors.all %}
-                            <span class="color-dot" title="{{ color.name }}" style="background: {{ '#'|add:color.hex_code }}"></span>
-                            <p>{{ color.name }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 items-start divide-y lg:divide-y-0 lg:divide-x lg:divide-x-reverse divide-gray-100">
 
-                <div class="product-show">
-                    <p class="product-detail-inventory">موجودی: {{ product.inventory|fa_number }}</p>
-                    <ul class="product-detail-features">
-                        {% for f in product.features.all %}
-                        <li class="product-detail-features-list">{{ f.name }}: {{ f.value }}</li>
-                        {% endfor %}
-                    </ul>
-                        <div class="price__detail">
-                            <span class="original-price">قیمت:{{ product.price|money_format }} تومان</span>
+                <div class="lg:col-span-5 p-6 relative min-w-0">
 
-                            <span class="discounted-price-d">قیمت پس از تخفیف{{ product.new_price|money_format }} تومان</span>
-                        </div>
-
-                        <button type="button" id="add_cart"
-                            data-url="{% url 'cart:add_to_cart' product.id %}"
-                            class="add-cart__button">
-                            افزودن به سبد خرید🛒
+                    <div class="absolute top-6 left-6 z-10 flex flex-col gap-3">
+                        <button onclick="toggleFavorite('{{ product.id }}', this)"
+                                class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 shadow-sm transition-all group">
+                            {% is_favorited product request.user as favorited %}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 transition-colors {% if favorited %}text-red-500 fill-red-500{% else %}group-hover:fill-red-50{% endif %}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
                         </button>
+                    </div>
 
-                <button onclick="toggleFavorite('{{ product.id }}', this)"
-                        class="border border-gray-200 rounded-xl p-3 hover:bg-red-50 hover:border-red-200 transition-all group">
-
-                    {% is_favorited product request.user as favorited %}
-
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         class="w-6 h-6 transition-colors {% if favorited %}text-red-500 fill-red-500{% else %}text-gray-400 group-hover:text-red-500{% endif %}"
-                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                </button>
-
-                </div>
-            </div>
-
-            <div class="product-images">
-
-                <div class="main-image-wrapper">
-                    <img id="main-image" src="{{ product.images.first.file.url }}" class="main-image" alt="Main Product Image">
-                </div>
-
-                <div class="thumbnails-container">
-                    {% for img in product.images.all %}
-                        <img src="{{ img.file.url }}" class="page-thumbnail" alt="Thumbnail">
-                    {% endfor %}
-                </div>
-
-            </div>
-
-                {#========================================#}
-                {#--------------Lightbox------------------#}
-                {#========================================#}
-            <div id="lightbox" class="lightbox">
-                <span class="close-lightbox">&times;</span>
-
-                <div class="lightbox-nav prev-btn">&#10094;</div>
-                <div class="lightbox-nav next-btn">&#10095;</div>
-
-                <div class="lightbox-slider-container">
-                    <div class="lightbox-track" id="track">
-                        </div>
-                </div>
-
-                <div class="lightbox-bottom-strip">
-                    <div class="lightbox-thumbnails" id="lightbox-thumbnails">
-                        </div>
-                </div>
-
-                <div class="lightbox-counter"></div>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="product-description">
-        <h3>توضیحات محصول</h3>
-        <p>{{ product.description|fa_number }}</p>
-    </div>
-        <h3 class="product-detail__info">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="arrow-product">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
-</svg>
-             مشخصات کالا
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="arrow-product">
-  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 5.25 7.5 7.5 7.5-7.5m-15 6 7.5 7.5 7.5-7.5" />
-</svg>
-        </h3>
-        <div class="product-specs">
-        {% for group, features in grouped_features.items %}
-            <div class="spec-group">
-
-            <button type="button" class="collapsible-group">{{ group }}</button>
-            <div class="content">
-
-                <table class="spec-table">
-                    {% for f in features %}
-                        <tr>
-                            <td class="spec-name">{{ f.name|fa_number }}</td>
-                            <td class="spec-value">{{ f.value|fa_number }}</td>
-                        </tr>
-                    {% endfor %}
-                </table>
-
-            </div>
-
-            </div>
-        {% endfor %}
-    </div>
-
-<div class="p-5">
-    {% include 'partials/product_comments.html' with form=comment_form %}
-</div>
-
-
-
-{% if related_products %}
-<div class="mt-16 mb-8">
-
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-xl font-bold text-gray-800 border-r-4 border-red-500 pr-3">
-            محصولات مشابه
-        </h3>
-        <a href="{% url 'shop:product_list_by_category' product.category.slug %}" class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
-            مشاهده همه
-            <span>←</span>
-        </a>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 p-5">
-        {% for related in related_products %}
-            <div class="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 group relative">
-
-                <div class="relative aspect-square mb-4 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
-                    <a href="{{ related.get_absolute_url }}">
-                        {% if related.images.first %}
-                            <img src="{{ related.images.first.file.url }}" alt="{{ related.name }}" class="object-contain w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-300">
+                    <div class="w-full aspect-square mb-4 flex items-center justify-center cursor-zoom-in group" id="main-image-container">
+                        {% if product.images.first %}
+                            <img id="main-image" src="{{ product.images.first.file.url }}" alt="{{ product.name }}"
+                                 class="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105">
                         {% else %}
-                            <span class="text-4xl">📷</span>
+                            <span class="text-8xl opacity-10">📷</span>
                         {% endif %}
-                    </a>
+                    </div>
 
-                    {% if related.off %}
-                        <span class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            {{ related.off }} تومان
-                        </span>
+                    {% if product.images.all|length > 1 %}
+                        <div class="flex gap-2 overflow-x-auto hide-scrollbar justify-center py-2 px-1">
+                            {% for img in product.images.all %}
+                                <div class="page-thumbnail w-16 h-16 sm:w-20 sm:h-20 rounded-xl border-2 border-transparent hover:border-blue-500 cursor-pointer overflow-hidden bg-white p-1 flex-shrink-0 transition-all {% if forloop.first %}active-thumb border-blue-500{% endif %}">
+                                    <img src="{{ img.file.url }}" class="w-full h-full object-contain pointer-events-none">
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% endif %}
                 </div>
 
-                <div class="space-y-2">
-                    <h4 class="font-bold text-gray-800 text-sm leading-6 h-12 overflow-hidden">
-                        <a href="{{ related.get_absolute_url }}" class="hover:text-blue-600 transition-colors">
-                            {{ related.name|fa_number }}
-                        </a>
-                    </h4>
+                <div class="lg:col-span-4 p-6 lg:p-8 flex flex-col min-w-0 h-full">
+                    <div class="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                        <span class="text-blue-600 font-bold">{{ product.brand.name }}</span>
+                        <span>/</span>
+                        <span>{{ product.category.name }}</span>
+                    </div>
 
-                    <div class="flex items-end justify-between mt-2">
-                        <div class="flex flex-col">
-                            {% if related.off %}
-                                <span class="text-xs text-gray-400 line-through">{{ related.price|money_format }}</span>
+                    <h1 class="text-xl font-bold text-gray-900 leading-relaxed mb-6 break-words">
+                        {{ product.name|fa_number }}
+                    </h1>
+
+                    <div class="mb-8 flex-grow">
+                        <h4 class="text-sm font-bold text-gray-700 mb-3">ویژگی‌های برتر:</h4>
+                        <ul class="space-y-2">
+                            {% for group, features in grouped_features.items %}
+                                {% for f in features|slice:":4" %}
+                                    <li class="flex items-baseline text-sm text-gray-600">
+                                        <span class="w-2 h-2 rounded-full bg-gray-300 ml-2 block"></span>
+                                        <span class="text-gray-500 ml-1">{{ f.name }}:</span>
+                                        <span class="font-medium text-gray-800 truncate">{{ f.value|fa_number }}</span>
+                                    </li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    {% if product.colors.exists %}
+                        <div class="mt-auto pt-6 border-t border-gray-100">
+                            <h4 class="text-sm font-bold text-gray-700 mb-3">رنگ: <span id="selected-color-name" class="text-blue-600 font-normal">{{ product.colors.first.name }}</span></h4>
+                            <div class="flex flex-wrap gap-3">
+                                {% for color in product.colors.all %}
+                                    <label class="cursor-pointer group relative">
+                                        <input type="radio" name="color" value="{{ color.id }}" class="peer sr-only" {% if forloop.first %}checked{% endif %}>
+                                        <div class="w-8 h-8 rounded-full shadow-sm border border-gray-200 peer-checked:border-blue-600 peer-checked:ring-1 peer-checked:ring-blue-500 transition-all flex items-center justify-center relative overflow-hidden"
+                                             style="background-color: #{{ color.hex_code }}"
+                                             onclick="document.getElementById('selected-color-name').innerText='{{ color.name }}'">
+                                            {% if color.hex_code|lower == 'ffffff' %}
+                                                <svg class="w-4 h-4 text-gray-400 opacity-0 peer-checked:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                            {% else %}
+                                                <svg class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                            {% endif %}
+                                        </div>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="lg:col-span-3 p-6 lg:bg-gray-50 min-w-0 h-full">
+                    <div class="lg:sticky lg:top-24 space-y-6">
+
+                        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                                <span class="font-bold text-gray-700 text-sm">فروشنده</span>
+                                <div class="flex items-center gap-1 text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded">
+                                    <span>🛍️</span>
+                                    <span>فروشگاه من</span>
+                                </div>
+                            </div>
+
+                            {% if product.inventory > 0 %}
+                                <div class="flex items-center gap-3 text-sm text-gray-700 mb-6">
+                                    <span class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    </span>
+                                    <div>
+                                        <p class="font-bold text-gray-800">موجود در انبار</p>
+                                        <p class="text-xs text-gray-400">آماده ارسال</p>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="flex items-center gap-2 text-red-500 text-sm font-bold mb-6 bg-red-50 p-3 rounded-lg">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    <span>ناموجود</span>
+                                </div>
                             {% endif %}
-                            <span class="text-base font-bold text-gray-900">{{ related.new_price|money_format }} <span class="text-xs font-normal text-gray-500">تومان</span></span>
+
+                            <div class="mb-6 text-left">
+                                {% if product.off %}
+                                    <div class="flex items-center justify-end gap-2 mb-1">
+                                        <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{{ product.off|fa_number }}%</span>
+                                        <span class="text-gray-400 text-xs line-through decoration-gray-400">{{ product.price|money_format }}</span>
+                                    </div>
+                                {% endif %}
+                                <div class="flex items-center justify-end gap-1 flex-wrap">
+                                    <span class="text-2xl font-extrabold text-gray-900 tracking-tight">{{ product.new_price|money_format }}</span>
+                                    <span class="text-xs font-bold text-gray-500 mt-1">تومان</span>
+                                </div>
+                            </div>
+
+                            {% if product.inventory > 0 %}
+                                <button id="add_cart"
+                                        data-url="{% url 'cart:add_to_cart' product.id %}"
+                                        class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer group text-sm">
+                                    <span>افزودن به سبد خرید</span>
+                                </button>
+                            {% else %}
+                                <button disabled class="w-full bg-gray-100 text-gray-400 font-bold py-3 px-4 rounded-xl cursor-not-allowed text-sm border border-gray-200">
+                                    خبرم کن
+                                </button>
+                            {% endif %}
                         </div>
 
-                        <a href="{{ related.get_absolute_url }}" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
-                            +
-                        </a>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                            <div class="grid grid-cols-2 gap-3 text-[10px] text-gray-500 font-medium">
+                                <div class="flex flex-col items-center gap-1 text-center">
+                                    <span class="text-lg grayscale opacity-70">🛡️</span>
+                                    <span>۷ روز ضمانت</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1 text-center">
+                                    <span class="text-lg grayscale opacity-70">🚀</span>
+                                    <span>ارسال سریع</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1 text-center">
+                                    <span class="text-lg grayscale opacity-70">💎</span>
+                                    <span>تضمین اصالت</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1 text-center">
+                                    <span class="text-lg grayscale opacity-70">💳</span>
+                                    <span>پرداخت امن</span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
             </div>
-        {% endfor %}
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-12">
+            <div class="flex border-b border-gray-200 overflow-x-auto hide-scrollbar">
+                <button onclick="switchTab('desc')" id="tab-btn-desc" class="tab-button active px-6 lg:px-8 py-4 text-sm font-bold text-gray-500 hover:text-blue-600 border-b-2 border-transparent transition-all whitespace-nowrap cursor-pointer">
+                    توضیحات محصول
+                </button>
+                <button onclick="switchTab('specs')" id="tab-btn-specs" class="tab-button px-6 lg:px-8 py-4 text-sm font-bold text-gray-500 hover:text-blue-600 border-b-2 border-transparent transition-all whitespace-nowrap cursor-pointer">
+                    مشخصات فنی
+                </button>
+                <button onclick="switchTab('comments')" id="tab-btn-comments" class="tab-button px-6 lg:px-8 py-4 text-sm font-bold text-gray-500 hover:text-blue-600 border-b-2 border-transparent transition-all whitespace-nowrap cursor-pointer">
+                    دیدگاه کاربران <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs mr-1">{{ product.comments.count|fa_number }}</span>
+                </button>
+            </div>
+
+            <div class="p-6 lg:p-10 min-h-[300px]">
+                <div id="tab-content-desc" class="tab-content block animate-fade-in">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 border-r-4 border-blue-500 pr-3">نقد و بررسی</h3>
+                    <div class="prose max-w-none text-gray-600 leading-8 text-justify">
+                        {{ product.description|linebreaks|fa_number }}
+                    </div>
+                </div>
+
+                <div id="tab-content-specs" class="tab-content hidden animate-fade-in">
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 border-r-4 border-blue-500 pr-3">مشخصات فنی</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6">
+                        {% for group, features in grouped_features.items %}
+                            <div class="break-inside-avoid">
+                                <h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> {{ group }}
+                                </h4>
+                                <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                                    {% for f in features %}
+                                        <div class="flex justify-between px-4 py-3 border-b border-gray-200 last:border-0 hover:bg-gray-100 transition-colors">
+                                            <span class="text-gray-500 text-sm w-1/3">{{ f.name }}</span>
+                                            <span class="text-gray-800 text-sm font-medium w-2/3 text-left">{{ f.value|fa_number }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="tab-content-comments" class="tab-content hidden animate-fade-in">
+                    {% include 'partials/product_comments.html' with form=comment_form comments=comments %}
+                </div>
+            </div>
+        </div>
+
+        {% if related_products %}
+             {% include 'partials/product_slider.html' with title="محصولات مشابه" products=related_products %}
+        {% endif %}
+
     </div>
-</div>
-{% endif %}
+
+    <div id="lightbox" class="fixed inset-0 z-[60] bg-black/95 hidden items-center justify-center p-4 backdrop-blur-sm">
+        <button class="close-lightbox absolute top-5 right-5 text-white/70 hover:text-white text-4xl transition-colors cursor-pointer">✕</button>
+        <div class="relative w-full max-w-5xl h-[85vh] flex flex-col items-center justify-center">
+            <div id="track" class="flex-1 w-full flex items-center justify-center overflow-hidden relative"></div>
+            <button class="prev-btn absolute left-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-5xl p-2 hover:bg-white/10 rounded-full transition-all cursor-pointer">❯</button>
+            <button class="next-btn absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white text-5xl p-2 hover:bg-white/10 rounded-full transition-all cursor-pointer">❮</button>
+            <div id="lightbox-thumbnails" class="h-20 mt-4 flex gap-2 overflow-x-auto hide-scrollbar w-full justify-center"></div>
+            <div class="lightbox-counter text-white/50 mt-2 font-mono text-sm"></div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .tab-button.active { color: #2563eb; border-bottom-color: #2563eb; background-color: #eff6ff; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+</style>
+
+<script src="{% static 'js/detail.js' %}"></script>
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        const target = document.getElementById(`tab-content-${tabId}`);
+        target.classList.remove('hidden');
+    }
+</script>
 {% endblock %}

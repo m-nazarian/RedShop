@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // ✅✅✅ تغییر حیاتی اینجاست: ✅✅✅
         // خواندن اسلاگ دسته‌بندی از اینپوت مخفی و اضافه کردن به درخواست
         const catInput = document.getElementById("page-category-slug");
         if (catInput && catInput.value) {
@@ -67,7 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateProducts = () => {
         const selected = getSelectedFilters();
 
-        // اضافه کردن لودینگ (اختیاری ولی خوبه)
         productContainer.style.opacity = '0.5';
 
         fetch("/products/filter/", {
