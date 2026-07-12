@@ -220,16 +220,14 @@ class OrderLifecycleService:
                 changed = True
 
             if changed:
-                # این به‌روزرسانی عمداً با QuerySet.update انجام می‌شود.
-                # سیگنال‌های قدیمی سفارش هم هنگام تغییر وضعیت لغو، موجودی را برمی‌گردانند.
-                # اگر اینجا از save استفاده شود، موجودی دوبار آزاد می‌شود.
-                Order.objects.filter(id=order.id).update(
-                    status=order.status,
-                    stock_released=order.stock_released,
-                    canceled_at=order.canceled_at,
-                    notes=order.notes,
-                    updated=timezone.now(),
+                order.save(
+                    update_fields=[
+                        "status",
+                        "stock_released",
+                        "canceled_at",
+                        "notes",
+                        "updated",
+                    ]
                 )
-                order.refresh_from_db()
 
             return order, changed

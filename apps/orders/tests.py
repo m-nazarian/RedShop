@@ -201,3 +201,29 @@ class PaymentLifecycleTests(CheckoutSecurityTests):
         self.assertTrue(order.stock_released)
         self.assertEqual(payment_transaction.status, "canceled")
         self.assertEqual(self.product.inventory, 10)
+
+
+    def test_plain_status_change_does_not_touch_inventory(self):
+        order = self._create_online_order()
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory, 8)
+
+        order.status = "canceled"
+        order.save(update_fields=["status", "updated"])
+
+        self.product.refresh_from_db()
+        order.refresh_from_db()
+
+        self.assertEqual(self.product.inventory, 8)
+        self.assertFalse(order.stock_released)
+
+        OrderLifecycleService.cancel_unpaid_order(
+            order.id,
+            reason="لغو آزمایشی بعد از تغییر وضعیت دستی",
+        )
+
+        self.product.refresh_from_db()
+        order.refresh_from_db()
+
+        self.assertEqual(self.product.inventory, 10)
+        self.assertTrue(order.stock_released)
