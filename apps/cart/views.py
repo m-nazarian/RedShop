@@ -1,46 +1,72 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from apps.shop.models import Product
-from .cart import Cart
-from apps.coupons.forms import CouponApplyForm
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.views.decorators.http import require_POST
 
+from apps.coupons.forms import CouponApplyForm
+from apps.shop.models import Product
+
+from .cart import Cart
+
+
+def _product_queryset():
+    return Product.objects.select_related(
+        'category',
+        'brand',
+    ).prefetch_related(
+        'images',
+    )
+
+
+def _cart_totals_payload(cart):
+    return {
+        'item_count': len(cart),
+        'total_price': cart.get_total_price(),
+        'final_price': cart.get_final_price(),
+        'post_price': cart.get_post_price_if_any(),
+    }
+
+
+def _json_error(message, *, status=400):
+    return JsonResponse(
+        {
+            'success': False,
+            'error': message,
+        },
+        status=status,
+    )
 
 
 @require_POST
 def add_to_cart(request, product_id):
     cart = Cart(request)
-    product = get_object_or_404(Product.objects.select_related('category', 'brand').prefetch_related('images'), id=product_id)
+    product = get_object_or_404(_product_queryset(), id=product_id)
 
-    # 1. بررسی موجودی کلی محصول
     if product.inventory <= 0:
-        return JsonResponse({'error': 'موجودی این محصول تمام شده است!'}, status=400)
+        return _json_error('موجودی این محصول تمام شده است.', status=400)
 
-    # 2. بررسی اینکه آیا کاربر بیشتر از موجودی انبار دارد به سبد اضافه می‌کند؟
-    product_id_str = str(product_id)
-    current_qty_in_cart = 0
-    if product_id_str in cart.cart:
-        current_qty_in_cart = cart.cart[product_id_str]['quantity']
+    product_id_str = str(product.id)
+    current_qty_in_cart = int(cart.cart.get(product_id_str, {}).get('quantity', 0))
 
     if current_qty_in_cart + 1 > product.inventory:
-        return JsonResponse({'error': 'تعداد درخواستی بیشتر از موجودی انبار است!'}, status=400)
+        return _json_error('تعداد درخواستی بیشتر از موجودی انبار است.', status=400)
 
-    # اگر همه چی اوکی بود، اضافه کن
-    try:
-        cart.add(product)
+    cart.add(product)
 
-        html_cart = render_to_string('partials/nav_cart.html', {'cart': cart}, request=request)
+    html_cart = render_to_string(
+        'partials/nav_cart.html',
+        {'cart': cart},
+        request=request,
+    )
 
-        context = {
-            'item_count': len(cart),
-            'total_price': cart.get_total_price(),
+    payload = _cart_totals_payload(cart)
+    payload.update(
+        {
+            'success': True,
             'html_cart': html_cart,
         }
-        return JsonResponse(context, status=200)
-    except Exception as e:
-        # اگر ارور پیش ‌بینی نشده‌ای رخ داد
-        return JsonResponse({'error': 'خطایی در افزودن محصول رخ داد.'}, status=500)
+    )
+    return JsonResponse(payload, status=200)
 
 
 def cart_detail(request):
@@ -50,56 +76,73 @@ def cart_detail(request):
         'cart': cart,
         'coupon_apply_form': coupon_apply_form,
     }
-    return render(request, 'cart/detail.html',context)
+    return render(request, 'cart/detail.html', context)
+
 
 @require_POST
 def update_quantity(request):
     item_id = request.POST.get('item_id')
     action = request.POST.get('action')
-    try:
-        product = get_object_or_404(Product.objects.select_related('category', 'brand').prefetch_related('images'), id=item_id)
-        cart = Cart(request)
-        if action == 'add':
-            cart.add(product)
-        elif action == 'decrease':
-            cart.decrease(product)
-        item = cart.cart[str(item_id)]
-        context = {
+
+    if not item_id:
+        return _json_error('شناسه محصول ارسال نشده است.', status=400)
+
+    if action not in {'add', 'decrease'}:
+        return _json_error('عملیات سبد خرید معتبر نیست.', status=400)
+
+    cart = Cart(request)
+    product = get_object_or_404(_product_queryset(), id=item_id)
+    product_id = str(product.id)
+
+    if product_id not in cart.cart:
+        return _json_error('این محصول در سبد خرید وجود ندارد.', status=404)
+
+    if action == 'add':
+        current_qty = int(cart.cart[product_id].get('quantity', 0))
+        if current_qty + 1 > product.inventory:
+            return _json_error('تعداد درخواستی بیشتر از موجودی انبار است.', status=400)
+        cart.add(product)
+    else:
+        cart.decrease(product)
+
+    item = cart.cart.get(product_id)
+    if item is None:
+        return _json_error('این محصول در سبد خرید وجود ندارد.', status=404)
+
+    payload = _cart_totals_payload(cart)
+    payload.update(
+        {
             'success': True,
-            'item_count': len(cart),
-            'total_price': cart.get_total_price(),
-            'final_price': cart.get_final_price(),
-            'post_price': cart.get_post_price_if_any(),
             'quantity': item['quantity'],
             'item_total': item['quantity'] * item['price'],
         }
-        return JsonResponse(context)
-    except:
-        return JsonResponse({'success': False, 'error': 'Item not found!'})
+    )
+    return JsonResponse(payload)
 
 
 @require_POST
 def remove_item(request):
     item_id = request.POST.get('item_id')
-    try:
-        product = get_object_or_404(Product.objects.select_related('category', 'brand').prefetch_related('images'), id=item_id)
-        cart = Cart(request)
-        cart.remove(product)
-        context = {
-            'success': True,
-            'item_count': len(cart),
-            'total_price': cart.get_total_price(),
-            'final_price': cart.get_final_price(),
-            'post_price': cart.get_post_price_if_any(),
-        }
-        return JsonResponse(context)
-    except:
-        return JsonResponse({'success': False, 'error': 'Item not found!'})
+
+    if not item_id:
+        return _json_error('شناسه محصول ارسال نشده است.', status=400)
+
+    cart = Cart(request)
+    product = get_object_or_404(_product_queryset(), id=item_id)
+    product_id = str(product.id)
+
+    if product_id not in cart.cart:
+        return _json_error('این محصول در سبد خرید وجود ندارد.', status=404)
+
+    cart.remove(product)
+
+    payload = _cart_totals_payload(cart)
+    payload['success'] = True
+    return JsonResponse(payload)
 
 
 def checkout_start(request):
-    # اگر کاربر وارد نشده → هدایت به صفحه لاگین
     if not request.user.is_authenticated:
         return redirect(f"/login/?next=/cart/checkout/")
-    # اگر وارد شده → بره به صفحه مشخصات ارسال
+
     return redirect('orders:checkout_address')

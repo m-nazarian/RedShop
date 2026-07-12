@@ -151,6 +151,84 @@ class CheckoutSecurityTests(TestCase):
         detail_response = self.client.get(self.product.get_absolute_url())
         self.assertEqual(detail_response.status_code, 200)
 
+
+
+    def test_cart_update_rejects_invalid_action(self):
+        session = self.client.session
+        session["cart"] = {
+            str(self.product.id): {
+                "quantity": 1,
+                "price": float(self.product.new_price),
+                "weight": float(self.product.weight),
+            }
+        }
+        session.save()
+
+        response = self.client.post(
+            reverse("cart:update_quantity"),
+            {"item_id": self.product.id, "action": "invalid"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["success"])
+
+    def test_cart_update_rejects_missing_item(self):
+        response = self.client.post(
+            reverse("cart:update_quantity"),
+            {"item_id": self.product.id, "action": "add"},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(response.json()["success"])
+
+    def test_cart_update_rejects_quantity_over_inventory(self):
+        session = self.client.session
+        session["cart"] = {
+            str(self.product.id): {
+                "quantity": self.product.inventory,
+                "price": float(self.product.new_price),
+                "weight": float(self.product.weight),
+            }
+        }
+        session.save()
+
+        response = self.client.post(
+            reverse("cart:update_quantity"),
+            {"item_id": self.product.id, "action": "add"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["success"])
+
+    def test_cart_remove_rejects_missing_item(self):
+        response = self.client.post(
+            reverse("cart:remove_item"),
+            {"item_id": self.product.id},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(response.json()["success"])
+
+    def test_cart_remove_existing_item(self):
+        session = self.client.session
+        session["cart"] = {
+            str(self.product.id): {
+                "quantity": 1,
+                "price": float(self.product.new_price),
+                "weight": float(self.product.weight),
+            }
+        }
+        session.save()
+
+        response = self.client.post(
+            reverse("cart:remove_item"),
+            {"item_id": self.product.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["success"])
+        self.assertEqual(response.json()["item_count"], 0)
+
 class PaymentLifecycleTests(CheckoutSecurityTests):
     def _create_online_order(self):
         self._prepare_checkout_session(with_coupon=False)
