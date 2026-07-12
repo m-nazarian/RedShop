@@ -46,13 +46,12 @@ class CheckoutService:
         if not cart.coupon_id:
             return None
 
-        now = timezone.now()
-        return Coupon.objects.filter(
-            id=cart.coupon_id,
-            active=True,
-            valid_from__lte=now,
-            valid_to__gte=now,
-        ).first()
+        return (
+            Coupon.usable_queryset()
+            .select_for_update()
+            .filter(id=cart.coupon_id)
+            .first()
+        )
 
     @staticmethod
     def _calculate_discount(subtotal, coupon):
@@ -143,6 +142,11 @@ class CheckoutService:
 
             order.subtotal = subtotal
             order.discount_amount = discount_amount
+            if coupon:
+                Coupon.objects.filter(id=coupon.id).update(
+                    used_count=F("used_count") + 1
+                )
+
             order.coupon_code = coupon.code if coupon else ""
             order.shipping_price = shipping_price
             order.post_price = shipping_price
@@ -152,6 +156,7 @@ class CheckoutService:
                     "subtotal",
                     "discount_amount",
                     "coupon_code",
+                    "coupon_released",
                     "shipping_price",
                     "post_price",
                     "total",
@@ -215,6 +220,20 @@ class OrderLifecycleService:
                 order.canceled_at = timezone.now()
                 changed = True
 
+            if (
+                order.coupon_code
+                and order.discount_amount > 0
+                and not order.coupon_released
+            ):
+                Coupon.objects.select_for_update().filter(
+                    code=order.coupon_code,
+                    used_count__gt=0,
+                ).update(
+                    used_count=F("used_count") - 1
+                )
+                order.coupon_released = True
+                changed = True
+
             if reason and reason not in (order.notes or ""):
                 order.notes = cls._append_note(order, reason)
                 changed = True
@@ -224,6 +243,7 @@ class OrderLifecycleService:
                     update_fields=[
                         "status",
                         "stock_released",
+                        "coupon_released",
                         "canceled_at",
                         "notes",
                         "updated",

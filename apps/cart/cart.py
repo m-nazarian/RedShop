@@ -67,10 +67,7 @@ class Cart:
     @property
     def coupon(self):
         if self.coupon_id:
-            try:
-                return Coupon.objects.get(id=self.coupon_id)
-            except Coupon.DoesNotExist:
-                pass
+            return Coupon.usable_queryset().filter(id=self.coupon_id).first()
         return None
 
 

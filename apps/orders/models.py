@@ -68,6 +68,11 @@ class Order(models.Model):
     subtotal = models.PositiveIntegerField(default=0, verbose_name="جمع کالاها")
     discount_amount = models.PositiveIntegerField(default=0, verbose_name="مبلغ تخفیف")
     coupon_code = models.CharField(max_length=50, blank=True, verbose_name="کد تخفیف")
+    coupon_released = models.BooleanField(
+        default=False,
+        verbose_name="مصرف کوپن آزاد شده",
+        help_text="برای جلوگیری از کم شدن چندباره شمارنده مصرف کوپن استفاده می‌شود.",
+    )
     shipping_price = models.PositiveIntegerField(default=0, verbose_name="هزینه حمل و نقل")
     post_price = models.PositiveIntegerField(default=0, verbose_name="هزینه پست")
     total = models.PositiveIntegerField(default=0, verbose_name="مبلغ قابل پرداخت")

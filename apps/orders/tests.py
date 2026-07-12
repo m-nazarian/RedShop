@@ -282,3 +282,81 @@ class PaymentLifecycleTests(CheckoutSecurityTests):
         self.assertTrue(order.stock_released)
         self.assertEqual(order.status, "canceled")
         self.assertTrue(dummy_admin.messages)
+
+
+    def test_coupon_usage_count_increases_when_order_created(self):
+        self._prepare_checkout_session(with_coupon=True)
+
+        response = self.client.post(
+            reverse("orders:checkout_create"),
+            {"payment_method": "cod"},
+        )
+
+        self.assertRedirects(response, reverse("orders:checkout_complete"))
+
+        self.coupon.refresh_from_db()
+        order = Order.objects.get(user=self.user)
+
+        self.assertEqual(self.coupon.used_count, 1)
+        self.assertEqual(order.coupon_code, self.coupon.code)
+        self.assertFalse(order.coupon_released)
+
+    def test_coupon_usage_limit_prevents_extra_discount(self):
+        self.coupon.usage_limit = 1
+        self.coupon.used_count = 1
+        self.coupon.save(update_fields=["usage_limit", "used_count"])
+
+        self._prepare_checkout_session(with_coupon=True)
+
+        response = self.client.post(
+            reverse("orders:checkout_create"),
+            {"payment_method": "cod"},
+        )
+
+        self.assertRedirects(response, reverse("orders:checkout_complete"))
+
+        order = Order.objects.get(user=self.user)
+
+        self.coupon.refresh_from_db()
+
+        self.assertEqual(order.discount_amount, 0)
+        self.assertEqual(order.coupon_code, "")
+        self.assertEqual(self.coupon.used_count, 1)
+
+    def test_cancel_unpaid_order_releases_coupon_usage_once(self):
+        self._prepare_checkout_session(with_coupon=True)
+
+        response = self.client.post(
+            reverse("orders:checkout_create"),
+            {"payment_method": "online"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        order = Order.objects.get(user=self.user, payment_method="online")
+        self.coupon.refresh_from_db()
+
+        self.assertEqual(self.coupon.used_count, 1)
+        self.assertFalse(order.coupon_released)
+
+        OrderLifecycleService.cancel_unpaid_order(
+            order.id,
+            reason="لغو آزمایشی برای آزادسازی کوپن",
+        )
+
+        self.coupon.refresh_from_db()
+        order.refresh_from_db()
+
+        self.assertEqual(self.coupon.used_count, 0)
+        self.assertTrue(order.coupon_released)
+
+        OrderLifecycleService.cancel_unpaid_order(
+            order.id,
+            reason="تلاش تکراری برای آزادسازی کوپن",
+        )
+
+        self.coupon.refresh_from_db()
+        order.refresh_from_db()
+
+        self.assertEqual(self.coupon.used_count, 0)
+        self.assertTrue(order.coupon_released)
