@@ -8,7 +8,8 @@ from account.models import Address, ShopUser
 from coupons.models import Coupon
 from shop.models import Brand, Category, Product
 
-from .models import Order
+from .models import Order, Transaction
+from .services import OrderLifecycleService
 
 
 class CheckoutSecurityTests(TestCase):
@@ -141,3 +142,62 @@ class CheckoutSecurityTests(TestCase):
             expected_subtotal - expected_discount + expected_shipping,
         )
         self.assertEqual(self.product.inventory, 8)
+
+class PaymentLifecycleTests(CheckoutSecurityTests):
+    def _create_online_order(self):
+        self._prepare_checkout_session(with_coupon=False)
+        response = self.client.post(
+            reverse("orders:checkout_create"),
+            {"payment_method": "online"},
+        )
+        self.assertEqual(response.status_code, 302)
+        return Order.objects.get(user=self.user, payment_method="online")
+
+    def test_cancel_unpaid_order_restores_stock_once(self):
+        order = self._create_online_order()
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory, 8)
+
+        canceled_order, changed = OrderLifecycleService.cancel_unpaid_order(
+            order.id,
+            reason="لغو آزمایشی پرداخت",
+        )
+        self.assertTrue(changed)
+        self.assertEqual(canceled_order.status, "canceled")
+        self.assertTrue(canceled_order.stock_released)
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory, 10)
+
+        OrderLifecycleService.cancel_unpaid_order(
+            order.id,
+            reason="لغو آزمایشی پرداخت",
+        )
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory, 10)
+
+    def test_payment_callback_cancel_releases_stock(self):
+        order = self._create_online_order()
+        payment_transaction = Transaction.objects.create(
+            order=order,
+            transaction_id="A000000000000000000000000000000001",
+            provider="zarinpal",
+            amount=order.total,
+            status="pending",
+            success=False,
+        )
+
+        response = self.client.get(
+            reverse("payment:verify"),
+            {"Authority": payment_transaction.transaction_id, "Status": "NOK"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        order.refresh_from_db()
+        payment_transaction.refresh_from_db()
+        self.product.refresh_from_db()
+
+        self.assertEqual(order.status, "canceled")
+        self.assertTrue(order.stock_released)
+        self.assertEqual(payment_transaction.status, "canceled")
+        self.assertEqual(self.product.inventory, 10)

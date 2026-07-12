@@ -53,6 +53,11 @@ class Order(models.Model):
         verbose_name="روش پرداخت",
     )
     paid = models.BooleanField(default=False, verbose_name="پرداخت شده")
+    stock_released = models.BooleanField(
+        default=False,
+        verbose_name="موجودی آزاد شده",
+        help_text="برای سفارش‌های لغوشده مشخص می‌کند موجودی کالاها قبلاً به انبار برگشته است.",
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -69,6 +74,7 @@ class Order(models.Model):
 
     created = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ثبت")
     updated = models.DateTimeField(auto_now=True, verbose_name="آخرین بروزرسانی")
+    canceled_at = models.DateTimeField(blank=True, null=True, verbose_name="زمان لغو")
     notes = models.TextField(blank=True, null=True, verbose_name="یادداشت")
 
     class Meta:
@@ -154,6 +160,13 @@ class OrderItem(models.Model):
 
 
 class Transaction(models.Model):
+    PAYMENT_STATUS_CHOICES = (
+        ("pending", "در انتظار نتیجه"),
+        ("paid", "پرداخت موفق"),
+        ("failed", "پرداخت ناموفق"),
+        ("canceled", "لغو شده"),
+    )
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -175,13 +188,25 @@ class Transaction(models.Model):
     provider = models.CharField(max_length=50, default="cod", verbose_name="درگاه پرداخت")
     amount = models.PositiveIntegerField(verbose_name="مبلغ (تومان)")
     success = models.BooleanField(default=False, verbose_name="موفق")
+    status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default="pending",
+        db_index=True,
+        verbose_name="وضعیت تراکنش",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ ایجاد")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="آخرین بروزرسانی")
     raw_response = models.JSONField(blank=True, null=True, verbose_name="پاسخ خام بانک")
 
     class Meta:
         verbose_name = "تراکنش"
         verbose_name_plural = "تراکنش‌ها"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["provider", "transaction_id"]),
+            models.Index(fields=["order", "status"]),
+        ]
 
     def __str__(self):
         return f"{self.order.order_number} - {self.amount}"

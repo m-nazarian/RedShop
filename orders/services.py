@@ -2,6 +2,7 @@ from decimal import Decimal, ROUND_DOWN
 from functools import partial
 
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from account.models import Address
@@ -165,3 +166,68 @@ class CheckoutService:
                 )
 
             return order
+
+class OrderLifecycleService:
+    """عملیات حساس چرخه سفارش را اتمیک و قابل تکرار اجرا می‌کند."""
+
+    @staticmethod
+    def _append_note(order, note):
+        current_notes = (order.notes or "").strip()
+        if not current_notes:
+            return note
+        return f"{current_notes}\n{note}"
+
+    @classmethod
+    def cancel_unpaid_order(cls, order_id, *, reason="لغو سفارش پرداخت‌نشده"):
+        """سفارش پرداخت‌نشده را لغو می‌کند و موجودی را فقط یک‌بار برمی‌گرداند."""
+        with transaction.atomic():
+            order = (
+                Order.objects.select_for_update()
+                .prefetch_related("items")
+                .get(id=order_id)
+            )
+
+            if order.paid:
+                return order, False
+
+            changed = False
+
+            if not order.stock_released:
+                items = list(order.items.all())
+                product_ids = [item.product_id for item in items]
+
+                locked_products = {
+                    product.id: product
+                    for product in Product.objects.select_for_update().filter(id__in=product_ids)
+                }
+
+                for item in items:
+                    if item.product_id in locked_products:
+                        Product.objects.filter(id=item.product_id).update(
+                            inventory=F("inventory") + item.quantity
+                        )
+
+                order.stock_released = True
+                changed = True
+
+            if order.status != "canceled":
+                order.status = "canceled"
+                order.canceled_at = timezone.now()
+                changed = True
+
+            if reason and reason not in (order.notes or ""):
+                order.notes = cls._append_note(order, reason)
+                changed = True
+
+            if changed:
+                order.save(
+                    update_fields=[
+                        "status",
+                        "stock_released",
+                        "canceled_at",
+                        "notes",
+                        "updated",
+                    ]
+                )
+
+            return order, changed

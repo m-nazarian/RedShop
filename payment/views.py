@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET
 
 from orders.emails import send_order_confirmation
 from orders.models import Order, Transaction
+from orders.services import OrderLifecycleService
 
 from .zarinpal_service import ZarinPalService
 
@@ -42,8 +43,21 @@ def payment_process(request):
             },
         )
 
+    if order.status == "canceled" or order.stock_released:
+        request.session.pop("order_id", None)
+        request.session.pop("checkout_order_id", None)
+        return render(
+            request,
+            "payment/failure.html",
+            {
+                "message": "این سفارش قبلاً لغو شده و موجودی آن به انبار برگشته است.",
+                "show_retry": False,
+            },
+        )
+
     recent_pending = order.transactions.filter(
         provider="zarinpal",
+        status="pending",
         success=False,
         transaction_id__isnull=False,
         created_at__gte=timezone.now() - timedelta(minutes=15),
@@ -66,6 +80,7 @@ def payment_process(request):
             amount=order.total,
             provider="zarinpal",
             success=False,
+            status="pending",
             raw_response={"request_status": "created"},
         )
         return redirect(response["url"])
@@ -75,10 +90,18 @@ def payment_process(request):
         order.order_number,
         response.get("code"),
     )
+    Transaction.objects.create(
+        order=order,
+        amount=order.total,
+        provider="zarinpal",
+        success=False,
+        status="failed",
+        raw_response={"request_status": "failed", "code": response.get("code")},
+    )
     return render(
         request,
         "payment/failure.html",
-        {"error_code": response.get("code")},
+        {"error_code": response.get("code"), "show_retry": True},
     )
 
 
@@ -91,7 +114,7 @@ def payment_verify(request):
         return render(
             request,
             "payment/failure.html",
-            {"message": "شناسه تراکنش ارسال نشده است."},
+            {"message": "شناسه تراکنش ارسال نشده است.", "show_retry": False},
         )
 
     payment_transaction = Transaction.objects.filter(
@@ -103,7 +126,7 @@ def payment_verify(request):
         return render(
             request,
             "payment/failure.html",
-            {"message": "تراکنش معتبر پیدا نشد."},
+            {"message": "تراکنش معتبر پیدا نشد.", "show_retry": False},
         )
 
     if payment_transaction.success:
@@ -117,30 +140,50 @@ def payment_verify(request):
         )
 
     if status != "OK":
-        payment_transaction.raw_response = {
-            "callback_status": status or "unknown",
-            "verified": False,
-        }
-        payment_transaction.save(update_fields=["raw_response"])
+        with db_transaction.atomic():
+            locked_transaction = Transaction.objects.select_for_update().get(
+                id=payment_transaction.id
+            )
+            locked_transaction.status = "canceled"
+            locked_transaction.raw_response = {
+                "callback_status": status or "unknown",
+                "verified": False,
+            }
+            locked_transaction.save(update_fields=["status", "raw_response", "updated_at"])
+
+        order, _ = OrderLifecycleService.cancel_unpaid_order(
+            payment_transaction.order_id,
+            reason="پرداخت از طرف کاربر یا درگاه لغو شد.",
+        )
+
+        if request.session.get("order_id") == order.id:
+            request.session.pop("order_id", None)
+        if request.session.get("checkout_order_id") == order.id:
+            request.session.pop("checkout_order_id", None)
+
         return render(
             request,
             "payment/failure.html",
-            {"message": "پرداخت لغو شد یا از طرف درگاه تأیید نشد."},
+            {
+                "message": "پرداخت لغو شد و موجودی سفارش به انبار برگشت.",
+                "show_retry": False,
+            },
         )
 
     zarinpal = ZarinPalService()
     response = zarinpal.verify_payment(authority, payment_transaction.amount)
 
     if not response["status"]:
+        payment_transaction.status = "failed"
         payment_transaction.raw_response = {
             "verified": False,
             "code": response.get("code"),
         }
-        payment_transaction.save(update_fields=["raw_response"])
+        payment_transaction.save(update_fields=["status", "raw_response", "updated_at"])
         return render(
             request,
             "payment/failure.html",
-            {"error_code": response.get("code")},
+            {"error_code": response.get("code"), "show_retry": False},
         )
 
     with db_transaction.atomic():
@@ -151,6 +194,7 @@ def payment_verify(request):
 
         if not locked_transaction.success:
             locked_transaction.success = True
+            locked_transaction.status = "paid"
             locked_transaction.ref_id = str(response["ref_id"])
             locked_transaction.raw_response = {
                 "verified": True,
@@ -158,7 +202,7 @@ def payment_verify(request):
                 "ref_id": str(response["ref_id"]),
             }
             locked_transaction.save(
-                update_fields=["success", "ref_id", "raw_response"]
+                update_fields=["success", "status", "ref_id", "raw_response", "updated_at"]
             )
 
             was_paid = order.paid
