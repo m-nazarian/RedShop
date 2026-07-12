@@ -39,3 +39,5 @@ _AI_PROJECT_REVIEW/
 RedShop_AI_Review.zip
 _roadmap_backups/
 *.sqlite3
+logs/
+*.log
