@@ -12,7 +12,7 @@ from apps.orders.session_keys import (
 )
 
 
-class CheckoutSecurityTests(RedShopTestBase, TestCase):
+class CheckoutFlowTests(RedShopTestBase, TestCase):
 
     def test_stale_paid_checkout_session_is_ignored_before_new_order(self):
         old_order, payment_method = self._create_paid_stale_order()
