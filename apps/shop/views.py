@@ -1,3 +1,4 @@
+import logging
 import json
 from collections import OrderedDict
 from django.contrib.admin.views.autocomplete import AutocompleteJsonView
@@ -12,6 +13,9 @@ from .models import (
     Category, Product, CategoryFeature, CommentLike,
     ProductComment, ProductFavorite
 )
+logger = logging.getLogger(__name__)
+
+
 from .services import (
     sort_products, get_dynamic_features, assemble_filters,
     apply_filters, global_search, get_frequently_bought_products,
@@ -259,8 +263,12 @@ def get_category_features(request, category_id):
 
     except Category.DoesNotExist:
         return JsonResponse({'features': []})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except Exception:
+        logger.exception("خطا هنگام دریافت ویژگی‌های دسته‌بندی")
+        return JsonResponse(
+            {'error': 'خطا در دریافت اطلاعات دسته‌بندی.'},
+            status=500,
+        )
 
 
 # --------------------------------------------------------------------------

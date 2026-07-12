@@ -81,11 +81,15 @@ class TransactionAdmin(ModelAdmin):
 
 # --- RedShop safe order admin actions ---
 
+import logging
+
 from django.contrib import admin as _redshop_admin
 from django.contrib import messages as _redshop_messages
 
 from .models import Order as _RedShopOrder
 from .services import OrderLifecycleService as _RedShopOrderLifecycleService
+
+_redshop_logger = logging.getLogger(__name__)
 
 
 def cancel_unpaid_orders(modeladmin, request, queryset):
@@ -106,6 +110,10 @@ def cancel_unpaid_orders(modeladmin, request, queryset):
                 reason="لغو از پنل مدیریت",
             )
         except Exception:
+            _redshop_logger.exception(
+                "لغو امن سفارش از پنل مدیریت با خطا روبه‌رو شد. order_id=%s",
+                order.id,
+            )
             error_count += 1
             continue
 
@@ -155,6 +163,6 @@ try:
         if "cancel_unpaid_orders" not in _existing_names:
             _order_admin.actions = [*_existing_actions, cancel_unpaid_orders]
 except Exception:
-    pass
+    _redshop_logger.exception("ثبت Admin Action لغو امن سفارش ناموفق بود.")
 
 # --- End RedShop safe order admin actions ---

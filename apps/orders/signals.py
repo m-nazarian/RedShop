@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models.signals import pre_save
@@ -6,6 +7,8 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from .models import Order
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(pre_save, sender=Order)
@@ -43,4 +46,5 @@ def send_order_status_update_email(sender, instance, **kwargs):
         )
     except Exception:
         # ارسال ایمیل نباید ذخیره سفارش را خراب کند.
+        logger.exception("ارسال ایمیل وضعیت سفارش با خطا روبه‌رو شد.")
         return
