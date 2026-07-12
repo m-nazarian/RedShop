@@ -27,7 +27,7 @@ def index(request):
     """
     نمایش صفحه اصلی به همراه اسلایدرهای هوشمند.
     """
-    parent_categories = Category.objects.filter(parent=None)
+    parent_categories = Category.objects.filter(parent=None).prefetch_related('children')
 
     # دریافت لیست‌های هوشمند (خرید پرتکرار و علاقه‌مندی)
     frequent_products = get_frequently_bought_products(request.user)
@@ -47,8 +47,8 @@ def product_list(request, category_slug=None):
     """
     category = None
     # کوئری‌ست پایه
-    products = Product.objects.prefetch_related('colors', 'images').all()
-    categories = Category.objects.all()
+    products = Product.objects.select_related('category', 'brand').prefetch_related('colors', 'images').all()
+    categories = Category.objects.all().prefetch_related('children')
 
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
@@ -79,18 +79,31 @@ def product_detail(request, id, slug):
     """
     نمایش جزئیات محصول، نظرات و محصولات مرتبط.
     """
-    product = get_object_or_404(Product, id=id, slug=slug)
+    product = get_object_or_404(
+        Product.objects.select_related('category', 'brand').prefetch_related(
+            'colors',
+            'images',
+            'feature_values__feature__group',
+            'feature_values__feature__category',
+        ),
+        id=id,
+        slug=slug,
+    )
 
     grouped_features = product.get_grouped_features()
     comment_form = ProductCommentForm()
 
     # فقط نظرات فعال
-    active_comments = product.comments.filter(active=True)
+    active_comments = product.comments.filter(active=True).select_related('user').prefetch_related('likes')
 
     # محصولات مرتبط (هم‌دسته، به جز خود محصول، تصادفی)
-    related_products = Product.objects.filter(
-        category=product.category
-    ).exclude(id=product.id).order_by('?')[:6]
+    related_products = (
+        Product.objects.select_related('category', 'brand')
+        .prefetch_related('colors', 'images')
+        .filter(category=product.category)
+        .exclude(id=product.id)
+        .order_by('?')[:6]
+    )
 
     context = {
         'product': product,
@@ -116,7 +129,7 @@ def filter_products(request):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     # 1. لیست پایه (فقط بر اساس دسته‌بندی فیلتر شده، نه انتخاب کاربر)
-    base_products = Product.objects.prefetch_related('colors', 'images').all()
+    base_products = Product.objects.select_related('category', 'brand').prefetch_related('colors', 'images').all()
 
     # اگر اسلاگ دسته ارسال شده بود، لیست پایه را محدود به آن دسته کن
     category_slug = data.get('category_slug')
@@ -191,7 +204,7 @@ def categoryfeature_autocomplete(request):
         category = Category.objects.get(id=category_id)
         relevant_categories = category.get_ancestors(include_self=True)
 
-        features = CategoryFeature.objects.filter(category__in=relevant_categories)
+        features = CategoryFeature.objects.select_related('category', 'group').filter(category__in=relevant_categories)
 
         if term:
             features = features.filter(name__icontains=term)
@@ -257,7 +270,7 @@ def get_category_features(request, category_id):
 @login_required
 @require_POST
 def add_product_comment(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product.objects.only('id'), id=product_id)
     form = ProductCommentForm(request.POST)
 
     if form.is_valid():
@@ -273,7 +286,7 @@ def add_product_comment(request, product_id):
 @login_required
 @require_POST
 def like_comment(request, comment_id):
-    comment = get_object_or_404(ProductComment, id=comment_id)
+    comment = get_object_or_404(ProductComment.objects.select_related('product'), id=comment_id)
     action_type = request.POST.get('type')
     is_like = (action_type == 'like')
 
@@ -302,7 +315,7 @@ def like_comment(request, comment_id):
 @login_required
 @require_POST
 def toggle_favorite(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product.objects.only('id'), id=product_id)
     favorite, created = ProductFavorite.objects.get_or_create(user=request.user, product=product)
 
     if not created:
@@ -320,11 +333,11 @@ def toggle_favorite(request, product_id):
 
 @login_required
 def user_favorites_partial(request):
-    favorites = request.user.favorites.select_related('product').all()
+    favorites = request.user.favorites.select_related('product', 'product__category', 'product__brand').prefetch_related('product__images').all()
     return render(request, 'partials/favorites_list.html', {'favorites': favorites})
 
 
 @login_required
 def user_reviews_partial(request):
-    reviews = request.user.comments.select_related('product').order_by('-created')
+    reviews = request.user.comments.select_related('product', 'product__category', 'product__brand').order_by('-created')
     return render(request, 'partials/reviews_list.html', {'reviews': reviews})

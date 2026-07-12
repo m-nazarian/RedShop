@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @login_required
 @require_GET
 def user_orders(request):
-    orders = Order.objects.filter(user=request.user).order_by("-created")
+    orders = Order.objects.filter(user=request.user).prefetch_related("items").order_by("-created")
     return render(
         request,
         "partials/orders_list.html",
@@ -33,7 +33,7 @@ def user_orders(request):
 @require_GET
 def user_orders_partial(request):
     query = request.GET.get("q", "").strip()
-    orders = Order.objects.filter(user=request.user)
+    orders = Order.objects.filter(user=request.user).prefetch_related("items")
 
     if query:
         from django.db.models import Q
@@ -55,7 +55,7 @@ def user_orders_partial(request):
 @require_GET
 def order_detail(request, order_id):
     order = get_object_or_404(
-        Order.objects.prefetch_related("items"),
+        Order.objects.prefetch_related("items__product"),
         id=order_id,
         user=request.user,
     )
@@ -77,7 +77,7 @@ def order_detail(request, order_id):
 @require_GET
 def order_detail_partial(request, order_id):
     order = get_object_or_404(
-        Order.objects.prefetch_related("items"),
+        Order.objects.prefetch_related("items__product"),
         id=order_id,
         user=request.user,
     )
@@ -209,7 +209,7 @@ def checkout_complete(request):
 @require_GET
 def order_pdf(request, order_id):
     order = get_object_or_404(
-        Order.objects.prefetch_related("items"),
+        Order.objects.prefetch_related("items__product"),
         id=order_id,
         user=request.user,
     )

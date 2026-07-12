@@ -18,7 +18,7 @@ FILTER_ORDER = OrderedDict([
 def get_dynamic_features(products_queryset):
     feature_values = ProductFeatureValue.objects.filter(
         product__in=products_queryset
-    ).select_related('feature')
+    ).select_related('feature', 'feature__group', 'feature__category')
 
     dynamic_features = {}
     for fv in feature_values:
@@ -131,7 +131,7 @@ def global_search(query):
         Q(name__icontains=query) |
         Q(description__icontains=query) |
         Q(brand__name__icontains=query)
-    ).select_related('category').prefetch_related('images').distinct()[:5]  # فقط ۵ تای اول
+    ).select_related('category', 'brand').prefetch_related('images').distinct()[:5]  # فقط ۵ تای اول
 
     # ۲. حدس زدن دسته‌بندی مرتبط 🧠
     # اگر محصولاتی پیدا کردیم، ببینیم بیشترشون مال کدوم دسته‌ن؟
@@ -179,7 +179,12 @@ def get_frequently_bought_products(user, limit=10):
 
     # پیدا کردن محصولاتی که در سفارش‌های موفق کاربر هستند
     # و تعداد تکرارشان در OrderItem ها بیشتر از 1 است
-    products = Product.objects.filter(
+    products = Product.objects.select_related(
+        'category',
+        'brand',
+    ).prefetch_related(
+        'images',
+    ).filter(
         order_items__order__user=user,
         order_items__order__paid=True  # فقط خریدهای موفق
     ).annotate(

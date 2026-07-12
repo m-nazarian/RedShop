@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 @require_POST
 def add_to_cart(request, product_id):
     cart = Cart(request)
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product.objects.select_related('category', 'brand').prefetch_related('images'), id=product_id)
 
     # 1. بررسی موجودی کلی محصول
     if product.inventory <= 0:
@@ -57,7 +57,7 @@ def update_quantity(request):
     item_id = request.POST.get('item_id')
     action = request.POST.get('action')
     try:
-        product = get_object_or_404(Product, id=item_id)
+        product = get_object_or_404(Product.objects.select_related('category', 'brand').prefetch_related('images'), id=item_id)
         cart = Cart(request)
         if action == 'add':
             cart.add(product)
@@ -82,7 +82,7 @@ def update_quantity(request):
 def remove_item(request):
     item_id = request.POST.get('item_id')
     try:
-        product = get_object_or_404(Product, id=item_id)
+        product = get_object_or_404(Product.objects.select_related('category', 'brand').prefetch_related('images'), id=item_id)
         cart = Cart(request)
         cart.remove(product)
         context = {
