@@ -86,74 +86,62 @@ class RedShopTestBase:
             session["coupon_id"] = self.coupon.id
         session.save()
 
-class ProjectSettingsTests(TestCase):
-    def test_logging_configuration_is_available(self):
-        from django.conf import settings
+    def _choose_cash_payment_method(self):
+        field = Order._meta.get_field("payment_method")
+        choices = [key for key, _label in field.choices]
 
-        self.assertIn("version", settings.LOGGING)
-        self.assertEqual(settings.LOGGING["version"], 1)
-        self.assertIn("handlers", settings.LOGGING)
-        self.assertIn("loggers", settings.LOGGING)
-        self.assertIn("apps", settings.LOGGING["loggers"])
-        self.assertIn("django.request", settings.LOGGING["loggers"])
+        for candidate in ("cash_on_delivery", "cod", "cash", "cash_delivery"):
+            if candidate in choices:
+                return candidate
 
+        for key in choices:
+            if "online" not in str(key).lower():
+                return key
 
-class CheckoutSecurityTests(RedShopTestBase, TestCase):
+        return choices[0] if choices else "cash_on_delivery"
 
-    def test_stale_paid_checkout_session_is_ignored_before_new_order(self):
+    def _sample_value_for_required_order_field(self, field):
         from decimal import Decimal
         import uuid
 
         from django.db import models
-        from django.db.models.fields import NOT_PROVIDED
         from django.utils import timezone
 
-        def choose_cash_payment_method():
-            field = Order._meta.get_field("payment_method")
-            choices = [key for key, _label in field.choices]
+        if isinstance(field, models.CharField):
+            if field.name == "order_number":
+                return f"TEST-{uuid.uuid4().hex[:12]}"
+            if field.choices:
+                return list(field.choices)[0][0]
+            return "test"
 
-            for candidate in ("cash_on_delivery", "cod", "cash", "cash_delivery"):
-                if candidate in choices:
-                    return candidate
+        if isinstance(field, models.TextField):
+            return "test"
 
-            for key in choices:
-                if "online" not in str(key).lower():
-                    return key
+        if isinstance(field, models.EmailField):
+            return "test@example.com"
 
-            return choices[0] if choices else "cash_on_delivery"
+        if isinstance(field, models.DecimalField):
+            return Decimal("0.00")
 
-        def sample_value_for_required_field(field):
-            if isinstance(field, models.CharField):
-                if field.name == "order_number":
-                    return f"TEST-{uuid.uuid4().hex[:12]}"
-                if field.choices:
-                    return list(field.choices)[0][0]
-                return "test"
+        if isinstance(field, models.IntegerField):
+            return 0
 
-            if isinstance(field, models.TextField):
-                return "test"
+        if isinstance(field, models.BooleanField):
+            return False
 
-            if isinstance(field, models.EmailField):
-                return "test@example.com"
+        if isinstance(field, models.DateTimeField):
+            return timezone.now()
 
-            if isinstance(field, models.DecimalField):
-                return Decimal("0.00")
+        if isinstance(field, models.DateField):
+            return timezone.now().date()
 
-            if isinstance(field, models.IntegerField):
-                return 0
+        return None
 
-            if isinstance(field, models.BooleanField):
-                return False
+    def _create_paid_stale_order(self):
+        from django.db import models
+        from django.db.models.fields import NOT_PROVIDED
 
-            if isinstance(field, models.DateTimeField):
-                return timezone.now()
-
-            if isinstance(field, models.DateField):
-                return timezone.now().date()
-
-            return None
-
-        payment_method = choose_cash_payment_method()
+        payment_method = self._choose_cash_payment_method()
 
         order_kwargs = {
             "user": self.user,
@@ -201,11 +189,11 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
             if isinstance(field, models.ForeignKey):
                 continue
 
-            order_kwargs[field.name] = sample_value_for_required_field(field)
+            order_kwargs[field.name] = self._sample_value_for_required_order_field(field)
 
-        old_order = Order.objects.create(**order_kwargs)
+        return Order.objects.create(**order_kwargs), payment_method
 
-        session = self.client.session
+    def _put_single_product_cart_in_session(self, session):
         session["cart"] = {
             str(self.product.id): {
                 "quantity": 1,
@@ -213,6 +201,26 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
                 "weight": str(self.product.weight),
             }
         }
+
+class ProjectSettingsTests(TestCase):
+    def test_logging_configuration_is_available(self):
+        from django.conf import settings
+
+        self.assertIn("version", settings.LOGGING)
+        self.assertEqual(settings.LOGGING["version"], 1)
+        self.assertIn("handlers", settings.LOGGING)
+        self.assertIn("loggers", settings.LOGGING)
+        self.assertIn("apps", settings.LOGGING["loggers"])
+        self.assertIn("django.request", settings.LOGGING["loggers"])
+
+
+class CheckoutSecurityTests(RedShopTestBase, TestCase):
+
+    def test_stale_paid_checkout_session_is_ignored_before_new_order(self):
+        old_order, payment_method = self._create_paid_stale_order()
+
+        session = self.client.session
+        self._put_single_product_cart_in_session(session)
         session["checkout_order_id"] = old_order.id
         session["order_id"] = old_order.id
         session["checkout_address_id"] = self.address.id
