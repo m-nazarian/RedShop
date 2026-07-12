@@ -4,8 +4,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-from shop.models import Product
-from shop.utils.shipping import calculate_post_price
+from apps.shop.models import Product
+from apps.shop.utils.shipping import calculate_post_price
 
 
 class Order(models.Model):

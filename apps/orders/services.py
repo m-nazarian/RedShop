@@ -5,10 +5,10 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from account.models import Address
-from coupons.models import Coupon
-from shop.models import Product
-from shop.utils.shipping import calculate_post_price
+from apps.account.models import Address
+from apps.coupons.models import Coupon
+from apps.shop.models import Product
+from apps.shop.utils.shipping import calculate_post_price
 
 from .emails import send_order_confirmation
 from .models import Order, OrderItem

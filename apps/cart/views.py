@@ -1,9 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from shop.models import Product
+from apps.shop.models import Product
 from .cart import Cart
-from coupons.forms import CouponApplyForm
+from apps.coupons.forms import CouponApplyForm
 from django.template.loader import render_to_string
 
 

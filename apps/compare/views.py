@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from shop.models import Product, ProductFeatureValue, FeatureGroup, CategoryFeature
+from apps.shop.models import Product, ProductFeatureValue, FeatureGroup, CategoryFeature
 from django.template.loader import render_to_string
 from .compare import Compare
 

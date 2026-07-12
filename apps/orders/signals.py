@@ -6,7 +6,7 @@ from django.db.models import F
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .models import Order, OrderItem
-from shop.models import Product
+from apps.shop.models import Product
 
 # لیست وضعیت‌هایی که یعنی کالا در انبار موجود نیست (فروخته شده)
 SOLD_STATUSES = ['pending', 'processing', 'shipped', 'delivered']

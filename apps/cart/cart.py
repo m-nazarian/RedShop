@@ -1,6 +1,6 @@
-from shop.models import Product
-from shop.utils.shipping import calculate_post_price
-from coupons.models import Coupon
+from apps.shop.models import Product
+from apps.shop.utils.shipping import calculate_post_price
+from apps.coupons.models import Coupon
 
 
 class Cart:

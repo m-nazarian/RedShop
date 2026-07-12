@@ -21,13 +21,13 @@ from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',include('shop.urls', namespace='shop')),
-    path('cart/',include('cart.urls', namespace='cart')),
-    path('account/', include('account.urls', namespace='account')),
-    path('orders/', include('orders.urls', namespace='orders')),
-    path('payment/', include('payment.urls', namespace='payment')),
-    path('coupons/', include('coupons.urls', namespace='coupons')),
-    path('compare/', include('compare.urls', namespace='compare')),
+    path('',include('apps.shop.urls', namespace='shop')),
+    path('cart/',include('apps.cart.urls', namespace='cart')),
+    path('account/', include('apps.account.urls', namespace='account')),
+    path('orders/', include('apps.orders.urls', namespace='orders')),
+    path('payment/', include('apps.payment.urls', namespace='payment')),
+    path('coupons/', include('apps.coupons.urls', namespace='coupons')),
+    path('compare/', include('apps.compare.urls', namespace='compare')),
 
 ]
 

@@ -3,8 +3,8 @@ from django.utils import timezone
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncDay
 from unfold.sites import UnfoldAdminSite
-from orders.models import Order
-from account.models import ShopUser
+from apps.orders.models import Order
+from apps.account.models import ShopUser
 import datetime
 import json
 

@@ -2,9 +2,10 @@ from django.apps import AppConfig
 
 
 class OrdersConfig(AppConfig):
+    label = 'orders'
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'orders'
+    name = 'apps.orders'
     verbose_name = 'مدیریت سفارشات'
 
     def ready(self):
-        import orders.signals
+        import apps.orders.signals

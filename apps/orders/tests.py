@@ -4,9 +4,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from account.models import Address, ShopUser
-from coupons.models import Coupon
-from shop.models import Brand, Category, Product
+from apps.account.models import Address, ShopUser
+from apps.coupons.models import Coupon
+from apps.shop.models import Brand, Category, Product
 
 from .models import Order, Transaction
 from .services import OrderLifecycleService

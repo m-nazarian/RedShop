@@ -8,8 +8,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from account.models import Address
-from cart.cart import Cart
+from apps.account.models import Address
+from apps.cart.cart import Cart
 
 from .forms import CheckoutPaymentForm
 from .models import Order

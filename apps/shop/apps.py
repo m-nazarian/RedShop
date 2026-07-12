@@ -2,10 +2,11 @@ from django.apps import AppConfig
 
 
 class ShopConfig(AppConfig):
+    label = 'shop'
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'shop'
+    name = 'apps.shop'
     verbose_name = 'مدیریت محصولات'
 
 
     def ready(self):
-        import shop.signals
+        import apps.shop.signals

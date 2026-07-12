@@ -9,9 +9,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
-from orders.emails import send_order_confirmation
-from orders.models import Order, Transaction
-from orders.services import OrderLifecycleService
+from apps.orders.emails import send_order_confirmation
+from apps.orders.models import Order, Transaction
+from apps.orders.services import OrderLifecycleService
 
 from .zarinpal_service import ZarinPalService
 
