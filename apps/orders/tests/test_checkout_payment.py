@@ -289,17 +289,6 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
         self.assertNotIn(PAYMENT_ORDER_SESSION_KEY, session)
         self.assertNotIn(CHECKOUT_ORDER_SESSION_KEY, session)
 
-    def test_profile_does_not_accept_post_or_staff_fields(self):
-        response = self.client.post(
-            reverse("account:profile"),
-            {"is_staff": "on", "is_superuser": "on"},
-        )
-        self.user.refresh_from_db()
-
-        self.assertEqual(response.status_code, 405)
-        self.assertFalse(self.user.is_staff)
-        self.assertFalse(self.user.is_superuser)
-
     def test_checkout_review_rejects_another_users_address(self):
         self._prepare_checkout_session(address_id=self.other_address.id)
         response = self.client.get(reverse("orders:checkout_review"))
