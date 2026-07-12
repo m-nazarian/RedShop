@@ -1,0 +1,109 @@
+name: Django CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: django-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  django-checks:
+    name: Django checks and tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: redshop_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d redshop_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:5432/redshop_ci"
+      DB_HOST: "127.0.0.1"
+      DB_NAME: "redshop_ci"
+      DB_PASSWORD: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DEBUG: "False"
+      DJANGO_SETTINGS_MODULE: "RedShop.settings"
+      EMAIL_BACKEND: "django.core.mail.backends.locmem.EmailBackend"
+      EMAIL_HOST_PASSWORD: "ci-password"
+      EMAIL_HOST_USER: "ci@example.com"
+      POSTGRES_DB: "redshop_ci"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_USER: "postgres"
+      PYTHONIOENCODING: "utf-8"
+      SECRET_KEY: "django-ci-secret-key"
+      ZARINPAL_MERCHANT_ID: "00000000-0000-0000-0000-000000000000"
+      ZARINPAL_SANDBOX: "True"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements/*.txt
+            pyproject.toml
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            default-libmysqlclient-dev \
+            libjpeg-dev \
+            libpango-1.0-0 \
+            libpangoft2-1.0-0 \
+            libpq-dev \
+            pkg-config \
+            zlib1g-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            pip install .
+          else
+            echo "requirements.txt یا pyproject.toml پیدا نشد."
+            exit 1
+          fi
+
+      - name: Compile Python files
+        run: python -m compileall -q RedShop apps
+
+      - name: Check migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run Django system checks
+        run: python manage.py check
+
+      - name: Run tests
+        run: python manage.py test --verbosity 2
