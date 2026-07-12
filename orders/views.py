@@ -1,94 +1,93 @@
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.shortcuts import render, get_object_or_404, redirect
-from django.template.loader import render_to_string
-from django.utils.crypto import get_random_string
-from django.db import transaction
-from django.contrib import messages
-from .emails import send_order_confirmation
-from .models import Order,OrderItem
-from cart.cart import Cart
-from account.models import Address
-from shop.models import Product
-from django.http import HttpResponse
+import logging
+
 import weasyprint
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
+
+from account.models import Address
+from cart.cart import Cart
+
+from .forms import CheckoutPaymentForm
+from .models import Order
+from .services import CheckoutError, CheckoutService
+
+logger = logging.getLogger(__name__)
+
 
 @login_required
+@require_GET
 def user_orders(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created')
-    return render(request, 'partials/orders_list.html', {
-        'orders': orders,
-        'active_tab': 'orders'
-    })
+    orders = Order.objects.filter(user=request.user).order_by("-created")
+    return render(
+        request,
+        "partials/orders_list.html",
+        {"orders": orders, "active_tab": "orders"},
+    )
 
 
 @login_required
+@require_GET
 def user_orders_partial(request):
-    """
-    نمایش لیست سفارش‌ها + قابلیت جستجو
-    """
-    # 1. دریافت کلمه جستجو شده (اگر وجود داشته باشد)
-    query = request.GET.get('q')
-
-    # 2. کوئری پایه: سفارش‌های خود کاربر
+    query = request.GET.get("q", "").strip()
     orders = Order.objects.filter(user=request.user)
 
-    # 3. اگر کاربر چیزی جستجو کرده بود:
     if query:
+        from django.db.models import Q
+
         orders = orders.filter(
-            Q(order_number__icontains=query) |  # جستجو در شماره سفارش
-            Q(id__icontains=query) |  # جستجو در ID عددی
-            Q(items__product__name__icontains=query)  # جستجو در نام محصولات داخل سفارش
-        ).distinct()  # جلوگیری از تکراری شدن نتایج به خاطر Join
+            Q(order_number__icontains=query)
+            | Q(id__icontains=query)
+            | Q(items__title__icontains=query)
+        ).distinct()
 
-    # 4. مرتب‌سازی نهایی
-    orders = orders.order_by('-created')
-
-    context = {
-        'orders': orders,
-    }
-    return render(request, 'partials/orders_list.html', context)
+    return render(
+        request,
+        "partials/orders_list.html",
+        {"orders": orders.order_by("-created")},
+    )
 
 
 @login_required
+@require_GET
 def order_detail(request, order_id):
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-
-    items = order.items.all()
-
-    # مجموع قیمت کالاها
-    total_items = sum(item.quantity * item.price for item in items)
-
-    # هزینه ارسال (در سفارش ذخیره نشده، پس باید ذخیره شود)
-    post_price = order.post_price if hasattr(order, "post_price") else 0
-
-    # جمع نهایی
-    final_total = total_items + post_price
-
-    return render(request, "partials/orders_list.html", {
-        "order": order,
-        "items": items,
-        "total_items": total_items,
-        "post_price": post_price,
-        "final_total": final_total,
-    })
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items"),
+        id=order_id,
+        user=request.user,
+    )
+    return render(
+        request,
+        "partials/orders_list.html",
+        {
+            "order": order,
+            "items": order.items.all(),
+            "total_items": order.subtotal,
+            "discount_amount": order.discount_amount,
+            "post_price": order.post_price,
+            "final_total": order.total,
+        },
+    )
 
 
 @login_required
+@require_GET
 def order_detail_partial(request, order_id):
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-    return render(request, 'partials/order_detail_content.html', {'order': order})
-
-
-
-def generate_order_number():
-    return get_random_string(10).upper()
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items"),
+        id=order_id,
+        user=request.user,
+    )
+    return render(request, "partials/order_detail_content.html", {"order": order})
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def checkout_address(request):
     cart = Cart(request)
-
     if len(cart) == 0:
         return redirect("cart:cart_detail")
 
@@ -97,160 +96,133 @@ def checkout_address(request):
     if request.method == "POST":
         address_id = request.POST.get("address_id")
         if not address_id:
-            return render(request, "orders/checkout_address.html", {
-                "cart": cart,
-                "addresses": addresses,
-                "error": "لطفا یک آدرس انتخاب کنید"
-            })
+            return render(
+                request,
+                "orders/checkout_address.html",
+                {
+                    "cart": cart,
+                    "addresses": addresses,
+                    "error": "یک آدرس را انتخاب کنید.",
+                },
+            )
 
-        request.session["checkout_address_id"] = address_id
+        address = get_object_or_404(Address, id=address_id, user=request.user)
+        request.session["checkout_address_id"] = address.id
         return redirect("orders:checkout_review")
 
-    return render(request, "orders/checkout_address.html", {
-        "cart": cart,
-        "addresses": addresses
-    })
-
-
-@login_required
-def checkout_review(request):
-    cart = Cart(request)
-
-    if "checkout_address_id" not in request.session:
-        return redirect("orders:checkout_address")
-
-    address = get_object_or_404(
-        Address, id=request.session["checkout_address_id"]
+    return render(
+        request,
+        "orders/checkout_address.html",
+        {"cart": cart, "addresses": addresses},
     )
 
-    return render(request, "orders/checkout_review.html", {
-        "cart": cart,
-        "address": address,
-    })
-
 
 @login_required
-def checkout_create_order(request):
+@require_GET
+def checkout_review(request):
     cart = Cart(request)
-
     if len(cart) == 0:
         return redirect("cart:cart_detail")
 
-    if "checkout_address_id" not in request.session:
+    address_id = request.session.get("checkout_address_id")
+    if not address_id:
         return redirect("orders:checkout_address")
 
-    address = get_object_or_404(
-        Address, id=request.session["checkout_address_id"]
+    address = get_object_or_404(Address, id=address_id, user=request.user)
+    return render(
+        request,
+        "orders/checkout_review.html",
+        {
+            "cart": cart,
+            "address": address,
+            "payment_form": CheckoutPaymentForm(),
+        },
     )
-
-    # اگر کاربر چیزی نفرستاده بود، پیش‌فرض 'cod' بگذار
-    payment_method = request.POST.get('payment_method', 'cod')
-
-    if request.session.get("order_created"):
-        # اگر قبلا ساخته شده، با توجه به روش پرداخت ریدایرکت کن
-        return redirect("orders:checkout_complete")
-
-    try:
-        with transaction.atomic():
-            # 1. ساخت سفارش اولیه
-            order = Order.objects.create(
-                user=request.user,
-                address=address.address_line,
-                order_number=generate_order_number(),
-                status="pending",
-                first_name=address.first_name,
-                last_name=address.last_name,
-                phone=address.phone,
-                province=address.province,
-                city=address.city,
-                postal_code=address.postal_code,
-                address_line=address.address_line,
-
-                payment_method=payment_method
-            )
-
-            # ساخت آیتم‌ها و کسر موجودی
-            for item in cart:
-                product_id = item['product'].id
-                quantity = item['quantity']
-
-                product = Product.objects.select_for_update().get(id=product_id)
-
-                if product.inventory < quantity:
-                    raise ValueError(
-                        f"متاسفانه موجودی محصول '{product.name}' کافی نیست (موجودی فعلی: {product.inventory}).")
-
-                product.inventory -= quantity
-                product.save()
-
-                OrderItem.objects.create(
-                    order=order,
-                    product=product,
-                    price=item['price'],
-                    quantity=quantity,
-                    weight=item['weight'],
-                )
-
-            # محاسبات نهایی سفارش
-            order.subtotal = order.get_total_cost()
-            order.post_price = order.get_post_cost()
-            order.shipping_price = order.post_price
-            order.total = order.subtotal + order.post_price
-            order.save()
-
-            # پایان موفقیت‌آمیز
-            request.session["order_created"] = True
-
-            # ذخیره آیدی سفارش در سشن برای درگاه
-            request.session['order_id'] = order.id
-
-            # پاک کردن سبد خرید
-            cart.clear()
-
-            if order.payment_method == 'online':
-                # هدایت به پردازش پرداخت
-                return redirect('payment:process')
-            else:
-                send_order_confirmation(order)
-                # پرداخت در محل (COD) -> صفحه تشکر معمولی
-                return redirect("orders:checkout_complete")
-
-    except ValueError as e:
-        messages.error(request, str(e))
-        return redirect("cart:cart_detail")
-
-    except Exception as e:
-        messages.error(request, "مشکلی در ثبت سفارش پیش آمد. لطفا مجددا تلاش کنید.")
-        return redirect("cart:cart_detail")
-
 
 
 @login_required
-def checkout_complete(request):
-    # بعد پایان سفارش، سشن را پاک می‌کنیم تا سفارش جدید ساخته شود
-    request.session.pop("checkout_address_id", None)
-    request.session.pop("order_created", None)
+@require_POST
+def checkout_create_order(request):
+    cart = Cart(request)
+    if len(cart) == 0:
+        return redirect("cart:cart_detail")
 
+    address_id = request.session.get("checkout_address_id")
+    if not address_id:
+        return redirect("orders:checkout_address")
+
+    existing_order_id = request.session.get("checkout_order_id")
+    if existing_order_id:
+        existing_order = Order.objects.filter(
+            id=existing_order_id,
+            user=request.user,
+        ).first()
+        if existing_order:
+            if existing_order.payment_method == "online" and not existing_order.paid:
+                request.session["order_id"] = existing_order.id
+                return redirect("payment:process")
+            return redirect("orders:checkout_complete")
+        request.session.pop("checkout_order_id", None)
+
+    form = CheckoutPaymentForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "روش پرداخت معتبر نیست.")
+        return redirect("orders:checkout_review")
+
+    try:
+        order = CheckoutService.place_order(
+            user=request.user,
+            cart=cart,
+            address_id=address_id,
+            payment_method=form.cleaned_data["payment_method"],
+        )
+    except CheckoutError as exc:
+        messages.error(request, str(exc))
+        return redirect("orders:checkout_review")
+    except Exception:
+        logger.exception("ثبت سفارش با خطای پیش‌بینی‌نشده متوقف شد.")
+        messages.error(request, "ثبت سفارش انجام نشد. دوباره تلاش کنید.")
+        return redirect("orders:checkout_review")
+
+    request.session["checkout_order_id"] = order.id
+    request.session.pop("checkout_address_id", None)
+    cart.clear()
+
+    if order.payment_method == "online":
+        request.session["order_id"] = order.id
+        return redirect("payment:process")
+
+    request.session.pop("order_id", None)
+    return redirect("orders:checkout_complete")
+
+
+@login_required
+@require_GET
+def checkout_complete(request):
+    request.session.pop("checkout_address_id", None)
+    request.session.pop("checkout_order_id", None)
+    request.session.pop("order_created", None)
     return render(request, "orders/checkout_complete.html")
 
 
 @login_required
+@require_GET
 def order_pdf(request, order_id):
-    order = get_object_or_404(Order, id=order_id, user=request.user)
+    order = get_object_or_404(
+        Order.objects.prefetch_related("items"),
+        id=order_id,
+        user=request.user,
+    )
 
-    # تنظیمات برای پیدا کردن فایل‌های استاتیک (مثل فونت و لوگو) توسط WeasyPrint
-    # چون WeasyPrint یک مرورگر نیست، باید آدرس فایل‌ها را دقیق بهش بدیم
-
-    html = render_to_string('orders/pdf/invoice.html', {
-        'order': order
-    }, request=request)
-
-    response = HttpResponse(content_type='application/pdf')
-    # attachment یعنی دانلود شود، inline یعنی در مرورگر باز شود
-    response['Content-Disposition'] = f'filename=order_{order.order_number}.pdf'
-
-    # تبدیل به PDF
-    # base_url برای این است که عکس‌ها و استایل‌ها پیدا شوند
-    weasyprint.HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(response)
-
+    html = render_to_string(
+        "orders/pdf/invoice.html",
+        {"order": order},
+        request=request,
+    )
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f"filename=order_{order.order_number}.pdf"
+    weasyprint.HTML(
+        string=html,
+        base_url=request.build_absolute_uri("/"),
+    ).write_pdf(response)
     return response

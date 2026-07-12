@@ -1,1 +1,41 @@
+# تنظیمات و اطلاعات محرمانه
+.env
+.env.*
+!.env.example
+
+# محیط‌های مجازی پایتون
+.venv/
+venv/
+env/
+
+# فایل‌های موقت پایتون و ابزارهای تست
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# فایل‌های محلی دیتابیس و خروجی اجرا
+db.sqlite3
+staticfiles/
+media/
+images/account_images/
+
+# تنظیمات ویرایشگرها
+.idea/
+.vscode/
+
+# فایل‌های سیستم‌عامل
+.DS_Store
+Thumbs.db
+
+# ابزار محلی Tailwind
 tailwindcss.exe
+
+# بسته‌های بررسی و بکاپ‌های محلی
+_AI_PROJECT_REVIEW/
+RedShop_AI_Review.zip
+_roadmap_backups/
+*.sqlite3

@@ -15,6 +15,7 @@ from django.contrib import staticfiles
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.templatetags.static import static
+from .env import env, env_bool, env_int, env_list
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,13 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3g6vg4z#1u!+my8t&1w^sclizr=yvc$c&meqgrk&-&1e2(tqef'
+# کلید محرمانه فقط از محیط خوانده می‌شود و نباید داخل سورس ذخیره شود.
+SECRET_KEY = env('DJANGO_SECRET_KEY', required=True)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# در توسعه روشن است؛ برای محیط واقعی باید در .env برابر False شود.
+DEBUG = env_bool('DJANGO_DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', default=['127.0.0.1', 'localhost', '[::1]'])
 
 
 # Application definition
@@ -98,16 +99,15 @@ WSGI_APPLICATION = 'RedShop.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# مقدارها از .env خوانده می‌شوند تا رمز دیتابیس داخل سورس نماند.
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'redshop_db',
-        'USER': 'redshop_user',
-        'PASSWORD': '12345',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': env('DB_NAME', default='redshop_db'),
+        'USER': env('DB_USER', default='redshop_user'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='5432'),
     }
 }
 
@@ -173,25 +173,35 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-# Zarinpal Settings (Sandbox)
-ZARINPAL_MERCHANT_ID = "00000000-0000-0000-0000-000000000000"  # کد مخصوص سندباکس
-ZARINPAL_BROKER = "https://sandbox.zarinpal.com/pg/v4/payment/"
+# Zarinpal Settings
+# در توسعه از سندباکس استفاده می‌شود. مقدارهای واقعی فقط در .env نگهداری می‌شوند.
+ZARINPAL_MERCHANT_ID = env('ZARINPAL_MERCHANT_ID', default='00000000-0000-0000-0000-000000000000')
+ZARINPAL_BROKER = env('ZARINPAL_BROKER', default='https://sandbox.zarinpal.com/pg/v4/payment/')
 ZARINPAL_REQUEST_URL = f"{ZARINPAL_BROKER}request.json"
 ZARINPAL_VERIFY_URL = f"{ZARINPAL_BROKER}verify.json"
-ZARINPAL_START_PAY_URL = "https://sandbox.zarinpal.com/pg/StartPay/"
-ZARINPAL_CALLBACK_URL = "http://127.0.0.1:8000/payment/verify/"  # آدرس بازگشت
+ZARINPAL_START_PAY_URL = env('ZARINPAL_START_PAY_URL', default='https://sandbox.zarinpal.com/pg/StartPay/')
+ZARINPAL_CALLBACK_URL = env('ZARINPAL_CALLBACK_URL', default='http://127.0.0.1:8000/payment/verify/')
 
 
-# Email Configuration (SMTP - Gmail)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True  # پروتکل امنیتی گوگل
+# Email Configuration
+# رمز SMTP نباید داخل سورس ذخیره شود. در توسعه می‌توان از Console Backend استفاده کرد.
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env_int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER or 'webmaster@localhost')
 
-EMAIL_HOST_USER = 'pythonnazarian@gmail.com'
-
-EMAIL_HOST_PASSWORD = 'araxhmssntiwefhq'
-
+# تنظیمات پایه امنیتی برای کوکی‌ها. مقدارهای سخت‌گیرانه در زمان دیپلوی فعال می‌شوند.
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = env_bool('SESSION_COOKIE_SECURE', default=not DEBUG)
+CSRF_COOKIE_SECURE = env_bool('CSRF_COOKIE_SECURE', default=not DEBUG)
+SECURE_SSL_REDIRECT = env_bool('SECURE_SSL_REDIRECT', default=False)
+SECURE_HSTS_SECONDS = env_int('SECURE_HSTS_SECONDS', default=0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+SECURE_HSTS_PRELOAD = env_bool('SECURE_HSTS_PRELOAD', default=False)
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 UNFOLD = {

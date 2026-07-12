@@ -69,7 +69,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', verbose_name='دسته بندی')
     name = models.CharField(max_length=250, verbose_name='نام')
     slug = models.SlugField(max_length=250, verbose_name='اسلاگ')
-    description = models.TextField(max_length=6500, verbose_name='توضیحات')
+    description = models.TextField(max_length=6500, blank=True, verbose_name='توضیحات')
     inventory = models.PositiveIntegerField(default=0, verbose_name='موجودی')
     price = models.PositiveIntegerField(default=0, verbose_name='قیمت')
     weight = models.PositiveIntegerField(default=0, verbose_name='وزن')
@@ -77,7 +77,7 @@ class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE, related_name='products', verbose_name='برند')
     colors = models.ManyToManyField(Color, related_name='products', blank=True, verbose_name='رنگ‌ها')
 
-    off = models.PositiveIntegerField(default=0, verbose_name='تخفیف')
+    off = models.PositiveIntegerField(default=0, blank=True, verbose_name='تخفیف')
     new_price = models.PositiveIntegerField(default=0, verbose_name='قیمت پس از تخفیف')
     created = models.DateTimeField(auto_now_add=True, verbose_name='زمان ایجاد')
     updated = models.DateTimeField(auto_now=True, verbose_name='زمان بروزرسانی')

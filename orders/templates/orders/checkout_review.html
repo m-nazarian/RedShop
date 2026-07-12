@@ -20,7 +20,7 @@
 
                 <h2 class="text-xl font-bold text-gray-800">انتخاب روش پرداخت</h2>
 
-                <form method="post" action="{% url 'orders:checkout_create_order' %}" id="payment-form">
+                <form method="post" action="{% url 'orders:checkout_create' %}" id="payment-form">
                     {% csrf_token %}
 
                     <div class="space-y-4">
@@ -73,7 +73,12 @@
                             <span>قیمت کالاها ({{ cart|length|fa_number }})</span>
                             <span>{{ cart.get_total_price|money_format }} تومان</span>
                         </div>
-                        <div class="flex justify-between text-gray-600">
+                                                {% if cart.get_discount %}
+                        <div class="flex justify-between text-green-600">
+                            <span>تخفیف</span>
+                            <span>- {{ cart.get_discount|money_format }} تومان</span>
+                        </div>
+                        {% endif %}<div class="flex justify-between text-gray-600">
                             <span>هزینه ارسال</span>
                             <span>{{ cart.get_post_price|money_format }} تومان</span>
                         </div>
