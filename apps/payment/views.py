@@ -3,9 +3,10 @@ from datetime import timedelta
 from functools import partial
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction as db_transaction
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
@@ -14,7 +15,6 @@ from apps.orders.models import Order, Transaction
 from apps.orders.services import OrderLifecycleService
 
 from .zarinpal_service import ZarinPalService
-from django.contrib import messages
 
 logger = logging.getLogger(__name__)
 
