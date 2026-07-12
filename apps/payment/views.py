@@ -56,7 +56,6 @@ def _render_released_order_failure(request):
     )
 
 
-
 @login_required
 @require_GET
 def payment_process(request):

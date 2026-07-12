@@ -260,7 +260,6 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
         self.assertNotIn(CHECKOUT_ORDER_SESSION_KEY, session)
 
 
-
     def test_payment_process_clears_session_for_already_paid_order(self):
         order, _payment_method = self._create_paid_stale_order()
         order.payment_method = "online"
@@ -302,6 +301,7 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
         session = self.client.session
         self.assertNotIn(PAYMENT_ORDER_SESSION_KEY, session)
         self.assertNotIn(CHECKOUT_ORDER_SESSION_KEY, session)
+
     def test_cart_mutation_views_are_post_only(self):
         update_response = self.client.get(reverse("cart:update_quantity"))
         remove_response = self.client.get(reverse("cart:remove_item"))

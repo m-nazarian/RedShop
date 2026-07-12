@@ -9,6 +9,7 @@ CHECKOUT_ORDER_SESSION_KEY = "checkout_order_id"
 COUPON_SESSION_KEY = "coupon_id"
 PAYMENT_ORDER_SESSION_KEY = "order_id"
 
+
 def clear_checkout_order_session(session):
     """شناسه‌های سفارش checkout و payment را از session پاک می‌کند."""
 
@@ -24,4 +25,3 @@ def clear_checkout_order_session_if_matches(session, order_id):
 
     if session.get(CHECKOUT_ORDER_SESSION_KEY) == order_id:
         session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
-
