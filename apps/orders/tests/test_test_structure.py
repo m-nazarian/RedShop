@@ -22,3 +22,29 @@ class OrderTestStructureTests(TestCase):
                     )
 
         self.assertEqual(violations, [])
+
+    def test_redshop_test_base_only_lives_in_helpers_module(self):
+        tests_dir = Path(__file__).resolve().parent
+        helper_module = ".".join(["apps", "orders", "tests", "helpers"])
+        violations = []
+
+        for file_path in sorted(tests_dir.glob("test_*.py")):
+            tree = ast.parse(file_path.read_text(encoding="utf-8"))
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef) and node.name == "RedShopTestBase":
+                    violations.append(
+                        f"{file_path.name}:{node.lineno}: RedShopTestBase تعریف شده است"
+                    )
+
+                if not isinstance(node, ast.ImportFrom):
+                    continue
+
+                imported_names = {alias.name for alias in node.names}
+
+                if "RedShopTestBase" in imported_names and node.module != helper_module:
+                    violations.append(
+                        f"{file_path.name}:{node.lineno}: {node.module}"
+                    )
+
+        self.assertEqual(violations, [])
