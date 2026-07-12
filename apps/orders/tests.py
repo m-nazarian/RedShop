@@ -12,7 +12,7 @@ from .models import Order, Transaction
 from .services import OrderLifecycleService
 
 
-class CheckoutSecurityTests(TestCase):
+class RedShopTestBase(TestCase):
     def setUp(self):
         self.user = ShopUser.objects.create_user(
             phone="09120000001",
@@ -71,6 +71,7 @@ class CheckoutSecurityTests(TestCase):
         )
         self.client.force_login(self.user)
 
+
     def _prepare_checkout_session(self, address_id=None, with_coupon=True):
         session = self.client.session
         session["cart"] = {
@@ -84,6 +85,10 @@ class CheckoutSecurityTests(TestCase):
         if with_coupon:
             session["coupon_id"] = self.coupon.id
         session.save()
+
+
+
+class CheckoutSecurityTests(RedShopTestBase):
 
     def test_profile_does_not_accept_post_or_staff_fields(self):
         response = self.client.post(
@@ -229,7 +234,7 @@ class CheckoutSecurityTests(TestCase):
         self.assertTrue(response.json()["success"])
         self.assertEqual(response.json()["item_count"], 0)
 
-class PaymentLifecycleTests(CheckoutSecurityTests):
+class PaymentLifecycleTests(RedShopTestBase):
     def _create_online_order(self):
         self._prepare_checkout_session(with_coupon=False)
         response = self.client.post(
