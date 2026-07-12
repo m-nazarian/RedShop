@@ -18,6 +18,8 @@ from .zarinpal_service import ZarinPalService
 from apps.orders.session_keys import (
     CHECKOUT_ORDER_SESSION_KEY,
     PAYMENT_ORDER_SESSION_KEY,
+    clear_checkout_order_session,
+    clear_checkout_order_session_if_matches,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,14 +39,12 @@ def payment_process(request):
     ).first()
 
     if order is None:
-        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
-        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
+        clear_checkout_order_session(request.session)
         messages.error(request, "سفارش پرداخت معتبر پیدا نشد.")
         return redirect("cart:cart_detail")
 
     if order.status == "canceled" or order.stock_released:
-        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
-        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
+        clear_checkout_order_session(request.session)
         return render(
             request,
             "payment/failure.html",
@@ -55,8 +55,7 @@ def payment_process(request):
         )
 
     if order.paid:
-        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
-        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
+        clear_checkout_order_session(request.session)
         successful_transaction = order.transactions.filter(success=True).first()
         return render(
             request,
@@ -228,10 +227,7 @@ def payment_verify(request):
                     robust=True,
                 )
 
-    if request.session.get(PAYMENT_ORDER_SESSION_KEY) == order.id:
-        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
-    if request.session.get(CHECKOUT_ORDER_SESSION_KEY) == order.id:
-        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
+    clear_checkout_order_session_if_matches(request.session, order.id)
 
     return render(
         request,

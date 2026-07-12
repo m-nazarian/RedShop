@@ -19,6 +19,7 @@ from .session_keys import (
     CHECKOUT_ADDRESS_SESSION_KEY,
     CHECKOUT_ORDER_SESSION_KEY,
     PAYMENT_ORDER_SESSION_KEY,
+    clear_checkout_order_session,
 )
 
 logger = logging.getLogger(__name__)
@@ -165,11 +166,9 @@ def checkout_create_order(request):
         ).first()
 
         if existing_order is None:
-            request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
-            request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+            clear_checkout_order_session(request.session)
         elif existing_order.paid or existing_order.status == "canceled" or existing_order.stock_released:
-            request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
-            request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+            clear_checkout_order_session(request.session)
         elif existing_order.payment_method == "online":
             request.session[PAYMENT_ORDER_SESSION_KEY] = existing_order.id
             return redirect("payment:process")
