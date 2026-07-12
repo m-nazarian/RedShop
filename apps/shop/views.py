@@ -1,6 +1,5 @@
 import logging
 import json
-from collections import OrderedDict
 from django.contrib.admin.views.autocomplete import AutocompleteJsonView
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import user_passes_test, login_required
