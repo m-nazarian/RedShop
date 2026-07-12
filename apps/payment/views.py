@@ -25,6 +25,38 @@ from apps.orders.session_keys import (
 logger = logging.getLogger(__name__)
 
 
+def _get_online_order_for_payment(user, order_id):
+    return Order.objects.filter(
+        id=order_id,
+        user=user,
+        payment_method="online",
+    ).first()
+
+
+def _render_already_paid_order(request, order):
+    successful_transaction = order.transactions.filter(success=True).first()
+    return render(
+        request,
+        "payment/success.html",
+        {
+            "ref_id": successful_transaction.ref_id if successful_transaction else "-",
+            "order_number": order.order_number,
+        },
+    )
+
+
+def _render_released_order_failure(request):
+    return render(
+        request,
+        "payment/failure.html",
+        {
+            "message": "این سفارش قبلاً لغو شده و موجودی آن به انبار برگشته است.",
+            "show_retry": False,
+        },
+    )
+
+
+
 @login_required
 @require_GET
 def payment_process(request):
@@ -32,11 +64,7 @@ def payment_process(request):
     if not order_id:
         return redirect("orders:user_orders")
 
-    order = Order.objects.filter(
-        id=order_id,
-        user=request.user,
-        payment_method="online",
-    ).first()
+    order = _get_online_order_for_payment(request.user, order_id)
 
     if order is None:
         clear_checkout_order_session(request.session)
@@ -45,26 +73,11 @@ def payment_process(request):
 
     if order.status == "canceled" or order.stock_released:
         clear_checkout_order_session(request.session)
-        return render(
-            request,
-            "payment/failure.html",
-            {
-                "message": "این سفارش قبلاً لغو شده و موجودی آن به انبار برگشته است.",
-                "show_retry": False,
-            },
-        )
+        return _render_released_order_failure(request)
 
     if order.paid:
         clear_checkout_order_session(request.session)
-        successful_transaction = order.transactions.filter(success=True).first()
-        return render(
-            request,
-            "payment/success.html",
-            {
-                "ref_id": successful_transaction.ref_id if successful_transaction else "-",
-                "order_number": order.order_number,
-            },
-        )
+        return _render_already_paid_order(request, order)
 
     recent_pending = order.transactions.filter(
         provider="zarinpal",
