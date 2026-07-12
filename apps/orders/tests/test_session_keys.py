@@ -52,11 +52,11 @@ class CheckoutSessionKeyUsageTests(TestCase):
         from pathlib import Path
 
         project_root = Path(__file__).resolve().parents[3]
+        tests_dir = Path(__file__).resolve().parent
         checked_files = [
             project_root / "apps" / "orders" / "views.py",
             project_root / "apps" / "payment" / "views.py",
-            Path(__file__),
-            Path(__file__).with_name("test_checkout_payment.py"),
+            *sorted(tests_dir.glob("*.py")),
         ]
         raw_session_keys = {
             CART_SESSION_KEY,
