@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from apps.orders.models import Order, Transaction
 from apps.orders.services import OrderLifecycleService
-from apps.orders.tests.test_checkout_payment import RedShopTestBase
+from apps.orders.tests.helpers import RedShopTestBase
 
 
 class PaymentLifecycleTests(RedShopTestBase, TestCase):

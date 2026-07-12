@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.orders.session_keys import CART_SESSION_KEY
-from apps.orders.tests.test_checkout_payment import RedShopTestBase
+from apps.orders.tests.helpers import RedShopTestBase
 
 
 class CartViewTests(RedShopTestBase, TestCase):

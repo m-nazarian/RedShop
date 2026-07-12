@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.orders.tests.test_checkout_payment import RedShopTestBase
+from apps.orders.tests.helpers import RedShopTestBase
 
 
 class ProfileSecurityTests(RedShopTestBase, TestCase):

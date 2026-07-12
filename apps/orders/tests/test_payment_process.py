@@ -5,7 +5,7 @@ from apps.orders.session_keys import (
     CHECKOUT_ORDER_SESSION_KEY,
     PAYMENT_ORDER_SESSION_KEY,
 )
-from apps.orders.tests.test_checkout_payment import RedShopTestBase
+from apps.orders.tests.helpers import RedShopTestBase
 
 
 class PaymentProcessTests(RedShopTestBase, TestCase):
