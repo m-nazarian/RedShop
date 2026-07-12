@@ -16,6 +16,8 @@ from .session_keys import (
     CHECKOUT_ORDER_SESSION_KEY,
     COUPON_SESSION_KEY,
     PAYMENT_ORDER_SESSION_KEY,
+    clear_checkout_order_session,
+    clear_checkout_order_session_if_matches,
 )
 
 
@@ -219,6 +221,41 @@ class ProjectSettingsTests(TestCase):
         self.assertIn("loggers", settings.LOGGING)
         self.assertIn("apps", settings.LOGGING["loggers"])
         self.assertIn("django.request", settings.LOGGING["loggers"])
+
+
+class CheckoutSessionHelperTests(TestCase):
+    def test_clear_checkout_order_session_removes_only_order_keys(self):
+        session = {
+            CART_SESSION_KEY: {"1": {"quantity": 1}},
+            CHECKOUT_ORDER_SESSION_KEY: 10,
+            PAYMENT_ORDER_SESSION_KEY: 10,
+            "unrelated": "keep",
+        }
+
+        clear_checkout_order_session(session)
+
+        self.assertNotIn(CHECKOUT_ORDER_SESSION_KEY, session)
+        self.assertNotIn(PAYMENT_ORDER_SESSION_KEY, session)
+        self.assertIn(CART_SESSION_KEY, session)
+        self.assertEqual(session["unrelated"], "keep")
+
+    def test_clear_checkout_order_session_if_matches_is_order_scoped(self):
+        session = {
+            CHECKOUT_ORDER_SESSION_KEY: 20,
+            PAYMENT_ORDER_SESSION_KEY: 10,
+            "unrelated": "keep",
+        }
+
+        clear_checkout_order_session_if_matches(session, 10)
+
+        self.assertNotIn(PAYMENT_ORDER_SESSION_KEY, session)
+        self.assertEqual(session[CHECKOUT_ORDER_SESSION_KEY], 20)
+        self.assertEqual(session["unrelated"], "keep")
+
+        clear_checkout_order_session_if_matches(session, 20)
+
+        self.assertNotIn(CHECKOUT_ORDER_SESSION_KEY, session)
+        self.assertEqual(session["unrelated"], "keep")
 
 
 class CheckoutSecurityTests(RedShopTestBase, TestCase):
