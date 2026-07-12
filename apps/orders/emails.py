@@ -1,9 +1,13 @@
+import logging
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 import threading
 
+
+
+logger = logging.getLogger(__name__)
 
 def send_order_email_thread(subject, html_message, recipient_list):
     """ ارسال ایمیل در یک ترد جداگانه برای جلوگیری از کندی سایت """
@@ -16,8 +20,8 @@ def send_order_email_thread(subject, html_message, recipient_list):
             recipient_list,
             html_message=html_message
         )
-    except Exception as e:
-        print(f"Error sending email: {e}")
+    except Exception:
+        logger.exception("ارسال ایمیل تایید سفارش با خطا روبه‌رو شد.")
 
 
 def send_order_confirmation(order):
