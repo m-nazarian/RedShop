@@ -8,9 +8,9 @@ from apps.account.models import Address, ShopUser
 from apps.coupons.models import Coupon
 from apps.shop.models import Brand, Category, Product
 
-from .models import Order, Transaction
-from .services import OrderLifecycleService
-from .session_keys import (
+from apps.orders.models import Order, Transaction
+from apps.orders.services import OrderLifecycleService
+from apps.orders.session_keys import (
     CART_SESSION_KEY,
     CHECKOUT_ADDRESS_SESSION_KEY,
     CHECKOUT_ORDER_SESSION_KEY,
@@ -263,7 +263,7 @@ class CheckoutSessionKeyUsageTests(TestCase):
         import ast
         from pathlib import Path
 
-        project_root = Path(__file__).resolve().parents[2]
+        project_root = Path(__file__).resolve().parents[3]
         checked_files = [
             project_root / "apps" / "orders" / "views.py",
             project_root / "apps" / "payment" / "views.py",
