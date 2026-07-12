@@ -78,3 +78,83 @@ class TransactionAdmin(ModelAdmin):
         # ✅ اصلاح شد: created_at به جای created
         return obj.created_at.strftime("%Y/%m/%d %H:%M")
     created_jalali.short_description = "تاریخ ایجاد"
+
+# --- RedShop safe order admin actions ---
+
+from django.contrib import admin as _redshop_admin
+from django.contrib import messages as _redshop_messages
+
+from .models import Order as _RedShopOrder
+from .services import OrderLifecycleService as _RedShopOrderLifecycleService
+
+
+def cancel_unpaid_orders(modeladmin, request, queryset):
+    """سفارش‌های پرداخت‌نشده را از مسیر امن Service لغو می‌کند."""
+    canceled_count = 0
+    unchanged_count = 0
+    paid_count = 0
+    error_count = 0
+
+    for order in queryset.select_related("user"):
+        if order.paid:
+            paid_count += 1
+            continue
+
+        try:
+            _updated_order, changed = _RedShopOrderLifecycleService.cancel_unpaid_order(
+                order.id,
+                reason="لغو از پنل مدیریت",
+            )
+        except Exception:
+            error_count += 1
+            continue
+
+        if changed:
+            canceled_count += 1
+        else:
+            unchanged_count += 1
+
+    parts = []
+
+    if canceled_count:
+        parts.append(f"{canceled_count} سفارش پرداخت‌نشده لغو شد و موجودی آن برگشت.")
+
+    if paid_count:
+        parts.append(f"{paid_count} سفارش پرداخت‌شده تغییر نکرد.")
+
+    if unchanged_count:
+        parts.append(f"{unchanged_count} سفارش از قبل در وضعیت نهایی بود.")
+
+    if error_count:
+        parts.append(f"{error_count} سفارش به‌دلیل خطا پردازش نشد.")
+
+    if not parts:
+        parts.append("هیچ سفارشی برای لغو امن پیدا نشد.")
+
+    if error_count:
+        level = _redshop_messages.ERROR
+    elif canceled_count:
+        level = _redshop_messages.SUCCESS
+    else:
+        level = _redshop_messages.WARNING
+
+    modeladmin.message_user(request, " ".join(parts), level=level)
+
+
+cancel_unpaid_orders.short_description = "لغو امن سفارش‌های پرداخت‌نشده و برگشت موجودی"
+
+try:
+    _order_admin = _redshop_admin.site._registry.get(_RedShopOrder)
+    if _order_admin is not None:
+        _existing_actions = list(getattr(_order_admin, "actions", []) or [])
+        _existing_names = {
+            getattr(action, "__name__", str(action))
+            for action in _existing_actions
+        }
+
+        if "cancel_unpaid_orders" not in _existing_names:
+            _order_admin.actions = [*_existing_actions, cancel_unpaid_orders]
+except Exception:
+    pass
+
+# --- End RedShop safe order admin actions ---

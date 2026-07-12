@@ -227,3 +227,58 @@ class PaymentLifecycleTests(CheckoutSecurityTests):
 
         self.assertEqual(self.product.inventory, 10)
         self.assertTrue(order.stock_released)
+
+
+    def test_cancel_paid_order_does_not_release_stock(self):
+        order = self._create_online_order()
+
+        order.paid = True
+        order.status = "processing"
+        order.save(update_fields=["paid", "status", "updated"])
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory, 8)
+
+        updated_order, changed = OrderLifecycleService.cancel_unpaid_order(
+            order.id,
+            reason="تلاش برای لغو سفارش پرداخت‌شده",
+        )
+
+        self.product.refresh_from_db()
+        updated_order.refresh_from_db()
+
+        self.assertFalse(changed)
+        self.assertEqual(self.product.inventory, 8)
+        self.assertFalse(updated_order.stock_released)
+        self.assertEqual(updated_order.status, "processing")
+
+    def test_admin_cancel_action_uses_lifecycle_service(self):
+        order = self._create_online_order()
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.inventory, 8)
+
+        from apps.orders.admin import cancel_unpaid_orders
+
+        class DummyAdmin:
+            def __init__(self):
+                self.messages = []
+
+            def message_user(self, request, message, level=None):
+                self.messages.append((message, level))
+
+        dummy_admin = DummyAdmin()
+
+        cancel_unpaid_orders(
+            dummy_admin,
+            request=None,
+            queryset=Order.objects.filter(id=order.id),
+        )
+
+        self.product.refresh_from_db()
+        order.refresh_from_db()
+
+        self.assertEqual(self.product.inventory, 10)
+        self.assertTrue(order.stock_released)
+        self.assertEqual(order.status, "canceled")
+        self.assertTrue(dummy_admin.messages)
