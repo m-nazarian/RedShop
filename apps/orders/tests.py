@@ -100,6 +100,18 @@ class ProjectSettingsTests(TestCase):
 
 class CheckoutSecurityTests(RedShopTestBase, TestCase):
 
+    def test_cart_mutation_views_are_post_only(self):
+        update_response = self.client.get(reverse("cart:update_quantity"))
+        remove_response = self.client.get(reverse("cart:remove_item"))
+
+        self.assertEqual(update_response.status_code, 405)
+        self.assertEqual(remove_response.status_code, 405)
+
+    def test_read_only_cart_pages_accept_get(self):
+        response = self.client.get(reverse("cart:cart_detail"))
+        self.assertEqual(response.status_code, 200)
+
+
     def test_profile_does_not_accept_post_or_staff_fields(self):
         response = self.client.post(
             reverse("account:profile"),

@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from .forms import ProductCommentForm
 from .models import (
     Category, Product, CategoryFeature, CommentLike,
@@ -27,6 +27,7 @@ from .services import (
 # Views اصلی صفحات
 # --------------------------------------------------------------------------
 
+@require_GET
 def index(request):
     """
     نمایش صفحه اصلی به همراه اسلایدرهای هوشمند.
@@ -45,6 +46,7 @@ def index(request):
     return render(request, "shop/index.html", context)
 
 
+@require_GET
 def product_list(request, category_slug=None):
     """
     نمایش لیست محصولات برای بارگذاری اولیه صفحه (GET request).
@@ -79,6 +81,7 @@ def product_list(request, category_slug=None):
     return render(request, 'shop/list.html', context)
 
 
+@require_GET
 def product_detail(request, id, slug):
     """
     نمایش جزئیات محصول، نظرات و محصولات مرتبط.
@@ -119,14 +122,12 @@ def product_detail(request, id, slug):
     return render(request, 'shop/detail.html', context)
 
 
+@require_POST
 def filter_products(request):
     """
     View مخصوص AJAX برای فیلتر کردن محصولات.
     نکته مهم: لیست فیلترها (سایدبار) نباید با انتخاب کاربر محدود شود.
     """
-    if request.method != 'POST':
-        return JsonResponse({"error": "Only POST requests allowed"}, status=405)
-
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -181,6 +182,7 @@ def filter_products(request):
 # API جستجو و اتوکامپلیت
 # --------------------------------------------------------------------------
 
+@require_GET
 def search_suggestions(request):
     """
     API برای جستجوی زنده (Live Search) در هدر.
@@ -194,6 +196,7 @@ def search_suggestions(request):
 
 
 @staff_member_required
+@require_GET
 def categoryfeature_autocomplete(request):
     """
     Autocomplete برای انتخاب ویژگی‌ها در پنل ادمین.
@@ -248,6 +251,7 @@ def is_staff(user):
 
 
 @user_passes_test(is_staff, login_url=None)
+@require_GET
 def get_category_features(request, category_id):
     if category_id is None or category_id == 0:
         return JsonResponse({'features': []})
@@ -340,12 +344,14 @@ def toggle_favorite(request, product_id):
 # --------------------------------------------------------------------------
 
 @login_required
+@require_GET
 def user_favorites_partial(request):
     favorites = request.user.favorites.select_related('product', 'product__category', 'product__brand').prefetch_related('product__images').all()
     return render(request, 'partials/favorites_list.html', {'favorites': favorites})
 
 
 @login_required
+@require_GET
 def user_reviews_partial(request):
     reviews = request.user.comments.select_related('product', 'product__category', 'product__brand').order_by('-created')
     return render(request, 'partials/reviews_list.html', {'reviews': reviews})

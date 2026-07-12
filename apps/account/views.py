@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .forms import AccountEditForm, AddressForm, UserEditForm, UserRegistrationForm
 from .models import Account, Address
@@ -32,6 +32,7 @@ def profile(request):
     return render(request, "account/profile.html")
 
 
+@require_http_methods(["GET", "POST"])
 def register(request):
     if request.user.is_authenticated:
         return redirect("account:profile")
@@ -50,6 +51,7 @@ def register(request):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def edit_account(request):
     user = request.user
     account, created = Account.objects.get_or_create(user=user)
@@ -80,6 +82,7 @@ def edit_account(request):
     )
 
 
+@require_http_methods(["GET", "POST"])
 def user_login(request):
     if request.user.is_authenticated:
         return redirect("account:profile")
@@ -106,6 +109,7 @@ def user_logout(request):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def add_address(request):
     is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
 
@@ -147,6 +151,7 @@ def add_address(request):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def edit_address(request, address_id):
     address = get_object_or_404(Address, id=address_id, user=request.user)
     is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
@@ -210,6 +215,7 @@ def user_addresses_partial(request):
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def edit_profile_partial(request):
     user = request.user
     account, _ = Account.objects.get_or_create(user=user)

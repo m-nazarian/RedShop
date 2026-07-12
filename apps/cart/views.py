@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from apps.coupons.forms import CouponApplyForm
 from apps.shop.models import Product
@@ -69,6 +69,7 @@ def add_to_cart(request, product_id):
     return JsonResponse(payload, status=200)
 
 
+@require_GET
 def cart_detail(request):
     cart = Cart(request)
     coupon_apply_form = CouponApplyForm()
@@ -141,6 +142,7 @@ def remove_item(request):
     return JsonResponse(payload)
 
 
+@require_GET
 def checkout_start(request):
     if not request.user.is_authenticated:
         return redirect(f"/login/?next=/cart/checkout/")
