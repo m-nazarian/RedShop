@@ -10,6 +10,13 @@ from apps.shop.models import Brand, Category, Product
 
 from .models import Order, Transaction
 from .services import OrderLifecycleService
+from .session_keys import (
+    CART_SESSION_KEY,
+    CHECKOUT_ADDRESS_SESSION_KEY,
+    CHECKOUT_ORDER_SESSION_KEY,
+    COUPON_SESSION_KEY,
+    PAYMENT_ORDER_SESSION_KEY,
+)
 
 
 class RedShopTestBase:
@@ -74,16 +81,16 @@ class RedShopTestBase:
 
     def _prepare_checkout_session(self, address_id=None, with_coupon=True):
         session = self.client.session
-        session["cart"] = {
+        session[CART_SESSION_KEY] = {
             str(self.product.id): {
                 "quantity": 2,
                 "price": float(self.product.new_price),
                 "weight": float(self.product.weight),
             }
         }
-        session["checkout_address_id"] = address_id or self.address.id
+        session[CHECKOUT_ADDRESS_SESSION_KEY] = address_id or self.address.id
         if with_coupon:
-            session["coupon_id"] = self.coupon.id
+            session[COUPON_SESSION_KEY] = self.coupon.id
         session.save()
 
     def _choose_cash_payment_method(self):
@@ -194,7 +201,7 @@ class RedShopTestBase:
         return Order.objects.create(**order_kwargs), payment_method
 
     def _put_single_product_cart_in_session(self, session):
-        session["cart"] = {
+        session[CART_SESSION_KEY] = {
             str(self.product.id): {
                 "quantity": 1,
                 "price": str(self.product.new_price),
@@ -221,9 +228,9 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
 
         session = self.client.session
         self._put_single_product_cart_in_session(session)
-        session["checkout_order_id"] = old_order.id
-        session["order_id"] = old_order.id
-        session["checkout_address_id"] = self.address.id
+        session[CHECKOUT_ORDER_SESSION_KEY] = old_order.id
+        session[PAYMENT_ORDER_SESSION_KEY] = old_order.id
+        session[CHECKOUT_ADDRESS_SESSION_KEY] = self.address.id
         session.save()
 
         response = self.client.post(
@@ -234,14 +241,14 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
         self.assertEqual(response.status_code, 302)
 
         session = self.client.session
-        self.assertNotEqual(session.get("checkout_order_id"), old_order.id)
-        self.assertNotIn("order_id", session)
+        self.assertNotEqual(session.get(CHECKOUT_ORDER_SESSION_KEY), old_order.id)
+        self.assertNotIn(PAYMENT_ORDER_SESSION_KEY, session)
         self.assertEqual(Order.objects.filter(user=self.user).count(), 2)
 
     def test_invalid_payment_session_is_cleared(self):
         session = self.client.session
-        session["order_id"] = 999999
-        session["checkout_order_id"] = 999999
+        session[PAYMENT_ORDER_SESSION_KEY] = 999999
+        session[CHECKOUT_ORDER_SESSION_KEY] = 999999
         session.save()
 
         response = self.client.get(reverse("payment:process"))
@@ -249,8 +256,8 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
         self.assertEqual(response.status_code, 302)
 
         session = self.client.session
-        self.assertNotIn("order_id", session)
-        self.assertNotIn("checkout_order_id", session)
+        self.assertNotIn(PAYMENT_ORDER_SESSION_KEY, session)
+        self.assertNotIn(CHECKOUT_ORDER_SESSION_KEY, session)
 
 
     def test_cart_mutation_views_are_post_only(self):
@@ -335,7 +342,7 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
 
     def test_cart_update_rejects_invalid_action(self):
         session = self.client.session
-        session["cart"] = {
+        session[CART_SESSION_KEY] = {
             str(self.product.id): {
                 "quantity": 1,
                 "price": float(self.product.new_price),
@@ -363,7 +370,7 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
 
     def test_cart_update_rejects_quantity_over_inventory(self):
         session = self.client.session
-        session["cart"] = {
+        session[CART_SESSION_KEY] = {
             str(self.product.id): {
                 "quantity": self.product.inventory,
                 "price": float(self.product.new_price),
@@ -391,7 +398,7 @@ class CheckoutSecurityTests(RedShopTestBase, TestCase):
 
     def test_cart_remove_existing_item(self):
         session = self.client.session
-        session["cart"] = {
+        session[CART_SESSION_KEY] = {
             str(self.product.id): {
                 "quantity": 1,
                 "price": float(self.product.new_price),

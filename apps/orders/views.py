@@ -14,6 +14,12 @@ from apps.cart.cart import Cart
 from .forms import CheckoutPaymentForm
 from .models import Order
 from .services import CheckoutError, CheckoutService
+from .session_keys import (
+    CART_SESSION_KEY,
+    CHECKOUT_ADDRESS_SESSION_KEY,
+    CHECKOUT_ORDER_SESSION_KEY,
+    PAYMENT_ORDER_SESSION_KEY,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -100,20 +106,20 @@ def checkout_address(request):
                 request,
                 "orders/checkout_address.html",
                 {
-                    "cart": cart,
+                    CART_SESSION_KEY: cart,
                     "addresses": addresses,
                     "error": "یک آدرس را انتخاب کنید.",
                 },
             )
 
         address = get_object_or_404(Address, id=address_id, user=request.user)
-        request.session["checkout_address_id"] = address.id
+        request.session[CHECKOUT_ADDRESS_SESSION_KEY] = address.id
         return redirect("orders:checkout_review")
 
     return render(
         request,
         "orders/checkout_address.html",
-        {"cart": cart, "addresses": addresses},
+        {CART_SESSION_KEY: cart, "addresses": addresses},
     )
 
 
@@ -124,7 +130,7 @@ def checkout_review(request):
     if len(cart) == 0:
         return redirect("cart:cart_detail")
 
-    address_id = request.session.get("checkout_address_id")
+    address_id = request.session.get(CHECKOUT_ADDRESS_SESSION_KEY)
     if not address_id:
         return redirect("orders:checkout_address")
 
@@ -133,7 +139,7 @@ def checkout_review(request):
         request,
         "orders/checkout_review.html",
         {
-            "cart": cart,
+            CART_SESSION_KEY: cart,
             "address": address,
             "payment_form": CheckoutPaymentForm(),
         },
@@ -147,11 +153,11 @@ def checkout_create_order(request):
     if len(cart) == 0:
         return redirect("cart:cart_detail")
 
-    address_id = request.session.get("checkout_address_id")
+    address_id = request.session.get(CHECKOUT_ADDRESS_SESSION_KEY)
     if not address_id:
         return redirect("orders:checkout_address")
 
-    existing_order_id = request.session.get("checkout_order_id")
+    existing_order_id = request.session.get(CHECKOUT_ORDER_SESSION_KEY)
     if existing_order_id:
         existing_order = Order.objects.filter(
             id=existing_order_id,
@@ -159,16 +165,16 @@ def checkout_create_order(request):
         ).first()
 
         if existing_order is None:
-            request.session.pop("checkout_order_id", None)
-            request.session.pop("order_id", None)
+            request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
+            request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
         elif existing_order.paid or existing_order.status == "canceled" or existing_order.stock_released:
-            request.session.pop("checkout_order_id", None)
-            request.session.pop("order_id", None)
+            request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
+            request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
         elif existing_order.payment_method == "online":
-            request.session["order_id"] = existing_order.id
+            request.session[PAYMENT_ORDER_SESSION_KEY] = existing_order.id
             return redirect("payment:process")
         else:
-            request.session.pop("order_id", None)
+            request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
             return redirect("orders:checkout_complete")
 
     form = CheckoutPaymentForm(request.POST)
@@ -191,23 +197,23 @@ def checkout_create_order(request):
         messages.error(request, "ثبت سفارش انجام نشد. دوباره تلاش کنید.")
         return redirect("orders:checkout_review")
 
-    request.session["checkout_order_id"] = order.id
-    request.session.pop("checkout_address_id", None)
+    request.session[CHECKOUT_ORDER_SESSION_KEY] = order.id
+    request.session.pop(CHECKOUT_ADDRESS_SESSION_KEY, None)
     cart.clear()
 
     if order.payment_method == "online":
-        request.session["order_id"] = order.id
+        request.session[PAYMENT_ORDER_SESSION_KEY] = order.id
         return redirect("payment:process")
 
-    request.session.pop("order_id", None)
+    request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
     return redirect("orders:checkout_complete")
 
 
 @login_required
 @require_GET
 def checkout_complete(request):
-    request.session.pop("checkout_address_id", None)
-    request.session.pop("checkout_order_id", None)
+    request.session.pop(CHECKOUT_ADDRESS_SESSION_KEY, None)
+    request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
     request.session.pop("order_created", None)
     return render(request, "orders/checkout_complete.html")
 

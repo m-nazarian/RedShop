@@ -15,6 +15,10 @@ from apps.orders.models import Order, Transaction
 from apps.orders.services import OrderLifecycleService
 
 from .zarinpal_service import ZarinPalService
+from apps.orders.session_keys import (
+    CHECKOUT_ORDER_SESSION_KEY,
+    PAYMENT_ORDER_SESSION_KEY,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +26,7 @@ logger = logging.getLogger(__name__)
 @login_required
 @require_GET
 def payment_process(request):
-    order_id = request.session.get("order_id")
+    order_id = request.session.get(PAYMENT_ORDER_SESSION_KEY)
     if not order_id:
         return redirect("orders:user_orders")
 
@@ -33,14 +37,14 @@ def payment_process(request):
     ).first()
 
     if order is None:
-        request.session.pop("order_id", None)
-        request.session.pop("checkout_order_id", None)
+        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
         messages.error(request, "سفارش پرداخت معتبر پیدا نشد.")
         return redirect("cart:cart_detail")
 
     if order.status == "canceled" or order.stock_released:
-        request.session.pop("order_id", None)
-        request.session.pop("checkout_order_id", None)
+        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
         return render(
             request,
             "payment/failure.html",
@@ -51,8 +55,8 @@ def payment_process(request):
         )
 
     if order.paid:
-        request.session.pop("order_id", None)
-        request.session.pop("checkout_order_id", None)
+        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
         successful_transaction = order.transactions.filter(success=True).first()
         return render(
             request,
@@ -164,10 +168,10 @@ def payment_verify(request):
             reason="پرداخت از طرف کاربر یا درگاه لغو شد.",
         )
 
-        if request.session.get("order_id") == order.id:
-            request.session.pop("order_id", None)
-        if request.session.get("checkout_order_id") == order.id:
-            request.session.pop("checkout_order_id", None)
+        if request.session.get(PAYMENT_ORDER_SESSION_KEY) == order.id:
+            request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+        if request.session.get(CHECKOUT_ORDER_SESSION_KEY) == order.id:
+            request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
 
         return render(
             request,
@@ -224,10 +228,10 @@ def payment_verify(request):
                     robust=True,
                 )
 
-    if request.session.get("order_id") == order.id:
-        request.session.pop("order_id", None)
-    if request.session.get("checkout_order_id") == order.id:
-        request.session.pop("checkout_order_id", None)
+    if request.session.get(PAYMENT_ORDER_SESSION_KEY) == order.id:
+        request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
+    if request.session.get(CHECKOUT_ORDER_SESSION_KEY) == order.id:
+        request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
 
     return render(
         request,
