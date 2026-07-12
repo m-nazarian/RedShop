@@ -10,13 +10,9 @@ class OrderTestStructureTests(TestCase):
         legacy_module = ".".join(
             ["apps", "orders", "tests", "test_checkout_payment"]
         )
-        allowed_file = tests_dir / "test_checkout_payment.py"
         violations = []
 
         for file_path in sorted(tests_dir.glob("test_*.py")):
-            if file_path == allowed_file:
-                continue
-
             tree = ast.parse(file_path.read_text(encoding="utf-8"))
 
             for node in ast.walk(tree):
