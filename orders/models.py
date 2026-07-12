@@ -204,8 +204,8 @@ class Transaction(models.Model):
         verbose_name_plural = "تراکنش‌ها"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["provider", "transaction_id"]),
-            models.Index(fields=["order", "status"]),
+            models.Index(fields=["provider", "transaction_id"], name="orders_tran_provide_6d8575_idx"),
+            models.Index(fields=["order", "status"], name="orders_tran_order_i_3c7d44_idx"),
         ]
 
     def __str__(self):
