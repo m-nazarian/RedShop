@@ -1,5 +1,5 @@
 from django.db.models import Q, Count
-from .models import Brand, Color, ProductFeatureValue, Product, Category
+from .models import Brand, Color, ProductFeatureValue, Product
 from collections import OrderedDict
 
 
