@@ -100,6 +100,151 @@ class ProjectSettingsTests(TestCase):
 
 class CheckoutSecurityTests(RedShopTestBase, TestCase):
 
+    def test_stale_paid_checkout_session_is_ignored_before_new_order(self):
+        from decimal import Decimal
+        import uuid
+
+        from django.db import models
+        from django.db.models.fields import NOT_PROVIDED
+        from django.utils import timezone
+
+        def choose_cash_payment_method():
+            field = Order._meta.get_field("payment_method")
+            choices = [key for key, _label in field.choices]
+
+            for candidate in ("cash_on_delivery", "cod", "cash", "cash_delivery"):
+                if candidate in choices:
+                    return candidate
+
+            for key in choices:
+                if "online" not in str(key).lower():
+                    return key
+
+            return choices[0] if choices else "cash_on_delivery"
+
+        def sample_value_for_required_field(field):
+            if isinstance(field, models.CharField):
+                if field.name == "order_number":
+                    return f"TEST-{uuid.uuid4().hex[:12]}"
+                if field.choices:
+                    return list(field.choices)[0][0]
+                return "test"
+
+            if isinstance(field, models.TextField):
+                return "test"
+
+            if isinstance(field, models.EmailField):
+                return "test@example.com"
+
+            if isinstance(field, models.DecimalField):
+                return Decimal("0.00")
+
+            if isinstance(field, models.IntegerField):
+                return 0
+
+            if isinstance(field, models.BooleanField):
+                return False
+
+            if isinstance(field, models.DateTimeField):
+                return timezone.now()
+
+            if isinstance(field, models.DateField):
+                return timezone.now().date()
+
+            return None
+
+        payment_method = choose_cash_payment_method()
+
+        order_kwargs = {
+            "user": self.user,
+            "payment_method": payment_method,
+            "paid": True,
+        }
+
+        for field in Order._meta.fields:
+            if field.primary_key:
+                continue
+
+            if getattr(field, "auto_now", False) or getattr(field, "auto_now_add", False):
+                continue
+
+            if field.name in order_kwargs:
+                continue
+
+            if field.name == "user":
+                order_kwargs["user"] = self.user
+                continue
+
+            if field.name == "address":
+                order_kwargs["address"] = self.address
+                continue
+
+            if field.name == "status" and field.choices:
+                choices = [key for key, _label in field.choices]
+                order_kwargs["status"] = "pending" if "pending" in choices else choices[0]
+                continue
+
+            if field.name == "stock_released":
+                order_kwargs["stock_released"] = False
+                continue
+
+            if field.name == "coupon_released":
+                order_kwargs["coupon_released"] = False
+                continue
+
+            if field.default is not NOT_PROVIDED:
+                continue
+
+            if field.null:
+                continue
+
+            if isinstance(field, models.ForeignKey):
+                continue
+
+            order_kwargs[field.name] = sample_value_for_required_field(field)
+
+        old_order = Order.objects.create(**order_kwargs)
+
+        session = self.client.session
+        session["cart"] = {
+            str(self.product.id): {
+                "quantity": 1,
+                "price": str(self.product.new_price),
+                "weight": str(self.product.weight),
+            }
+        }
+        session["checkout_order_id"] = old_order.id
+        session["order_id"] = old_order.id
+        session["checkout_address_id"] = self.address.id
+        session.save()
+
+        response = self.client.post(
+            reverse("orders:checkout_create"),
+            {"payment_method": payment_method},
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        session = self.client.session
+        self.assertNotEqual(session.get("checkout_order_id"), old_order.id)
+        self.assertNotIn("order_id", session)
+        self.assertEqual(Order.objects.filter(user=self.user).count(), 2)
+
+    def test_invalid_payment_session_is_cleared(self):
+        session = self.client.session
+        session["order_id"] = 999999
+        session["checkout_order_id"] = 999999
+        session.save()
+
+        response = self.client.get(reverse("payment:process"))
+
+        self.assertEqual(response.status_code, 302)
+
+        session = self.client.session
+        self.assertNotIn("order_id", session)
+        self.assertNotIn("checkout_order_id", session)
+
+
     def test_cart_mutation_views_are_post_only(self):
         update_response = self.client.get(reverse("cart:update_quantity"))
         remove_response = self.client.get(reverse("cart:remove_item"))

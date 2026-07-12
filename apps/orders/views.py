@@ -157,12 +157,19 @@ def checkout_create_order(request):
             id=existing_order_id,
             user=request.user,
         ).first()
-        if existing_order:
-            if existing_order.payment_method == "online" and not existing_order.paid:
-                request.session["order_id"] = existing_order.id
-                return redirect("payment:process")
+
+        if existing_order is None:
+            request.session.pop("checkout_order_id", None)
+            request.session.pop("order_id", None)
+        elif existing_order.paid or existing_order.status == "canceled" or existing_order.stock_released:
+            request.session.pop("checkout_order_id", None)
+            request.session.pop("order_id", None)
+        elif existing_order.payment_method == "online":
+            request.session["order_id"] = existing_order.id
+            return redirect("payment:process")
+        else:
+            request.session.pop("order_id", None)
             return redirect("orders:checkout_complete")
-        request.session.pop("checkout_order_id", None)
 
     form = CheckoutPaymentForm(request.POST)
     if not form.is_valid():

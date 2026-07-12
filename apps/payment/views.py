@@ -14,6 +14,7 @@ from apps.orders.models import Order, Transaction
 from apps.orders.services import OrderLifecycleService
 
 from .zarinpal_service import ZarinPalService
+from django.contrib import messages
 
 logger = logging.getLogger(__name__)
 
@@ -25,23 +26,17 @@ def payment_process(request):
     if not order_id:
         return redirect("orders:user_orders")
 
-    order = get_object_or_404(
-        Order,
+    order = Order.objects.filter(
         id=order_id,
         user=request.user,
         payment_method="online",
-    )
+    ).first()
 
-    if order.paid:
-        successful_transaction = order.transactions.filter(success=True).first()
-        return render(
-            request,
-            "payment/success.html",
-            {
-                "ref_id": successful_transaction.ref_id if successful_transaction else "-",
-                "order_number": order.order_number,
-            },
-        )
+    if order is None:
+        request.session.pop("order_id", None)
+        request.session.pop("checkout_order_id", None)
+        messages.error(request, "سفارش پرداخت معتبر پیدا نشد.")
+        return redirect("cart:cart_detail")
 
     if order.status == "canceled" or order.stock_released:
         request.session.pop("order_id", None)
@@ -52,6 +47,19 @@ def payment_process(request):
             {
                 "message": "این سفارش قبلاً لغو شده و موجودی آن به انبار برگشته است.",
                 "show_retry": False,
+            },
+        )
+
+    if order.paid:
+        request.session.pop("order_id", None)
+        request.session.pop("checkout_order_id", None)
+        successful_transaction = order.transactions.filter(success=True).first()
+        return render(
+            request,
+            "payment/success.html",
+            {
+                "ref_id": successful_transaction.ref_id if successful_transaction else "-",
+                "order_number": order.order_number,
             },
         )
 
