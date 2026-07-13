@@ -310,3 +310,22 @@ Recommended next:
 1. Add more granular callback outcome logs after success, failure, cancel, and payment_review branches.
 2. Add production runbook examples using request_id plus authority_hash.
 3. Add alerting around repeated failed callback events once a monitoring provider is chosen.
+
+
+## Phase 18 - Production operations runbook
+
+Implemented:
+
+- Added docs/OPERATIONS_FA.md as a Persian production operations runbook.
+- Documented payment incident investigation using request_id, authority_hash, order_number, transaction_status, and payment_review.
+- Documented safe handling of raw Authority values and hash_payment_identifier.
+- Documented release_expired_orders operational usage.
+- Documented OrderAuditLog usage for sensitive admin actions.
+- Documented Request ID tracing and RedactingFilter expectations.
+- Added regression tests to keep the runbook connected to payment logging, deployment checks, request IDs, redaction, and expired-order release operations.
+
+Recommended next:
+
+1. Add granular callback outcome events for success, failure, cancel, and payment_review branches.
+2. Add a README security/operations summary linking DEPLOYMENT_FA.md and OPERATIONS_FA.md.
+3. Add CI badge after GitHub Actions runs successfully on main.

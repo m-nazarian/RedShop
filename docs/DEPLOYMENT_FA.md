@@ -93,3 +93,7 @@ CSP در Local به‌صورت Report-Only است تا UI نشکند. در Produ
 ## 11. Payment callback logging
 
 payment_verify یک event ساختاریافته با نام callback_received ثبت می‌کند. مقدار خام Authority در لاگ ذخیره نمی‌شود؛ فقط authority_hash کوتاه ثبت می‌شود. برای پیگیری مشکل پرداخت، request_id و authority_hash را کنار هم بررسی کن.
+
+## 12. Production Runbook
+
+برای سناریوهای عملیاتی مثل خطای پرداخت، سفارش payment_review، آزادسازی موجودی، request_id، authority_hash و audit log، سند docs/OPERATIONS_FA.md را ببین.
