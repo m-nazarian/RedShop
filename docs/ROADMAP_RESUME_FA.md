@@ -201,3 +201,20 @@ Recommended next:
 1. Add a .env.example file documenting required deployment variables.
 2. Add CI commands for check, tests, deployment check, and migration dry-run.
 3. Add README deployment section.
+
+
+## Phase 12 - Deployment documentation and CI
+
+Implemented:
+
+- Added .env.example with local and production-oriented variables.
+- Added Persian deployment guide in docs/DEPLOYMENT_FA.md.
+- Added GitHub Actions workflow for compile, migration dry-run, system check, deployment readiness report, and tests.
+- Added static regression tests to ensure deployment docs and CI quality gates remain present.
+- Removed temporary AI patch scripts left from the previous fix.
+
+Recommended next:
+
+1. Verify CI environment variable names against the final hosting provider.
+2. Add README badges after the first successful GitHub Actions run.
+3. Add production logging configuration and Sentry-style error reporting.
