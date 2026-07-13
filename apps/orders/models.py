@@ -284,3 +284,80 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.order.order_number} - {self.amount}"
+
+
+# ---------------------------------------------------------------------------
+# Order audit logs
+# ---------------------------------------------------------------------------
+# These logs are append-only operational records for sensitive order/admin
+# actions. They are intentionally separate from payment transactions.
+
+from django.conf import settings as _redshop_audit_settings
+
+
+class OrderAuditLog(models.Model):
+    ACTION_PAYMENT_REVIEW_EXPORT = "payment_review_export"
+    ACTION_ADMIN_NOTE = "admin_note"
+
+    ACTION_CHOICES = [
+        (ACTION_PAYMENT_REVIEW_EXPORT, "Payment review CSV export"),
+        (ACTION_ADMIN_NOTE, "Admin note"),
+    ]
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="audit_logs",
+        null=True,
+        blank=True,
+        verbose_name="سفارش",
+    )
+    actor = models.ForeignKey(
+        _redshop_audit_settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="order_audit_logs",
+        null=True,
+        blank=True,
+        verbose_name="کاربر انجام‌دهنده",
+    )
+    action = models.CharField(
+        max_length=64,
+        choices=ACTION_CHOICES,
+        verbose_name="عملیات",
+    )
+    request_id = models.CharField(
+        max_length=128,
+        blank=True,
+        verbose_name="شناسه درخواست",
+    )
+    message = models.TextField(
+        blank=True,
+        verbose_name="پیام",
+    )
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name="داده تکمیلی",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="زمان ثبت",
+    )
+
+    class Meta:
+        verbose_name = "لاگ سفارش"
+        verbose_name_plural = "لاگ‌های سفارش"
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["action", "created_at"],
+                name="order_audit_action_created_idx",
+            ),
+            models.Index(
+                fields=["order", "created_at"],
+                name="order_audit_order_created_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.action} order={self.order_id or '-'}"

@@ -81,3 +81,7 @@ CSP در Local به‌صورت Report-Only است تا UI نشکند. در Produ
 هر Response یک Header با نام X-Request-ID دارد. اگر Reverse Proxy یا Client مقدار معتبر X-Request-ID بفرستد، همان مقدار حفظ می‌شود؛ در غیر این صورت سیستم یک مقدار امن تولید می‌کند.
 
 در لاگ‌های Production، request_id داخل فرمت plain و JSON ثبت می‌شود تا خطاهای checkout، پرداخت، و admin قابل ردیابی باشند.
+
+## 9. Order audit logs
+
+برای عملیات حساس ادمین، مثل خروجی گرفتن از سفارش‌های payment_review، رکورد audit ساخته می‌شود. این رکوردها شامل order، actor، action، request_id، metadata و زمان ثبت هستند و در Admin فقط خواندنی‌اند.

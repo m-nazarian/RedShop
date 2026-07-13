@@ -401,3 +401,117 @@ def _install_payment_review_admin_tools():
 
 
 _install_payment_review_admin_tools()
+
+
+# ---------------------------------------------------------------------------
+# Order audit log admin integration
+# ---------------------------------------------------------------------------
+
+from .audit import ORDER_AUDIT_PAYMENT_REVIEW_EXPORT, log_order_audit
+from .models import OrderAuditLog as _OrderAuditLog
+
+
+class OrderAuditLogAdmin(django_admin.ModelAdmin):
+    list_display = (
+        "id",
+        "created_at",
+        "action",
+        "order",
+        "actor",
+        "request_id",
+    )
+    list_filter = ("action", "created_at")
+    search_fields = (
+        "order__order_number",
+        "request_id",
+        "message",
+        "actor__phone",
+        "actor__email",
+    )
+    readonly_fields = (
+        "order",
+        "actor",
+        "action",
+        "request_id",
+        "message",
+        "metadata",
+        "created_at",
+    )
+    ordering = ("-created_at", "-id")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+if _OrderAuditLog not in django_admin.site._registry:
+    django_admin.site.register(_OrderAuditLog, OrderAuditLogAdmin)
+
+
+try:
+    _payment_review_export_without_audit = export_payment_review_orders
+except NameError:
+    _payment_review_export_without_audit = None
+
+
+if _payment_review_export_without_audit is not None:
+    def export_payment_review_orders(modeladmin, request, queryset):
+        response = _payment_review_export_without_audit(modeladmin, request, queryset)
+
+        request_id = getattr(request, "request_id", None)
+        actor = getattr(request, "user", None)
+        review_orders = queryset.filter(status=_payment_review_status_value()).order_by("id")
+
+        for order in review_orders:
+            log_order_audit(
+                order=order,
+                action=ORDER_AUDIT_PAYMENT_REVIEW_EXPORT,
+                actor=actor,
+                request_id=request_id,
+                message="Payment review CSV exported from Django admin.",
+                metadata={
+                    "order_number": getattr(order, "order_number", ""),
+                    "admin_action": "export_payment_review_orders",
+                },
+            )
+
+        return response
+
+    export_payment_review_orders.short_description = getattr(
+        _payment_review_export_without_audit,
+        "short_description",
+        "خروجی CSV سفارش‌های نیازمند بازبینی پرداخت",
+    )
+
+    def _replace_payment_review_export_action_with_audited_version():
+        model_admin = django_admin.site._registry.get(_PaymentReviewOrder)
+
+        if model_admin is None:
+            return
+
+        actions = tuple(getattr(model_admin, "actions", ()) or ())
+        new_actions = []
+        replaced = False
+
+        for action in actions:
+            action_name = action if isinstance(action, str) else getattr(action, "__name__", str(action))
+
+            if action_name == "export_payment_review_orders":
+                if not replaced:
+                    new_actions.append(export_payment_review_orders)
+                    replaced = True
+                continue
+
+            new_actions.append(action)
+
+        if not replaced:
+            new_actions.append(export_payment_review_orders)
+
+        model_admin.actions = tuple(new_actions)
+
+    _replace_payment_review_export_action_with_audited_version()

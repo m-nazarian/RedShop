@@ -256,3 +256,22 @@ Recommended next:
 1. Add audit logging for staff actions on payment_review orders.
 2. Include request_id in payment callback logs and operational runbooks.
 3. Forward X-Request-ID through reverse proxy configuration in production.
+
+
+## Phase 15 - Order audit logs
+
+Implemented:
+
+- Added OrderAuditLog as an append-only operational audit model.
+- Added order, actor, action, request_id, message, metadata, and created_at fields.
+- Added reusable log_order_audit helper.
+- Added read-only Django admin for audit logs.
+- Wrapped payment_review CSV export so every exported review order gets an audit record.
+- Audit records include the current request_id for correlation with production logs.
+- Regression tests cover manual audit logging, payment-review export audit logs, and read-only audit admin behavior.
+
+Recommended next:
+
+1. Add audit entries for explicit payment_review resolution actions once those actions exist.
+2. Add request_id to payment gateway callback logs.
+3. Add a staff-facing runbook for refund/re-reserve decisions.
