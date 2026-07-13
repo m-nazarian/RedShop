@@ -1,212 +1,402 @@
-# 🛍️ RedShop - پلتفرم فروشگاه اینترنتی پیشرفته با Django
 
-![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/Django-5.2-092E20?style=for-the-badge&logo=django&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Admin](https://img.shields.io/badge/Admin-Unfold-purple?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active%20Development-orange?style=for-the-badge)
+# RedShop
 
-**RedShop** یک پروژه فروشگاه اینترنتی مدرن، مقیاس‌پذیر و کامل است که با هدف پیاده‌سازی استانداردهای مهندسی نرم‌افزار و تجربه کاربری (UX) سطح بالا توسعه داده شده است. این پروژه فراتر از یک فروشگاه ساده بوده و شامل زیرساخت‌های پیشرفته‌ای مانند داشبورد مدیریتی BI، سیستم مقایسه کالا و پروفایل کاربری SPA-like است.
+RedShop یک فروشگاه اینترنتی فارسی و راست‌به‌چپ بر پایه Django است که با تمرکز روی تجربه خرید، مدیریت سفارش، پرداخت، امنیت، یکپارچگی داده و آمادگی عملیاتی توسعه داده شده است.
 
-> 🚧 **نکته:** این پروژه به صورت مداوم در حال توسعه و بهینه‌سازی (Refactoring) است تا به استانداردهای سطح Senior نزدیک‌تر شود.
+این پروژه صرفاً یک نمونه ظاهری یا CRUD ساده نیست. RedShop تلاش می‌کند بخش‌های مهم یک فروشگاه واقعی را، از لیست محصول و سبد خرید تا ثبت سفارش، پرداخت، مدیریت موجودی، لاگ عملیاتی، audit trail و چک‌های قبل از دیپلوی، به شکل قابل تست و قابل نگهداری پیاده‌سازی کند.
+
+> وضعیت پروژه: در حال hardening و آماده‌سازی برای ارائه رزومه‌ای/نمونه‌کار حرفه‌ای. پروژه برای اجرای واقعی نیازمند تنظیمات Production، دامنه، SSL، کلیدهای واقعی درگاه پرداخت، سرویس ایمیل، job scheduler و مانیتورینگ خارجی است.
 
 ---
 
-## 👋 درباره پروژه و چالش‌های فنی
+## فهرست
 
-به عنوان توسعه‌دهنده این پروژه، تمرکز من بر روی **«کیفیت کد»** و **«معماری تمیز»** بوده است. در این مسیر با چالش‌های فنی متعددی روبرو شدم و آن‌ها را حل کردم:
-
-* **بهینه‌سازی دیتابیس:** حل مشکل N+1 در کوئری‌های تو در تو (مثل منوی دسته‌بندی و سبد خرید) با استفاده از `select_related` و `prefetch_related`.
-* **رابط کاربری مدرن:** مهاجرت کامل از CSS سنتی به **Tailwind CSS** برای طراحی ریسپانسیو و تمیز.
-* **پنل مدیریت سفارشی:** جایگزینی ادمین پیش‌فرض جنگو با **Django Unfold** و شخصی‌سازی کامل آن برای پشتیبانی از راست‌چین (RTL)، فونت فارسی و دارک مود.
-* **معماری ماژولار:** جداسازی منطق‌های مختلف (فروش، کاربران، تخفیف، مقایسه) در اپلیکیشن‌های مستقل.
-
----
-
-## ✨ ویژگی‌های برجسته (Key Features)
-
-### 🏗️ زیرساخت و بک‌اند (Back-end)
-* **معماری تمیز (Clean Architecture):** جداسازی لایه بیزنس (Services) از لایه نمایش (Views).
-* **احراز هویت سفارشی:** سیستم لاگین با شماره موبایل (بدون نیاز به Username).
-* **دسته‌بندی درختی (Tree Structure):** پیاده‌سازی دسته‌بندی‌های نامحدود و تو در تو با `django-mptt`.
-* **ویژگی‌های پویا (EAV):** قابلیت تعریف ویژگی‌های فنی اختصاصی برای هر دسته‌بندی (مثل پردازنده برای لپ‌تاپ و جنس برای لباس).
-* **امنیت:** استفاده از CSRF Token در تمام درخواست‌های AJAX و اعتبارسنجی دقیق فرم‌ها.
-
-### 🛒 تجربه خرید و فروش
-* **سبد خرید هوشمند:** ذخیره سبد خرید در Session با قابلیت محاسبه آنی قیمت و تخفیف.
-* **سیستم تخفیف (Coupon):** موتور اعمال کد تخفیف با محدودیت‌های زمانی و تعدادی.
-* **درگاه پرداخت:** اتصال کامل به درگاه پرداخت (زرین‌پال سندباکس) و مدیریت بازگشت تراکنش (Callback).
-* **فاکتور رسمی:** تولید خودکار فاکتور PDF استاندارد با پشتیبانی از فونت فارسی (WeasyPrint).
-* **نوتیفیکیشن:** ارسال ایمیل خودکار هنگام ثبت سفارش و تغییر وضعیت ارسال.
-
-### 🎨 فرانت‌اند و تعاملات (Front-end)
-* **داشبورد کاربری SPA-like:** مدیریت پروفایل، آدرس‌ها، سفارش‌ها و علاقه‌مندی‌ها بدون رفرش صفحه (AJAX).
-* **سیستم مقایسه (Compare):** امکان مقایسه ویژگی‌های فنی محصولات هم‌دسته در یک جدول داینامیک.
-* **جستجوی زنده (Live Search):** پیشنهاد محصول و دسته‌بندی در لحظه تایپ کاربر.
-* **مگا منو (Mega Menu):** منوی دسته‌بندی حرفه‌ای با انیمیشن‌های نرم و تاخیر هوشمند.
-* **تعاملات اجتماعی:** لایک و دیس‌لایک نظرات، ثبت نظر با امتیاز ستاره‌ای و پیشنهاد خرید.
-
-### 👮‍♂️ داشبورد مدیریت پیشرفته (Admin Panel)
-* **رابط کاربری مدرن:** استفاده از پکیج `django-unfold` با تم Tailwind.
-* **داشبورد تحلیلی (BI Dashboard):** نمایش نمودار فروش ۷ روز گذشته و کارت‌های آمار کلیدی (KPI) در صفحه اول.
-* **راست‌چین و فارسی:** اصلاح کامل CSS برای نمایش صحیح فونت وزیر و اعداد فارسی در تمام بخش‌ها.
-* **دارک مود (Dark Mode):** پشتیبانی کامل و خودکار از حالت شب با کنتراست استاندارد.
+- [نگاه کلی](#نگاه-کلی)
+- [برای کارفرما یا مشتری](#برای-کارفرما-یا-مشتری)
+- [برای همکار فنی](#برای-همکار-فنی)
+- [قابلیت‌های اصلی](#قابلیت‌های-اصلی)
+- [امنیت و یکپارچگی داده](#امنیت-و-یکپارچگی-داده)
+- [پرداخت و مدیریت سفارش](#پرداخت-و-مدیریت-سفارش)
+- [Observability و عملیات](#observability-و-عملیات)
+- [ساختار پروژه](#ساختار-پروژه)
+- [راه‌اندازی محلی](#راه‌اندازی-محلی)
+- [دستورات مهم](#دستورات-مهم)
+- [مستندات پروژه](#مستندات-پروژه)
+- [محدودیت‌های فعلی](#محدودیت‌های-فعلی)
+- [مسیر توسعه بعدی](#مسیر-توسعه-بعدی)
 
 ---
 
-## 📸 گالری تصاویر (Screenshots)
+## نگاه کلی
 
-<div align="center">
-  <h3>📱 نمای فروشگاه</h3>
-  <img src="screenshots/Cart.png" width="800" alt="سبد خرید">
-  <br><br>
-  <img src="screenshots/Category.png" width="800" alt="مگامنو و دسته بندی ها">
-  <br><br>
-  <img src="screenshots/Comments.png" width="800" alt="کامنت ها">
-  <br><br>
-  <img src="screenshots/My_Address.png" width="800" alt="مدیریت آدرس ها">
-  <br><br>
-  <img src="screenshots/My_orders.png" width="800" alt="مدیریت سفارش ها">
-  <br><br>
-  <img src="screenshots/admin1.png" width="800" alt="داشبورد پنل ادمین">
-  <br><br>
-  <img src="screenshots/admin2.png" width="800" alt="سفارش ها پنل ادمین">
-  <br><br>
-  <img src="screenshots/admin3.png" width="800" alt="تراکنش ها پنل ادمین">
-  <br><br>
-  <img src="screenshots/admin4.png" width="800" alt="نظرات کاربران پنل ادمین">
-  <br><br>
-  <img src="screenshots/admin5.png" width="800" alt="داشبورد پنل ادمین دارک مود">
-  <br><br>
-</div>
+RedShop یک monolith جنگویی با اپلیکیشن‌های جداگانه برای حساب کاربری، فروشگاه، سبد خرید، سفارش، پرداخت، کوپن و مقایسه محصول است. معماری پروژه ساده و قابل فهم نگه داشته شده، اما در بخش‌های حساس مثل پرداخت، سفارش، موجودی و امنیت از سرویس‌ها، تست‌ها، constraintهای دیتابیس و ابزارهای عملیاتی استفاده شده است.
+
+هدف پروژه این نیست که خود را بزرگ‌تر از واقعیت نشان دهد. RedShop هنوز یک سیستم production-deployed عمومی نیست، اما بخش زیادی از دغدغه‌های جدی یک فروشگاه آنلاین در آن دیده شده و برای توسعه بیشتر پایه مناسبی دارد.
 
 ---
 
-## 🛠️ تکنولوژی‌های استفاده شده
+## برای کارفرما یا مشتری
 
-* **Language:** Python 3.13
-* **Framework:** Django 5.2
-* **Database:** PostgreSQL (Production) / SQLite (Dev)
-* **Frontend:** HTML5, Tailwind CSS 3, JavaScript (Vanilla ES6 + jQuery for AJAX)
-* **Payment Gateway:** Zarinpal
+RedShop نشان می‌دهد که یک فروشگاه آنلاین فقط صفحه محصول و سبد خرید نیست. بخش‌های مهم‌تری مثل درست ثبت شدن سفارش، خراب نشدن موجودی، قابل پیگیری بودن پرداخت، جلوگیری از نشت اطلاعات حساس، ثبت عملیات ادمین و داشتن مسیر عملیاتی برای خطاها هم در پروژه دیده شده‌اند.
 
-### 📦 کتابخانه‌های کلیدی (Key Libraries)
-* **مدیریت داده‌ها:** `django-mptt`, `django-jalali`, `psycopg2-binary`
-* **رابط کاربری ادمین:** `django-unfold`
-* **پردازش تصویر و مدیا:** `pillow`, `easy-thumbnails`
-* **گزارش‌گیری:** `weasyprint` (PDF Generation)
-* **ابزارها:** `requests`, `python-slugify`, `django-resized`
+از نگاه کسب‌وکار، پروژه روی این موارد تمرکز دارد:
 
-*(برای مشاهده لیست دقیق وابستگی‌ها، فایل `requirements.txt` را بررسی کنید)*
+- نمایش و جستجوی محصولات
+- دسته‌بندی و برندها
+- سبد خرید و ثبت سفارش
+- پشتیبانی از پرداخت آنلاین
+- کوپن و تخفیف
+- مدیریت وضعیت سفارش
+- حفظ تاریخچه مالی سفارش‌ها
+- جلوگیری از ارسال خودکار سفارش‌های مشکوک به پرداخت
+- ابزار بررسی سفارش‌های نیازمند بازبینی
+- مستندات دیپلوی و عملیات
+- تست‌های خودکار برای سناریوهای حساس
+
+این پروژه می‌تواند پایه خوبی برای یک فروشگاه سفارشی باشد، اما برای استفاده تجاری واقعی باید نیازهای دامنه کسب‌وکار، طراحی UI نهایی، سرویس پرداخت واقعی، زیرساخت Production، پشتیبان‌گیری، مانیتورینگ و فرآیندهای پشتیبانی مشتری روی آن تکمیل شود.
 
 ---
 
-## 🚀 نصب و راه‌اندازی (Installation)
+## برای همکار فنی
 
-برای اجرای این پروژه روی سیستم خودتان، مراحل زیر را طی کنید:
+از نگاه فنی، RedShop روی چند اصل بنا شده است:
 
-1.  **کلون کردن مخزن:**
-    ```bash
-    git clone [https://github.com/your-username/RedShop.git](https://github.com/your-username/RedShop.git)
-    cd RedShop
-    ```
+- جدا نگه داشتن concernها در اپلیکیشن‌های Django
+- استفاده از service layer برای منطق حساس سفارش و پرداخت
+- استفاده از transaction و locking در مسیرهای مالی/موجودی
+- تکیه نکردن صرف به منطق view یا admin برای حفظ یکپارچگی
+- استفاده از database constraints برای جلوگیری از داده نامعتبر
+- تست regression برای باگ‌های امنیتی و مالی
+- مستندسازی عملیاتی به جای اکتفا به توضیح شفاهی
+- logging قابل پیگیری با request_id
+- redaction اطلاعات حساس در لاگ‌ها
+- audit log برای عملیات حساس ادمین
 
-2.  **ساخت محیط مجازی (Virtual Environment):**
-    ```bash
-    python -m venv venv
-    # ویندوز:
-    venv\Scripts\activate
-    # مک/لینوکس:
-    source venv/bin/activate
-    ```
+پروژه تلاش می‌کند ساده بماند، اما در نقاطی که ریسک واقعی وجود دارد، محافظ‌های جدی‌تری داشته باشد.
 
-3.  **نصب وابستگی‌ها:**
-    ```bash
+---
+
+## قابلیت‌های اصلی
+
+### فروشگاه و محصول
+
+- مدیریت محصولات، دسته‌بندی‌ها و برندها
+- صفحه لیست محصول با pagination واقعی
+- فیلتر و جستجوی محصول
+- صفحه جزئیات محصول
+- تصویر محصول
+- ویژگی‌های محصول
+- امتیاز و نظر کاربران
+- خلاصه امتیاز و تعداد review روی کارت محصول
+- علاقه‌مندی‌ها
+- مقایسه محصول
+- حذف استفاده از order_by تصادفی در مسیرهای حساس به performance
+
+### حساب کاربری
+
+- ثبت‌نام با اعتبارسنجی قوی‌تر
+- اعتبارسنجی شماره موبایل ایران
+- جلوگیری از ثبت موبایل تکراری
+- بررسی قدرت رمز عبور
+- محدودسازی تلاش‌های ناموفق ورود
+- فرم‌های پروفایل بدون جمع‌آوری اطلاعات حساس plaintext
+- آدرس‌های کاربر با constraint برای default address
+
+### سبد خرید و سفارش
+
+- checkout با کنترل مالکیت آدرس
+- ثبت snapshot از اطلاعات محصول در سفارش
+- پشتیبانی از تخفیف و کوپن
+- مدیریت وضعیت سفارش
+- حفظ تاریخچه مالی حتی در صورت حذف کاربر یا محصول
+- جلوگیری از تغییر مستقیم فیلدهای مالی/وضعیت حساس در admin
+
+### پرداخت
+
+- پرداخت آنلاین با مدل Transaction
+- callback idempotent
+- کنترل تکرار callback موفق
+- تفکیک وضعیت paid، failed، canceled و pending
+- مدیریت late success بعد از آزادسازی موجودی
+- انتقال سفارش‌های پرریسک به payment_review
+- logging امن callback بدون ذخیره Authority خام
+
+---
+
+## امنیت و یکپارچگی داده
+
+RedShop چند لایه محافظ برای کاهش خطاهای رایج فروشگاه اینترنتی دارد.
+
+### Database constraints
+
+نمونه‌هایی از constraintهای پروژه:
+
+- معتبر بودن مبلغ تخفیف نسبت به subtotal سفارش
+- سازگاری status و success در Transaction
+- یکتا بودن provider و authority معتبر در Transaction
+- جلوگیری از مقدار نامعتبر برای quantity و weight آیتم سفارش
+- جلوگیری از قیمت جدید نامعتبر برای محصول
+- جلوگیری از تخفیف بیشتر از قیمت محصول
+- محدودیت مقدار امتیاز review
+- یکتایی feature value برای محصول و feature
+- فقط یک آدرس default برای هر کاربر
+
+### Admin safety
+
+در Django Admin، مسیرهای حساس مالی تا حد ممکن مستقیم قابل تغییر نیستند. تغییر وضعیت‌هایی مثل پرداخت شدن سفارش یا لغو سفارش باید از مسیر lifecycle انجام شود، نه با ویرایش دستی چند فیلد.
+
+### Frontend safety
+
+بخش‌هایی مثل live search و toast message از الگوهای امن‌تر DOM API و textContent استفاده می‌کنند و از تزریق HTML ناامن دور شده‌اند.
+
+### Log redaction
+
+لاگ‌های Production قبل از خروج از handlerها از RedactingFilter عبور می‌کنند. موارد زیر ماسک می‌شوند:
+
+- ایمیل
+- موبایل ایران
+- شماره کارت یا عددهای card-like
+- Bearer tokens
+- password
+- secret
+- token
+- authorization
+- api_key
+- merchant_id
+
+---
+
+## پرداخت و مدیریت سفارش
+
+یکی از بخش‌های مهم پروژه، پرداخت و اثر آن روی موجودی و وضعیت سفارش است.
+
+سناریوهای پوشش‌داده‌شده:
+
+- پرداخت موفق عادی
+- callback تکراری
+- پرداخت ناموفق یا لغوشده
+- سفارش پرداخت‌نشده‌ای که موجودی آن آزاد شده است
+- پرداخت موفق دیرهنگام بعد از آزادسازی موجودی
+- سفارش‌هایی که باید وارد payment_review شوند
+- حفظ transaction history
+- audit کردن عملیات حساس ادمین روی سفارش‌های نیازمند بررسی
+
+### payment_review چیست؟
+
+اگر پرداختی بعد از آزاد شدن موجودی موفق شود، سیستم نباید بی‌صدا سفارش را وارد پردازش ارسال کند؛ چون ممکن است موجودی قبلاً به فروش دیگری برگشته باشد. در این حالت سفارش به payment_review می‌رود تا ادمین وضعیت پرداخت، موجودی و تصمیم نهایی را دستی بررسی کند.
+
+این رفتار از خراب شدن موجودی و ارسال اشتباه جلوگیری می‌کند.
+
+---
+
+## Observability و عملیات
+
+RedShop فقط به پیاده‌سازی featureها اکتفا نکرده و برای عملیات هم ابزارهایی دارد.
+
+### Request ID
+
+هر response دارای header زیر است:
+
+    X-Request-ID
+
+این مقدار در لاگ‌ها هم ثبت می‌شود تا بتوان یک خطای checkout یا payment را از response تا log دنبال کرد.
+
+### Payment callback logging
+
+callback پرداخت event ساختاریافته ثبت می‌کند. مقدار خام Authority در لاگ ذخیره نمی‌شود. به جای آن authority_hash کوتاه ثبت می‌شود تا بتوان callbackهای مرتبط را بدون نشت داده حساس به هم وصل کرد.
+
+### OrderAuditLog
+
+برای عملیات حساس ادمین، مثل export سفارش‌های payment_review، رکورد audit ثبت می‌شود. این رکوردها شامل موارد زیر هستند:
+
+- order
+- actor
+- action
+- request_id
+- message
+- metadata
+- created_at
+
+Audit logها در admin فقط خواندنی هستند.
+
+### آزادسازی سفارش‌های رهاشده
+
+برای جلوگیری از قفل شدن دائمی موجودی سفارش‌های آنلاین پرداخت‌نشده، command زیر وجود دارد:
+
+    python manage.py release_expired_orders --older-than-minutes 30 --limit 200
+
+برای اجرای آزمایشی بدون تغییر داده:
+
+    python manage.py release_expired_orders --older-than-minutes 30 --dry-run
+
+### Deployment readiness check
+
+پروژه command اختصاصی برای بررسی آماده بودن تنظیمات Production دارد:
+
+    python manage.py redshop_deployment_check
+
+و برای حالت سخت‌گیرانه:
+
+    python manage.py redshop_deployment_check --strict
+
+---
+
+## ساختار پروژه
+
+ساختار کلی اپلیکیشن‌ها:
+
+    RedShop/
+      settings.py
+      settings_production.py
+      env.py
+      security.py
+      request_id.py
+      logging_config.py
+      logging_redaction.py
+      deployment_checks.py
+
+    apps/
+      account/
+      cart/
+      coupons/
+      orders/
+      payment/
+      shop/
+      compare/
+
+    docs/
+      DEPLOYMENT_FA.md
+      OPERATIONS_FA.md
+      ROADMAP_RESUME_FA.md
+
+نقش چند اپلیکیشن مهم:
+
+- account: کاربر، ثبت‌نام، ورود، پروفایل و آدرس‌ها
+- shop: محصول، دسته‌بندی، برند، review، feature، favorite و listing
+- cart: سبد خرید
+- orders: سفارش، آیتم سفارش، transaction، lifecycle، audit log
+- payment: فرآیند پرداخت و callback
+- coupons: کوپن و محدودیت مصرف
+- compare: مقایسه محصول
+
+---
+
+## راه‌اندازی محلی
+
+پیش‌نیازها:
+
+- Python
+- PostgreSQL
+- virtualenv
+- نصب dependencyها از requirements.txt
+
+مراحل پیشنهادی:
+
+    python -m venv .venv
+    .\.venv\Scripts\activate
     pip install -r requirements.txt
-    ```
 
-    > **نکته:** برای استفاده از قابلیت تولید PDF، ممکن است نیاز به نصب GTK3 داشته باشید (مخصوص ویندوز).
+فایل محیطی نمونه:
 
-4.  **اعمال مایگریشن‌ها:**
-    ```bash
+    Copy-Item .env.example .env
+
+سپس مقدارهای دیتابیس و تنظیمات محلی را در .env تنظیم کن.
+
+اجرای migration:
+
     python manage.py migrate
-    ```
 
-5.  **ساخت سوپریوزر (ادمین):**
-    ```bash
-    python manage.py createsuperuser
-    ```
+اجرای پروژه:
 
-6.  **اجرای سرور:**
-    ```bash
     python manage.py runserver
-    ```
 
 ---
 
-## 🗺️ نقشه راه آینده (Roadmap)
+## دستورات مهم
 
-این ویژگی‌ها در حال توسعه هستند یا به زودی اضافه خواهند شد:
+### تست‌ها
 
-- [x] سیستم جستجو و فیلتر پیشرفته (AJAX)
-- [x] درگاه پرداخت و صدور فاکتور
-- [x] سیستم مقایسه محصولات
-- [x] داشبورد مدیریت با نمودار
-- [ ] **ورود با پیامک (OTP)** 📲
-- [ ] **سیستم تیکت پشتیبانی** 🎫
-- [ ] **انبارداری پیشرفته و رزرو کالا** 📦
-- [ ] **داکریزه کردن پروژه (Docker)** 🐳
+    python manage.py test -v 2
 
----
-
-## 🤝 ارتباط با من
-
-من مشتاق یادگیری و همکاری هستم! اگر پیشنهادی برای بهبود کدها دارید یا باگی پیدا کردید، خوشحال می‌شوم بشنوم.
-
-* 📧 ایمیل: pythonnazarian@gmail.com
-
----
-⭐️ **اگر این پروژه برایتان مفید بود یا از کدنویسی آن خوشتان آمد، لطفاً به آن ستاره دهید!**
-
-
-## RedShop hardening summary
-
-RedShop is being hardened as a resume-ready Django ecommerce project. The recent hardening work focuses on payment correctness, financial data integrity, account security, frontend safety, operational observability, and production readiness.
-
-### Security and integrity highlights
-
-- Payment callbacks are idempotent and handled through a lifecycle service.
-- Late successful payments after inventory release move orders to payment_review instead of silently shipping or corrupting stock.
-- Financial records are preserved with safer delete behavior and protected transaction history.
-- Admin users cannot directly edit sensitive paid/status fields outside the lifecycle path.
-- OrderAuditLog records sensitive admin actions and includes request_id for traceability.
-- Login attempts are throttled.
-- Registration uses stronger validation.
-- Public profile forms no longer collect plaintext national ID or card fields.
-- Frontend live search and toast rendering avoid unsafe innerHTML patterns.
-- Database constraints protect order totals, transaction consistency, product pricing, review values, feature uniqueness, and default addresses.
-- Security headers and CSP support are installed through middleware.
-
-### Observability and operations
-
-- Every response receives X-Request-ID.
-- Logs include request_id for tracing checkout and payment incidents.
-- Payment callback logs use authority_hash instead of raw gateway Authority values.
-- RedactingFilter masks emails, Iranian mobile numbers, card-like numbers, Bearer tokens, password, secret, token, authorization, api_key, and merchant_id values.
-- release_expired_orders can release stale unpaid online order reservations.
-- redshop_deployment_check reports production-readiness problems and supports --strict mode.
-- GitHub Actions CI runs compile checks, migration dry-run, Django checks, deployment readiness report, and tests.
-
-### Operational documents
-
-- docs/DEPLOYMENT_FA.md covers environment variables, deployment checks, security headers, expired order release, payment_review, request IDs, audit logs, and payment callback logging.
-- docs/OPERATIONS_FA.md is the production runbook for payment incidents, request_id, authority_hash, OrderAuditLog, redaction, and expired order operations.
-- docs/ROADMAP_RESUME_FA.md tracks the resume-focused hardening phases.
-
-### Useful commands
+### بررسی migration
 
     python manage.py makemigrations --check --dry-run
+
+### Django check
+
     python manage.py check
+
+### بررسی Production readiness
+
+    python manage.py redshop_deployment_check
     python manage.py redshop_deployment_check --strict
+
+### آزادسازی سفارش‌های منقضی
+
     python manage.py release_expired_orders --older-than-minutes 30 --limit 200
-    python manage.py test -v 2
+
+### Dry-run آزادسازی سفارش‌ها
+
+    python manage.py release_expired_orders --older-than-minutes 30 --dry-run
+
+---
+
+## مستندات پروژه
+
+- docs/DEPLOYMENT_FA.md: راهنمای آماده‌سازی دیپلوی، envها، security headers، CSP، CI و commandهای عملیاتی
+- docs/OPERATIONS_FA.md: Runbook عملیاتی برای پرداخت، payment_review، request_id، authority_hash، audit log و redaction
+- docs/ROADMAP_RESUME_FA.md: مسیر hardening پروژه برای ارائه رزومه‌ای و فنی
+
+---
+
+## CI و quality gates
+
+GitHub Actions CI برای پروژه تعریف شده و این موارد را اجرا می‌کند:
+
+- compile کردن فایل‌های Python
+- بررسی migrationهای ساخته‌نشده
+- Django system check
+- گزارش deployment readiness
+- اجرای تست‌ها
+
+این CI جایگزین بررسی Production واقعی نیست، اما جلوی بسیاری از regressionهای رایج را قبل از merge یا push می‌گیرد.
+
+---
+
+## محدودیت‌های فعلی
+
+برای شفافیت، این پروژه هنوز این موارد را به شکل کامل نهایی نکرده است:
+
+- دیپلوی عمومی واقعی با دامنه و SSL انجام نشده است.
+- مانیتورینگ خارجی مثل Sentry یا Prometheus متصل نشده است.
+- job scheduler واقعی برای اجرای دوره‌ای commandها باید در زیرساخت Production تنظیم شود.
+- UI نهایی می‌تواند از نظر طراحی، accessibility و تجربه موبایل بیشتر polish شود.
+- payment_review فعلاً مسیر بررسی و audit دارد، اما workflow کامل resolution یا refund داخلی هنوز می‌تواند توسعه داده شود.
+- تست‌های performance در سطح محدود هستند و load test واقعی انجام نشده است.
+- اتصال به سرویس ایمیل و درگاه پرداخت واقعی نیازمند env و secretهای Production است.
+
+این محدودیت‌ها ضعف پنهان نیستند؛ مسیر طبیعی تبدیل پروژه از نمونه حرفه‌ای به محصول Production هستند.
+
+---
+
+## مسیر توسعه بعدی
+
+اولویت‌های منطقی بعدی:
+
+1. اضافه کردن event logهای دقیق‌تر برای outcomeهای پرداخت: success، failure، cancel و payment_review
+2. اضافه کردن actionهای امن برای resolve کردن payment_review در admin
+3. اضافه کردن audit log برای resolution، refund note و re-reserve decision
+4. اضافه کردن Sentry یا سرویس مشابه برای error reporting
+5. افزودن correlation ID در reverse proxy
+6. افزودن README badge بعد از اجرای موفق CI
+7. بهبود UI موبایل، accessibility و SEO
+8. افزودن integration testهای بیشتر برای checkout و payment
+9. افزودن معماری تصویری یا sequence diagram برای portfolio
+
+---
+
+## جمع‌بندی
+
+RedShop یک پروژه فروشگاهی Django است که علاوه بر قابلیت‌های معمول فروشگاه، روی بخش‌هایی تمرکز کرده که در پروژه‌های واقعی دردسرساز می‌شوند: پرداخت، موجودی، یکپارچگی مالی، امنیت فرم‌ها، XSS، admin safety، audit log، request tracing، redaction لاگ‌ها، commandهای عملیاتی و چک‌های قبل از دیپلوی.
+
+این پروژه نه یک SaaS آماده فروش است و نه صرفاً یک تمرین ساده. RedShop یک نمونه‌کار فنی قابل دفاع است که نشان می‌دهد توسعه‌دهنده به جز ساخت feature، به نگهداری، خطاهای واقعی، امنیت، عملیات و قابل اعتماد بودن سیستم هم فکر کرده است.

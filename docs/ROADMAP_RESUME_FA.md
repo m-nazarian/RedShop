@@ -345,3 +345,21 @@ Recommended next:
 1. Add granular payment callback outcome logs for success, failure, cancel, and payment_review.
 2. Add README CI badge after GitHub Actions has run successfully on main.
 3. Add screenshot or architecture diagram section for portfolio presentation.
+
+
+## Phase 20 - Professional README rewrite
+
+Implemented:
+
+- Replaced README with a complete professional Persian README.
+- Balanced customer-facing product explanation with developer-facing technical details.
+- Documented real capabilities without claiming production deployment.
+- Added honest current limitations and next development priorities.
+- Kept security, payment lifecycle, audit logs, request_id, authority_hash, redaction, CI, and operations visible for portfolio review.
+- Updated README regression tests to protect the new structure and positioning.
+
+Recommended next:
+
+1. Add granular payment callback outcome logs for success, failure, cancel, and payment_review.
+2. Add CI badge after GitHub Actions succeeds on main.
+3. Add architecture diagram or sequence diagram for checkout/payment.
