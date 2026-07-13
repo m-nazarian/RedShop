@@ -89,3 +89,7 @@ CSP در Local به‌صورت Report-Only است تا UI نشکند. در Produ
 ## 10. Sensitive log redaction
 
 لاگ‌های Production قبل از خروج از handlerها از فیلتر RedactingFilter عبور می‌کنند. ایمیل، موبایل ایران، شماره کارت، Bearer token و key-valueهای حساس مثل password، secret، token و api_key ماسک می‌شوند.
+
+## 11. Payment callback logging
+
+payment_verify یک event ساختاریافته با نام callback_received ثبت می‌کند. مقدار خام Authority در لاگ ذخیره نمی‌شود؛ فقط authority_hash کوتاه ثبت می‌شود. برای پیگیری مشکل پرداخت، request_id و authority_hash را کنار هم بررسی کن.

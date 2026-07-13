@@ -16,6 +16,7 @@ from apps.orders.services import OrderLifecycleService, PaymentLifecycleService
 
 from .zarinpal_service import ZarinPalService
 from apps.orders.session_keys import (
+from .logging_events import log_payment_callback_event
     CHECKOUT_ORDER_SESSION_KEY,
     PAYMENT_ORDER_SESSION_KEY,
     clear_checkout_order_session,
@@ -130,6 +131,24 @@ def payment_process(request):
 
 @require_GET
 def payment_verify(request):
+    log_payment_callback_event(
+        "callback_received",
+        authority=(
+            request.GET.get("Authority")
+            or request.POST.get("Authority")
+            or request.GET.get("authority")
+            or request.POST.get("authority")
+            or ""
+        ),
+        status=(
+            request.GET.get("Status")
+            or request.POST.get("Status")
+            or request.GET.get("status")
+            or request.POST.get("status")
+            or ""
+        ),
+        request=request,
+    )
     authority = request.GET.get("Authority", "").strip()
     status = request.GET.get("Status", "").strip()
 

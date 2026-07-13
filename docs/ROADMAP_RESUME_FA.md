@@ -293,3 +293,20 @@ Recommended next:
 1. Add explicit payment callback log events now that redaction and request_id are in place.
 2. Add audit entries for future payment_review resolution actions.
 3. Add a README security section summarizing redaction and request tracing.
+
+
+## Phase 17 - Structured payment callback logging
+
+Implemented:
+
+- Added apps.payment.logging_events for safe payment callback event logging.
+- Added hash_payment_identifier so raw gateway Authority values are not emitted.
+- Added request_id-aware payment callback event payloads.
+- Instrumented payment_verify with callback_received logging.
+- Regression tests cover stable hashing, request_id propagation, raw Authority non-disclosure, and view instrumentation.
+
+Recommended next:
+
+1. Add more granular callback outcome logs after success, failure, cancel, and payment_review branches.
+2. Add production runbook examples using request_id plus authority_hash.
+3. Add alerting around repeated failed callback events once a monitoring provider is chosen.
