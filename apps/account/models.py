@@ -98,6 +98,19 @@ class Address(models.Model):
     class Meta:
         verbose_name = "آدرس"
         verbose_name_plural = "آدرس‌ها"
+        indexes = [
+            models.Index(
+                fields=["user", "is_default"],
+                name="account_addr_user_def_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=models.Q(is_default=True),
+                name="uniq_default_address_per_user",
+            ),
+        ]
 
     @property
     def full_name(self):

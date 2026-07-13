@@ -135,6 +135,16 @@ class Product(models.Model):
             models.Index(fields=['name']),
             models.Index(fields=['-created']),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(off__lte=models.F("price")),
+                name="product_discount_lte_price",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(new_price=0) | models.Q(new_price__lte=models.F("price")),
+                name="product_new_price_valid",
+            ),
+        ]
         verbose_name = 'محصول'
         verbose_name_plural = 'محصول‌ها'
 
@@ -209,6 +219,18 @@ class ProductFeatureValue(models.Model):
     class Meta:
         verbose_name = "مقدار ویژگی محصول"
         verbose_name_plural = "مقادیر ویژگی‌های محصول"
+        indexes = [
+            models.Index(
+                fields=["product", "feature"],
+                name="shop_pfv_prod_feature_idx",
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["product", "feature"],
+                name="uniq_product_feature_value",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.product} - {self.feature}: {self.value}"
@@ -299,6 +321,16 @@ class ProductComment(models.Model):
         ordering = ['-created']
         verbose_name = 'نظر کاربر'
         verbose_name_plural = 'نظرات کاربران'
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(score__gte=1) & models.Q(score__lte=5),
+                name="product_comment_score_range",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(suggest__in=["yes", "no", "none"]),
+                name="product_comment_suggest_valid",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.user} - {self.product.name}"

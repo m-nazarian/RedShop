@@ -56,3 +56,22 @@ Recommended next:
 1. Replace remaining trusted partial swaps with a tiny reviewed helper.
 2. Add CSP headers before deployment.
 3. Add integration tests for AJAX partial rendering.
+
+
+## Phase 04 - Database and domain constraints
+
+Implemented:
+
+- Each user can have at most one default address.
+- Duplicate product feature values for the same product and feature are blocked.
+- Product discounts cannot exceed product price.
+- Product new_price must be zero or no greater than product price.
+- Product comment score and suggest values are protected at database level.
+- Existing duplicate/default data is normalized before constraints are applied.
+- Domain integrity regression tests were added.
+
+Recommended next:
+
+1. Move address default selection into a small AddressService.
+2. Add model-level clean methods for better form/admin error messages.
+3. Add search/query performance improvements for product listing pages.
