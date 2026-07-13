@@ -94,3 +94,20 @@ Recommended next:
 1. Add annotated review counts/scores to product cards to remove comment N+1 queries.
 2. Cache frequently used filter metadata by category.
 3. Add full-text search or trigram search when moving beyond simple icontains.
+
+
+## Phase 06 - Product review annotations
+
+Implemented:
+
+- Product card querysets now include review_count and avg_score annotations.
+- Review summary values are calculated from active comments only.
+- Empty review summaries default to zero.
+- Product list pages expose review annotations to card templates without extra queries.
+- Regression tests cover annotated review counts, average score, and list-page availability.
+
+Recommended next:
+
+1. Display review_count and avg_score in the card UI if the current design needs it.
+2. Add category-level cached filter metadata for heavy catalogs.
+3. Add query-count tests around the product list after UI usage stabilizes.

@@ -1,6 +1,7 @@
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Q, Count
-from .models import Brand, Color, ProductFeatureValue, Product
+from django.db.models import Avg, Count, FloatField, IntegerField, OuterRef, Q, Subquery, Value
+from django.db.models.functions import Coalesce
+from .models import Brand, Color, Product, ProductComment, ProductFeatureValue
 from collections import OrderedDict
 
 
@@ -82,21 +83,51 @@ def assemble_filters(request, products, dynamic_features_data):
 
 
 
+
 def get_product_card_queryset(queryset=None):
     """Return the optimized queryset used by product cards.
 
-    Product cards repeatedly touch category, brand, colors, and images. Keeping
-    this in one helper prevents N+1 regressions across list, filter, search, and
-    personalized sliders.
+    Product cards repeatedly touch category, brand, colors, images, and review
+    summary values. Keeping this in one helper prevents N+1 regressions across
+    list, filter, search, and personalized sliders.
     """
     queryset = queryset if queryset is not None else Product.objects.all()
 
-    return queryset.select_related(
-        "category",
-        "brand",
-    ).prefetch_related(
-        "colors",
-        "images",
+    active_comments = (
+        ProductComment.objects.filter(
+            product_id=OuterRef("pk"),
+            active=True,
+        )
+        .values("product_id")
+    )
+
+    review_count_subquery = active_comments.annotate(
+        total=Count("id")
+    ).values("total")[:1]
+
+    avg_score_subquery = active_comments.annotate(
+        average=Avg("score")
+    ).values("average")[:1]
+
+    return (
+        queryset.select_related(
+            "category",
+            "brand",
+        )
+        .prefetch_related(
+            "colors",
+            "images",
+        )
+        .annotate(
+            review_count=Coalesce(
+                Subquery(review_count_subquery, output_field=IntegerField()),
+                Value(0),
+            ),
+            avg_score=Coalesce(
+                Subquery(avg_score_subquery, output_field=FloatField()),
+                Value(0.0),
+            ),
+        )
     )
 
 
