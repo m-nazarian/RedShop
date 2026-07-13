@@ -1,3 +1,4 @@
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -10,24 +11,27 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from .forms import AccountEditForm, AddressForm, UserEditForm, UserRegistrationForm
 from .models import Account, Address
+from .security import LoginThrottle
 
 
 def _safe_redirect_url(request, default_url_name, candidate=None):
-    """آدرس بازگشت را فقط زمانی قبول می‌کند که داخل همین سایت باشد."""
+    """Accept a return URL only when it points to the current host."""
     target = candidate or request.POST.get("next") or request.GET.get("next")
+
     if target and url_has_allowed_host_and_scheme(
         url=target,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):
         return target
+
     return reverse(default_url_name)
 
 
 @login_required
 @require_GET
 def profile(request):
-    """صفحه اصلی حساب کاربری را نمایش می‌دهد."""
+    """Render the main account dashboard."""
     Account.objects.get_or_create(user=request.user)
     return render(request, "account/profile.html")
 
@@ -90,12 +94,22 @@ def user_login(request):
     if request.method == "POST":
         phone = request.POST.get("phone", "").strip()
         password = request.POST.get("password", "")
+
+        if LoginThrottle.is_blocked(request, phone):
+            messages.error(
+                request,
+                "تعداد تلاش‌های ورود زیاد بوده است. چند دقیقه بعد دوباره تلاش کنید.",
+            )
+            return render(request, "account/login.html", status=429)
+
         user = authenticate(request, phone=phone, password=password)
 
         if user is not None:
+            LoginThrottle.reset(request, phone)
             login(request, user)
             return redirect(_safe_redirect_url(request, "account:profile"))
 
+        LoginThrottle.register_failure(request, phone)
         messages.error(request, "شماره تلفن یا رمز عبور نادرست است.")
 
     return render(request, "account/login.html")
@@ -198,6 +212,7 @@ def edit_address(request, address_id):
 @require_POST
 def delete_address(request):
     address_id = request.POST.get("address_id")
+
     if address_id:
         address = get_object_or_404(Address, id=address_id, user=request.user)
         address.delete()
@@ -238,6 +253,7 @@ def edit_profile_partial(request):
 
     user_form = UserEditForm(instance=user)
     account_form = AccountEditForm(instance=account)
+
     return render(
         request,
         "partials/edit_profile.html",

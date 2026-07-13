@@ -21,3 +21,20 @@ This phase fixes the issues that experienced Django reviewers notice first:
 3. DOM XSS cleanup in live search and toast rendering.
 4. Product feature constraints and default address constraints.
 5. Checkout reservation expiry job for abandoned online payments.
+
+
+## Phase 02 - Account security hardening
+
+Implemented:
+
+- Public registration now uses Django password validators.
+- Login endpoint has cache-backed throttling for phone and IP failures.
+- Profile editing supports email so password reset can work for phone-first users.
+- Public profile forms no longer collect plaintext national ID or bank/card fields.
+- Account security behavior is covered by regression tests.
+
+Recommended next:
+
+1. Replace email-only password reset with OTP or verified-email reset flow.
+2. Add audit logs for admin-level account changes.
+3. Add database constraints for default addresses.
