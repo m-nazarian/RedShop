@@ -183,3 +183,21 @@ Recommended next:
 1. Add this command to CI before deployment.
 2. Split local and production settings modules.
 3. Move secrets fully to environment variables.
+
+
+## Phase 11 - Production settings from environment
+
+Implemented:
+
+- Added RedShop.env helpers for required values, booleans, integers, and lists.
+- Added RedShop.settings_production for environment-driven production configuration.
+- Production settings require DJANGO_SECRET_KEY and DJANGO_ALLOWED_HOSTS.
+- Production defaults enable HTTPS redirect, secure cookies, HSTS, and enforced CSP.
+- Local development settings remain unchanged.
+- Regression tests cover env parsing, invalid env values, required secrets, required hosts, and production security defaults.
+
+Recommended next:
+
+1. Add a .env.example file documenting required deployment variables.
+2. Add CI commands for check, tests, deployment check, and migration dry-run.
+3. Add README deployment section.
