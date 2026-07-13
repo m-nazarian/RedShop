@@ -78,17 +78,21 @@ class ShopDomainConstraintTests(TestCase):
     def test_product_new_price_cannot_exceed_price_unless_zero(self):
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
-                Product.objects.create(
-                    category=self.category,
-                    brand=self.brand,
-                    name="Invalid New Price",
-                    slug="invalid-new-price",
-                    description="Invalid",
-                    inventory=1,
-                    price=100,
-                    off=0,
-                    new_price=101,
-                    weight=1,
+                Product.objects.bulk_create(
+                    [
+                        Product(
+                            category=self.category,
+                            brand=self.brand,
+                            name="Invalid New Price",
+                            slug="invalid-new-price",
+                            description="Invalid",
+                            inventory=1,
+                            price=100,
+                            off=0,
+                            new_price=101,
+                            weight=1,
+                        )
+                    ]
                 )
 
     def test_product_comment_score_must_be_between_one_and_five(self):
