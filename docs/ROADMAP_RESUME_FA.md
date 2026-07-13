@@ -146,3 +146,23 @@ Recommended next:
 1. Add a staff-only dashboard card for payment_review counts.
 2. Add operational documentation for resolving payment_review orders.
 3. Add audit logging if staff actions start changing payment-review state.
+
+
+## Phase 09 - Security headers
+
+Implemented:
+
+- Added SecurityHeadersMiddleware.
+- Added X-Content-Type-Options: nosniff.
+- Added Referrer-Policy: same-origin.
+- Added Permissions-Policy for camera, microphone, geolocation, and payment.
+- Added Cross-Origin-Opener-Policy: same-origin.
+- Added Content-Security-Policy in report-only mode by default.
+- CSP can be enforced later with REDSHOP_ENFORCE_CSP=True.
+- Regression tests verify headers, non-overwrite behavior, and CSP enforcement mode.
+
+Recommended next:
+
+1. Review CSP reports before enabling enforced CSP in production.
+2. Move external assets to self-hosted static files where possible.
+3. Add deployment-specific secure cookie/HSTS checks once production settings are split.

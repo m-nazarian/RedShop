@@ -63,6 +63,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'RedShop.security.SecurityHeadersMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -368,3 +369,7 @@ LOGGING = {
 }
 
 # --- End RedShop logging configuration ---
+
+# Browser security headers
+# CSP starts in report-only mode to avoid breaking current templates/assets.
+REDSHOP_ENFORCE_CSP = False
