@@ -166,3 +166,20 @@ Recommended next:
 1. Review CSP reports before enabling enforced CSP in production.
 2. Move external assets to self-hosted static files where possible.
 3. Add deployment-specific secure cookie/HSTS checks once production settings are split.
+
+
+## Phase 10 - Deployment readiness checks
+
+Implemented:
+
+- Added redshop_deployment_check management command.
+- Added checks for DEBUG, ALLOWED_HOSTS, SECRET_KEY, SSL redirect, HSTS, secure cookies, and CSP enforcement mode.
+- Default mode reports findings without breaking local development.
+- Strict mode raises a CommandError for blocking deployment risks.
+- Regression tests cover safe production settings, insecure settings, strict mode, and wildcard hosts.
+
+Recommended next:
+
+1. Add this command to CI before deployment.
+2. Split local and production settings modules.
+3. Move secrets fully to environment variables.
