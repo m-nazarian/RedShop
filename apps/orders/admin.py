@@ -224,3 +224,180 @@ class TransactionAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# ---------------------------------------------------------------------------
+# Payment review admin tools
+# ---------------------------------------------------------------------------
+# Orders can enter payment_review when a gateway callback succeeds after the
+# original unpaid order reservation was already released. This is intentionally
+# not auto-resolved: staff need a focused report to decide whether to re-reserve
+# stock, contact the customer, or refund manually.
+
+import csv
+
+from django.contrib import admin as django_admin
+from django.http import HttpResponse
+from django.utils.html import format_html
+
+from .models import Order as _PaymentReviewOrder
+
+
+def _payment_review_status_value():
+    return getattr(_PaymentReviewOrder, "STATUS_PAYMENT_REVIEW", "payment_review")
+
+
+def _payment_review_created_value(order):
+    for field_name in ("created", "created_at", "created_time"):
+        value = getattr(order, field_name, None)
+        if value:
+            return value
+    return ""
+
+
+def _payment_review_total_value(order):
+    for field_name in ("total", "total_price", "payable_amount", "final_price"):
+        value = getattr(order, field_name, None)
+        if value is not None:
+            return value
+
+    method = getattr(order, "get_total_cost", None)
+    if callable(method):
+        return method()
+
+    return ""
+
+
+def _payment_review_user_phone(order):
+    user = getattr(order, "user", None)
+
+    if user is not None:
+        return getattr(user, "phone", "") or ""
+
+    return getattr(order, "phone", "") or ""
+
+
+class PaymentReviewStatusFilter(django_admin.SimpleListFilter):
+    title = "بازبینی پرداخت"
+    parameter_name = "payment_review"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("1", "نیازمند بازبینی پرداخت"),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.filter(status=_payment_review_status_value())
+        return queryset
+
+
+def payment_review_badge(self, obj):
+    if getattr(obj, "status", None) == _payment_review_status_value():
+        return format_html(
+            '<span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;'
+            'border-radius:999px;padding:2px 8px;font-size:12px;font-weight:700;">'
+            "نیازمند بررسی پرداخت</span>"
+        )
+
+    return "-"
+
+
+payment_review_badge.short_description = "وضعیت بازبینی پرداخت"
+
+
+def export_payment_review_orders(modeladmin, request, queryset):
+    review_orders = (
+        queryset.filter(status=_payment_review_status_value())
+        .select_related("user")
+        .order_by("id")
+    )
+
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="payment-review-orders.csv"'
+    response.write("\ufeff")
+
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "order_id",
+            "order_number",
+            "user_id",
+            "user_phone",
+            "status",
+            "paid",
+            "payment_method",
+            "total",
+            "created",
+            "notes",
+        ]
+    )
+
+    for order in review_orders:
+        writer.writerow(
+            [
+                order.pk,
+                getattr(order, "order_number", ""),
+                getattr(order, "user_id", "") or "",
+                _payment_review_user_phone(order),
+                getattr(order, "status", ""),
+                getattr(order, "paid", ""),
+                getattr(order, "payment_method", ""),
+                _payment_review_total_value(order),
+                _payment_review_created_value(order),
+                getattr(order, "notes", "") or "",
+            ]
+        )
+
+    return response
+
+
+export_payment_review_orders.short_description = "خروجی CSV سفارش‌های نیازمند بازبینی پرداخت"
+
+
+def _install_payment_review_admin_tools():
+    model_admin = django_admin.site._registry.get(_PaymentReviewOrder)
+
+    if model_admin is None:
+        return
+
+    admin_class = model_admin.__class__
+
+    if not hasattr(admin_class, "payment_review_badge"):
+        setattr(admin_class, "payment_review_badge", payment_review_badge)
+
+    list_display = tuple(getattr(model_admin, "list_display", ()) or ())
+
+    if "payment_review_badge" not in list_display:
+        if "status" in list_display:
+            insert_index = list_display.index("status") + 1
+            list_display = (
+                list_display[:insert_index]
+                + ("payment_review_badge",)
+                + list_display[insert_index:]
+            )
+        else:
+            list_display = list_display + ("payment_review_badge",)
+
+        model_admin.list_display = list_display
+
+    list_filter = tuple(getattr(model_admin, "list_filter", ()) or ())
+    filter_names = {
+        getattr(item, "__name__", str(item))
+        for item in list_filter
+    }
+
+    if "PaymentReviewStatusFilter" not in filter_names:
+        model_admin.list_filter = list_filter + (PaymentReviewStatusFilter,)
+
+    actions = tuple(getattr(model_admin, "actions", ()) or ())
+    action_names = {
+        item if isinstance(item, str) else getattr(item, "__name__", str(item))
+        for item in actions
+    }
+
+    if "export_payment_review_orders" not in action_names:
+        model_admin.actions = actions + (export_payment_review_orders,)
+
+
+_install_payment_review_admin_tools()

@@ -129,3 +129,20 @@ Recommended next:
 1. Run the command periodically in production through cron, Task Scheduler, or a worker.
 2. Add an admin action/report for orders in payment_review.
 3. Add observability counters for released reservations.
+
+
+## Phase 08 - Payment review admin tooling
+
+Implemented:
+
+- Added a dedicated admin filter for orders in payment_review.
+- Added an admin badge so payment-review orders are visible in the order list.
+- Added a CSV export action for payment-review orders.
+- The export is read-only and does not mutate order/payment state.
+- Regression tests verify admin registration, filtering, and CSV export behavior.
+
+Recommended next:
+
+1. Add a staff-only dashboard card for payment_review counts.
+2. Add operational documentation for resolving payment_review orders.
+3. Add audit logging if staff actions start changing payment-review state.
