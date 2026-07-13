@@ -111,3 +111,21 @@ Recommended next:
 1. Display review_count and avg_score in the card UI if the current design needs it.
 2. Add category-level cached filter metadata for heavy catalogs.
 3. Add query-count tests around the product list after UI usage stabilizes.
+
+
+## Phase 07 - Expired online order release
+
+Implemented:
+
+- Added release_expired_orders management command.
+- The command releases only unpaid, pending, online orders older than the configured threshold.
+- It uses row-level locking before invoking the order lifecycle service.
+- Dry-run mode reports matching orders without changing data.
+- Limit option prevents large one-off batches from overloading the system.
+- Regression tests cover selection rules, dry-run behavior, and batch limits.
+
+Recommended next:
+
+1. Run the command periodically in production through cron, Task Scheduler, or a worker.
+2. Add an admin action/report for orders in payment_review.
+3. Add observability counters for released reservations.
