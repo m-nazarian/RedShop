@@ -86,6 +86,9 @@ def create_order(user, *, minutes_old, payment_method=None, status=None, paid=Fa
         if name in field_names:
             values.setdefault(name, value)
 
+    if "order_number" in field_names:
+        values["order_number"] = f"TEST-EXPIRED-{Order.objects.count() + 1:06d}"
+
     for field in Order._meta.fields:
         if field.name in values:
             continue
