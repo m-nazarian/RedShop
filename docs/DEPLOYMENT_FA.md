@@ -75,3 +75,9 @@ CSP در Local به‌صورت Report-Only است تا UI نشکند. در Produ
 - ALLOWED_HOSTS نباید * باشد.
 - بعد از اطمینان از HTTPS، HSTS را فعال نگه دار.
 - برای پرداخت واقعی، کلیدهای Gateway باید فقط از محیط خوانده شوند.
+
+## 8. Request ID و ردیابی لاگ‌ها
+
+هر Response یک Header با نام X-Request-ID دارد. اگر Reverse Proxy یا Client مقدار معتبر X-Request-ID بفرستد، همان مقدار حفظ می‌شود؛ در غیر این صورت سیستم یک مقدار امن تولید می‌کند.
+
+در لاگ‌های Production، request_id داخل فرمت plain و JSON ثبت می‌شود تا خطاهای checkout، پرداخت، و admin قابل ردیابی باشند.

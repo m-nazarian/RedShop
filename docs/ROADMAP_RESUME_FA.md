@@ -237,3 +237,22 @@ Recommended next:
 1. Add request correlation IDs for tracing checkout and payment flows.
 2. Add structured audit logs for staff actions on payment_review orders.
 3. Add external error reporting such as Sentry when a production provider is chosen.
+
+
+## Phase 14 - Request correlation IDs
+
+Implemented:
+
+- Added RequestIDMiddleware.
+- Every response gets X-Request-ID.
+- Valid incoming X-Request-ID values are preserved.
+- Unsafe or oversized request IDs are replaced with generated UUID hex values.
+- Request ID is stored in a context variable during the request lifecycle.
+- Logging configuration now injects request_id into plain and JSON logs.
+- Regression tests cover request headers, context reset, sanitizer behavior, log filter injection, JSON output, and logging config wiring.
+
+Recommended next:
+
+1. Add audit logging for staff actions on payment_review orders.
+2. Include request_id in payment callback logs and operational runbooks.
+3. Forward X-Request-ID through reverse proxy configuration in production.

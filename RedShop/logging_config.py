@@ -5,8 +5,19 @@ import json
 import logging
 from pathlib import Path
 
+from RedShop.request_id import get_request_id
+
 
 VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+
+
+class RequestIdFilter(logging.Filter):
+    """Inject the current request ID into every log record."""
+
+    def filter(self, record):
+        if not hasattr(record, "request_id"):
+            record.request_id = get_request_id()
+        return True
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -17,6 +28,7 @@ class JsonLogFormatter(logging.Formatter):
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
+            "request_id": getattr(record, "request_id", "-"),
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
@@ -39,22 +51,24 @@ def normalize_log_level(value):
 
 
 def build_logging_config(log_level="INFO", log_file=None, json_format=False):
-    """Build Django LOGGING configuration for production.
-
-    Console logging is always enabled. File logging is opt-in through
-    DJANGO_LOG_FILE so local development and container deployments stay simple.
-    """
+    """Build Django LOGGING configuration for production."""
     level = normalize_log_level(log_level)
 
     formatters = {
         "plain": {
-            "format": "%(levelname)s %(asctime)s %(name)s %(message)s",
+            "format": "%(levelname)s %(asctime)s [%(request_id)s] %(name)s %(message)s",
         },
         "verbose": {
-            "format": "%(levelname)s %(asctime)s %(name)s %(module)s:%(lineno)d %(message)s",
+            "format": "%(levelname)s %(asctime)s [%(request_id)s] %(name)s %(module)s:%(lineno)d %(message)s",
         },
         "json": {
             "()": "RedShop.logging_config.JsonLogFormatter",
+        },
+    }
+
+    filters = {
+        "request_id": {
+            "()": "RedShop.logging_config.RequestIdFilter",
         },
     }
 
@@ -64,6 +78,7 @@ def build_logging_config(log_level="INFO", log_file=None, json_format=False):
         "console": {
             "class": "logging.StreamHandler",
             "formatter": formatter_name,
+            "filters": ["request_id"],
             "level": level,
         },
     }
@@ -81,6 +96,7 @@ def build_logging_config(log_level="INFO", log_file=None, json_format=False):
             "backupCount": 5,
             "encoding": "utf-8",
             "formatter": formatter_name,
+            "filters": ["request_id"],
             "level": level,
         }
         root_handlers.append("file")
@@ -88,6 +104,7 @@ def build_logging_config(log_level="INFO", log_file=None, json_format=False):
     return {
         "version": 1,
         "disable_existing_loggers": False,
+        "filters": filters,
         "formatters": formatters,
         "handlers": handlers,
         "root": {

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'RedShop.security.SecurityHeadersMiddleware',
+    'RedShop.request_id.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -373,3 +374,6 @@ LOGGING = {
 # Browser security headers
 # CSP starts in report-only mode to avoid breaking current templates/assets.
 REDSHOP_ENFORCE_CSP = False
+
+# Correlation ID header for tracing requests across logs and responses.
+REDSHOP_REQUEST_ID_RESPONSE_HEADER = "X-Request-ID"
