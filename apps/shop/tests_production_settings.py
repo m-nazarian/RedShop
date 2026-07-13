@@ -4,12 +4,14 @@ from __future__ import annotations
 import importlib
 import os
 import sys
+import tempfile
 from contextlib import contextmanager
+from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
-from RedShop.env import env_bool, env_int, env_list
+from RedShop.env import env, env_bool, env_int, env_list, load_dotenv_file
 
 
 @contextmanager
@@ -45,6 +47,38 @@ def import_fresh_production_settings():
 
 
 class EnvironmentHelperTests(SimpleTestCase):
+    def test_dotenv_loader_preserves_local_settings_compatibility(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            env_file = Path(tmpdir) / ".env"
+            env_file.write_text(
+                """
+                # comment
+                REDSHOP_TEST_DOTENV_SECRET="loaded-secret"
+                REDSHOP_TEST_DOTENV_LIST=one,two;three
+                """,
+                encoding="utf-8",
+            )
+
+            with patched_environ(
+                {},
+                remove=(
+                    "REDSHOP_TEST_DOTENV_SECRET",
+                    "REDSHOP_TEST_DOTENV_LIST",
+                ),
+            ):
+                self.assertTrue(load_dotenv_file(env_file))
+                self.assertEqual(env("REDSHOP_TEST_DOTENV_SECRET"), "loaded-secret")
+                self.assertEqual(
+                    env_list("REDSHOP_TEST_DOTENV_LIST"),
+                    ["one", "two", "three"],
+                )
+
+    def test_env_raw_helper_preserves_settings_compatibility(self):
+        with patched_environ({"REDSHOP_TEST_RAW": "value"}):
+            self.assertEqual(env("REDSHOP_TEST_RAW"), "value")
+
+        self.assertEqual(env("REDSHOP_TEST_MISSING", "fallback"), "fallback")
+
     def test_env_bool_parses_common_values(self):
         with patched_environ({"REDSHOP_TEST_BOOL": "yes"}):
             self.assertTrue(env_bool("REDSHOP_TEST_BOOL"))
@@ -67,6 +101,12 @@ class EnvironmentHelperTests(SimpleTestCase):
                 env_list("REDSHOP_TEST_LIST"),
                 ["a.example", "b.example", "c.example"],
             )
+
+    def test_env_list_accepts_string_defaults_for_local_settings(self):
+        self.assertEqual(
+            env_list("REDSHOP_TEST_MISSING_LIST", "localhost,127.0.0.1"),
+            ["localhost", "127.0.0.1"],
+        )
 
 
 class ProductionSettingsTests(SimpleTestCase):
@@ -100,17 +140,17 @@ class ProductionSettingsTests(SimpleTestCase):
         self.assertTrue(module.REDSHOP_ENFORCE_CSP)
 
     def test_production_settings_require_secret_key(self):
-        env = self.production_env()
-        env.pop("DJANGO_SECRET_KEY")
+        env_values = self.production_env()
+        env_values.pop("DJANGO_SECRET_KEY")
 
-        with patched_environ(env, remove=("DJANGO_SECRET_KEY",)):
+        with patched_environ(env_values, remove=("DJANGO_SECRET_KEY",)):
             with self.assertRaises(ImproperlyConfigured):
                 import_fresh_production_settings()
 
     def test_production_settings_require_allowed_hosts(self):
-        env = self.production_env()
-        env.pop("DJANGO_ALLOWED_HOSTS")
+        env_values = self.production_env()
+        env_values.pop("DJANGO_ALLOWED_HOSTS")
 
-        with patched_environ(env, remove=("DJANGO_ALLOWED_HOSTS",)):
+        with patched_environ(env_values, remove=("DJANGO_ALLOWED_HOSTS",)):
             with self.assertRaises(ImproperlyConfigured):
                 import_fresh_production_settings()
