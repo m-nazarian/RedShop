@@ -75,3 +75,22 @@ Recommended next:
 1. Move address default selection into a small AddressService.
 2. Add model-level clean methods for better form/admin error messages.
 3. Add search/query performance improvements for product listing pages.
+
+
+## Phase 05 - Product listing performance
+
+Implemented:
+
+- Product listing pages now use real Django pagination.
+- AJAX filtering returns paginated product result HTML and page metadata.
+- Product card query optimization is centralized in get_product_card_queryset.
+- Product list ordering is deterministic, preventing pagination drift.
+- Product detail related items no longer use expensive database random ordering.
+- Live search now evaluates only a small optimized product list.
+- Regression tests cover pagination, AJAX pagination, search limits, and random-order removal.
+
+Recommended next:
+
+1. Add annotated review counts/scores to product cards to remove comment N+1 queries.
+2. Cache frequently used filter metadata by category.
+3. Add full-text search or trigram search when moving beyond simple icontains.

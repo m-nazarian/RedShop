@@ -63,8 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ------------------------------------------------------------------
     // 3. تابع اصلی: ارسال و دریافت AJAX
     // ------------------------------------------------------------------
-    const updateProducts = () => {
+    const updateProducts = (page = 1) => {
         const selected = getSelectedFilters();
+        selected.page = page;
 
         productContainer.style.opacity = '0.5';
 
@@ -98,6 +99,17 @@ document.addEventListener("DOMContentLoaded", () => {
             productContainer.style.opacity = '1';
         });
     };
+
+    productContainer.addEventListener("click", (event) => {
+        const pageLink = event.target.closest("[data-page]");
+
+        if (!pageLink) {
+            return;
+        }
+
+        event.preventDefault();
+        updateProducts(pageLink.dataset.page || 1);
+    });
 
     // ------------------------------------------------------------------
     // 4. تابع فعال‌سازی مجدد شنوندگان و Collapsible (پس از AJAX)

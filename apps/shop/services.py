@@ -1,3 +1,4 @@
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q, Count
 from .models import Brand, Color, ProductFeatureValue, Product
 from collections import OrderedDict
@@ -13,6 +14,10 @@ FILTER_ORDER = OrderedDict([
     ('color', 'بر اساس رنگ'),
 
 ])
+
+
+PRODUCTS_PER_PAGE = 12
+SEARCH_SUGGESTION_LIMIT = 5
 
 
 def get_dynamic_features(products_queryset):
@@ -76,15 +81,52 @@ def assemble_filters(request, products, dynamic_features_data):
     return ordered_filters
 
 
+
+def get_product_card_queryset(queryset=None):
+    """Return the optimized queryset used by product cards.
+
+    Product cards repeatedly touch category, brand, colors, and images. Keeping
+    this in one helper prevents N+1 regressions across list, filter, search, and
+    personalized sliders.
+    """
+    queryset = queryset if queryset is not None else Product.objects.all()
+
+    return queryset.select_related(
+        "category",
+        "brand",
+    ).prefetch_related(
+        "colors",
+        "images",
+    )
+
+
+def paginate_queryset(queryset, page_number, per_page=PRODUCTS_PER_PAGE):
+    """Return a safe Django Page object for a queryset."""
+    paginator = Paginator(queryset, per_page)
+
+    try:
+        return paginator.page(page_number or 1)
+    except PageNotAnInteger:
+        return paginator.page(1)
+    except EmptyPage:
+        return paginator.page(paginator.num_pages)
+
+
+
 def sort_products(products, sort_option):
-    if sort_option == 'cheapest':
-        return products.order_by('new_price')
-    elif sort_option == 'expensive':
-        return products.order_by('-new_price')
-    elif sort_option == 'name':
-        return products.order_by('name')
-    else:
-        return products.order_by('-created')
+    """Apply deterministic ordering for product lists.
+
+    Every ordering includes id as a stable tiebreaker so pagination does not
+    move products between pages when many products share the same value.
+    """
+    ordering_map = {
+        "cheapest": ("new_price", "id"),
+        "expensive": ("-new_price", "id"),
+        "name": ("name", "id"),
+        "newest": ("-created", "id"),
+    }
+
+    return products.order_by(*ordering_map.get(sort_option, ordering_map["newest"]))
 
 
 def is_staff(user):
@@ -118,55 +160,59 @@ def apply_filters(products, data):
     return products
 
 
+
 def global_search(query):
-    """
-    جستجوی همزمان محصولات و پیدا کردن دسته‌بندی مرتبط
-    """
+    """Search products and return a small safe JSON payload for live search."""
+    query = (query or "").strip()
+
     if not query:
-        return {'products': [], 'suggested_category': None}
+        return {"products": [], "suggested_category": None, "query": query}
 
-    # ۱. جستجو در محصولات (نام، توضیحات یا برند)
-    # از distinct استفاده می‌کنیم تا تکراری نیاید
-    products = Product.objects.filter(
-        Q(name__icontains=query) |
-        Q(description__icontains=query) |
-        Q(brand__name__icontains=query)
-    ).select_related('category', 'brand').prefetch_related('images').distinct()[:5]  # فقط ۵ تای اول
+    products = list(
+        get_product_card_queryset(
+            Product.objects.filter(
+                Q(name__icontains=query)
+                | Q(description__icontains=query)
+                | Q(brand__name__icontains=query)
+            ).distinct()
+        )[:SEARCH_SUGGESTION_LIMIT]
+    )
 
-    # ۲. حدس زدن دسته‌بندی مرتبط 🧠
-    # اگر محصولاتی پیدا کردیم، ببینیم بیشترشون مال کدوم دسته‌ن؟
     suggested_category = None
 
-    if products.exists():
-        # تمام دسته‌های محصولات پیدا شده را می‌گیریم
-        # و پرتکرارترین دسته را پیدا می‌کنیم
-        categories = [p.category for p in products]
-
-        # پیدا کردن پرتکرارترین (Most Common)
+    if products:
         from collections import Counter
+
+        categories = [product.category for product in products if product.category_id]
+
         if categories:
-            most_common_cat = Counter(categories).most_common(1)[0][0]
+            most_common_category = Counter(categories).most_common(1)[0][0]
             suggested_category = {
-                'name': most_common_cat.name,
-                'slug': most_common_cat.slug,
-                'url': most_common_cat.get_absolute_url()
+                "name": most_common_category.name,
+                "slug": most_common_category.slug,
+                "url": most_common_category.get_absolute_url(),
             }
 
-    # ۳. فرمت‌دهی خروجی برای JSON
     results = []
-    for p in products:
-        results.append({
-            'name': p.name,
-            'price': p.new_price if p.new_price else p.price,
-            'image': p.images.first().file.url if p.images.exists() else '',
-            'url': p.get_absolute_url(),
-            'category_name': p.category.name
-        })
+
+    for product in products:
+        images = list(product.images.all())
+        first_image = images[0] if images else None
+
+        results.append(
+            {
+                "name": product.name,
+                "price": product.new_price if product.new_price else product.price,
+                "image": first_image.file.url if first_image else "",
+                "url": product.get_absolute_url(),
+                "category_name": product.category.name,
+            }
+        )
 
     return {
-        'products': results,
-        'suggested_category': suggested_category,
-        'query': query
+        "products": results,
+        "suggested_category": suggested_category,
+        "query": query,
     }
 
 
@@ -179,12 +225,7 @@ def get_frequently_bought_products(user, limit=10):
 
     # پیدا کردن محصولاتی که در سفارش‌های موفق کاربر هستند
     # و تعداد تکرارشان در OrderItem ها بیشتر از 1 است
-    products = Product.objects.select_related(
-        'category',
-        'brand',
-    ).prefetch_related(
-        'images',
-    ).filter(
+    products = get_product_card_queryset(Product.objects).filter(
         order_items__order__user=user,
         order_items__order__paid=True  # فقط خریدهای موفق
     ).annotate(
@@ -203,6 +244,6 @@ def get_wishlist_products(user, limit=10):
     if not user.is_authenticated:
         return []
 
-    return Product.objects.filter(
+    return get_product_card_queryset(Product.objects).filter(
         favorited_by__user=user
     ).order_by('-favorited_by__created')[:limit]

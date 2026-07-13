@@ -15,7 +15,7 @@
             <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <span class="text-blue-600">📂</span>
                 {% if category %}{{ category.name }}{% else %}همه محصولات{% endif %}
-                <span class="text-sm font-normal text-gray-500">({{ products|length|fa_number }} کالا)</span>
+                <span class="text-sm font-normal text-gray-500">({{ product_count|default:products.paginator.count|fa_number }} کالا)</span>
             </h1>
 
             <div class="flex items-center gap-3 text-sm">
@@ -47,11 +47,7 @@
                 </div>
 
             <div class="lg:col-span-9" id="product-container">
-                {% include 'partials/product_list_partials.html' with products=products %}
-
-                <div class="mt-8">
-                    {% include "partials/pagination.html" with page=products %}
-                </div>
+                {% include 'partials/product_results.html' with products=products %}
             </div>
 
         </div>

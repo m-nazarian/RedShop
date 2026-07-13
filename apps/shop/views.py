@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 from .services import (
     sort_products, get_dynamic_features, assemble_filters,
     apply_filters, global_search, get_frequently_bought_products,
-    get_wishlist_products
+    get_wishlist_products, get_product_card_queryset, paginate_queryset
 )
 
 
@@ -45,40 +45,42 @@ def index(request):
     return render(request, "shop/index.html", context)
 
 
+
 @require_GET
 def product_list(request, category_slug=None):
     """
-    نمایش لیست محصولات برای بارگذاری اولیه صفحه (GET request).
+    Render paginated product listing pages.
+
+    Filters are calculated from the full category queryset, but only the current
+    page is rendered. This keeps templates from rendering hundreds of cards at
+    once and makes pagination deterministic.
     """
     category = None
-    # کوئری‌ست پایه
-    products = Product.objects.select_related('category', 'brand').prefetch_related('colors', 'images').all()
-    categories = Category.objects.all().prefetch_related('children')
+    products = get_product_card_queryset()
+    categories = Category.objects.all().prefetch_related("children")
 
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
         products = products.filter(category__in=category.get_descendants(include_self=True))
 
-    # مرتب‌سازی پیش‌فرض
-    sort_option = request.GET.get('sort', 'newest')
+    sort_option = request.GET.get("sort", "newest")
     products = sort_products(products, sort_option)
 
-    # فیلترها
+    product_count = products.count()
     dynamic_features_data = get_dynamic_features(products)
-
-    current_selections = {}
     ordered_filters = assemble_filters(request, products, dynamic_features_data)
+    page_obj = paginate_queryset(products, request.GET.get("page"))
 
     context = {
-        'category': category,
-        'products': products,
-        'categories': categories,
-        'sort_option': sort_option,
-        'ordered_filters': ordered_filters,
-        'current_selections': current_selections,
+        "category": category,
+        "products": page_obj,
+        "product_count": product_count,
+        "categories": categories,
+        "sort_option": sort_option,
+        "ordered_filters": ordered_filters,
+        "current_selections": {},
     }
-    return render(request, 'shop/list.html', context)
-
+    return render(request, "shop/list.html", context)
 
 @require_GET
 def product_detail(request, id, slug):
@@ -108,7 +110,7 @@ def product_detail(request, id, slug):
         .prefetch_related('colors', 'images')
         .filter(category=product.category)
         .exclude(id=product.id)
-        .order_by('?')[:6]
+        .order_by('-created', 'id')[:6]
     )
 
     context = {
@@ -121,61 +123,65 @@ def product_detail(request, id, slug):
     return render(request, 'shop/detail.html', context)
 
 
+
 @require_POST
 def filter_products(request):
     """
-    View مخصوص AJAX برای فیلتر کردن محصولات.
-    نکته مهم: لیست فیلترها (سایدبار) نباید با انتخاب کاربر محدود شود.
+    AJAX product filtering.
+
+    The filter sidebar is based on the category/base queryset, while the product
+    cards are paginated after the user's filters and sort option are applied.
     """
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    # 1. لیست پایه (فقط بر اساس دسته‌بندی فیلتر شده، نه انتخاب کاربر)
-    base_products = Product.objects.select_related('category', 'brand').prefetch_related('colors', 'images').all()
+    base_products = get_product_card_queryset()
 
-    # اگر اسلاگ دسته ارسال شده بود، لیست پایه را محدود به آن دسته کن
-    category_slug = data.get('category_slug')
+    category_slug = data.get("category_slug")
     if category_slug:
         try:
             category = Category.objects.get(slug=category_slug)
-            base_products = base_products.filter(category__in=category.get_descendants(include_self=True))
+            base_products = base_products.filter(
+                category__in=category.get_descendants(include_self=True)
+            )
         except Category.DoesNotExist:
             pass
 
-    # 2. لیست نهایی (برای نمایش کارت‌های محصول) -> فیلترهای کاربر روی این اعمال می‌شود
     filtered_products = apply_filters(base_products, data)
 
-    # 3. مرتب‌سازی
-    sort_option = data.get('sort', 'newest')
+    sort_option = data.get("sort", "newest")
     filtered_products = sort_products(filtered_products, sort_option)
+    page_obj = paginate_queryset(filtered_products, data.get("page"))
 
-    # 4. ساخت گزینه‌های فیلتر (سایدبار)
     base_dynamic_features = get_dynamic_features(base_products)
     ordered_filters = assemble_filters(request, base_products, base_dynamic_features)
 
-    # 5. رندر کردن پارشیال‌ها
     html_products = render_to_string(
-        "partials/product_list_partials.html",
-        {"products": filtered_products},
-        request=request
+        "partials/product_results.html",
+        {"products": page_obj},
+        request=request,
     )
 
     html_filters = render_to_string(
         "partials/all_filters_partials.html",
         {
             "ordered_filters": ordered_filters,
-            "current_selections": data
+            "current_selections": data,
         },
-        request=request
+        request=request,
     )
 
-    return JsonResponse({
-        "html_products": html_products,
-        "html_filters": html_filters
-    }, safe=False)
-
+    return JsonResponse(
+        {
+            "html_products": html_products,
+            "html_filters": html_filters,
+            "product_count": filtered_products.count(),
+            "page": page_obj.number,
+            "num_pages": page_obj.paginator.num_pages,
+        }
+    )
 
 # --------------------------------------------------------------------------
 # API جستجو و اتوکامپلیت
