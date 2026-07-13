@@ -275,3 +275,21 @@ Recommended next:
 1. Add audit entries for explicit payment_review resolution actions once those actions exist.
 2. Add request_id to payment gateway callback logs.
 3. Add a staff-facing runbook for refund/re-reserve decisions.
+
+
+## Phase 16 - Sensitive log redaction
+
+Implemented:
+
+- Added RedactingFilter for production logging.
+- Added masking for emails, Iranian mobile numbers, card-like numbers, Bearer tokens, and secret key-value pairs.
+- Added recursive redaction for dictionaries, lists, tuples, and sets.
+- Logging handlers now apply redaction before request_id injection.
+- JSON logs and plain logs both receive redacted messages.
+- Regression tests cover text redaction, nested mappings, logging records, JSON output, and logging config wiring.
+
+Recommended next:
+
+1. Add explicit payment callback log events now that redaction and request_id are in place.
+2. Add audit entries for future payment_review resolution actions.
+3. Add a README security section summarizing redaction and request tracing.

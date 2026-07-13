@@ -5,6 +5,7 @@ import json
 import logging
 from pathlib import Path
 
+from RedShop.logging_redaction import RedactingFilter
 from RedShop.request_id import get_request_id
 
 
@@ -70,15 +71,19 @@ def build_logging_config(log_level="INFO", log_file=None, json_format=False):
         "request_id": {
             "()": "RedShop.logging_config.RequestIdFilter",
         },
+        "redact": {
+            "()": "RedShop.logging_redaction.RedactingFilter",
+        },
     }
 
     formatter_name = "json" if json_format else "plain"
+    handler_filters = ["redact", "request_id"]
 
     handlers = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": formatter_name,
-            "filters": ["request_id"],
+            "filters": handler_filters,
             "level": level,
         },
     }
@@ -96,7 +101,7 @@ def build_logging_config(log_level="INFO", log_file=None, json_format=False):
             "backupCount": 5,
             "encoding": "utf-8",
             "formatter": formatter_name,
-            "filters": ["request_id"],
+            "filters": handler_filters,
             "level": level,
         }
         root_handlers.append("file")

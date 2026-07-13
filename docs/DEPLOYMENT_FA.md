@@ -85,3 +85,7 @@ CSP در Local به‌صورت Report-Only است تا UI نشکند. در Produ
 ## 9. Order audit logs
 
 برای عملیات حساس ادمین، مثل خروجی گرفتن از سفارش‌های payment_review، رکورد audit ساخته می‌شود. این رکوردها شامل order، actor، action، request_id، metadata و زمان ثبت هستند و در Admin فقط خواندنی‌اند.
+
+## 10. Sensitive log redaction
+
+لاگ‌های Production قبل از خروج از handlerها از فیلتر RedactingFilter عبور می‌کنند. ایمیل، موبایل ایران، شماره کارت، Bearer token و key-valueهای حساس مثل password، secret، token و api_key ماسک می‌شوند.
