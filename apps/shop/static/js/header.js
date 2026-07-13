@@ -24,17 +24,100 @@ document.addEventListener("DOMContentLoaded", function() {
             }, 300);
         });
 
-        function renderResults(data, query) {
-            resultsBox.innerHTML = "";
-            if (data.products.length === 0 && !data.suggested_category) { resultsBox.style.display = "none"; return; }
-            let htmlContent = "";
-            if (data.suggested_category) {
-                htmlContent += `<a href="${data.suggested_category.url}" class="block px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm border-b border-gray-100">🔍 جستجو برای «<strong>${query}</strong>» در دسته‌ی <strong>${data.suggested_category.name}</strong></a>`;
+        
+function renderResults(data, query) {
+            while (resultsBox.firstChild) {
+                resultsBox.removeChild(resultsBox.firstChild);
             }
-            data.products.forEach(p => {
-                htmlContent += `<a href="${p.url}" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"><img src="${p.image}" alt="${p.name}" class="w-10 h-10 object-cover rounded-lg border border-gray-200"><div class="flex-1 min-w-0"><span class="block text-sm font-bold text-gray-800 truncate">${p.name}</span><div class="flex items-center gap-2 text-xs text-gray-500 mt-1"><span class="bg-gray-100 px-1.5 py-0.5 rounded">${p.category_name}</span><span>|</span><span class="text-blue-600 font-medium">${formatMoney(p.price)}</span></div></div></a>`;
+
+            const products = Array.isArray(data.products) ? data.products : [];
+            const suggestedCategory = data.suggested_category || null;
+
+            if (products.length === 0 && !suggestedCategory) {
+                resultsBox.style.display = "none";
+                return;
+            }
+
+            const safeSameOriginUrl = (value) => {
+                if (!value) return "#";
+
+                try {
+                    const url = new URL(String(value), window.location.origin);
+
+                    if (url.origin !== window.location.origin) {
+                        return "#";
+                    }
+
+                    return `${url.pathname}${url.search}${url.hash}`;
+                } catch (_error) {
+                    return "#";
+                }
+            };
+
+            const appendStrongText = (parent, value) => {
+                const strong = document.createElement("strong");
+                strong.textContent = String(value ?? "");
+                parent.appendChild(strong);
+                return strong;
+            };
+
+            if (suggestedCategory) {
+                const categoryLink = document.createElement("a");
+                categoryLink.href = safeSameOriginUrl(suggestedCategory.url);
+                categoryLink.className = "block px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm border-b border-gray-100";
+
+                categoryLink.appendChild(document.createTextNode("🔍 جستجو برای «"));
+                appendStrongText(categoryLink, query);
+                categoryLink.appendChild(document.createTextNode("» در دسته‌ی "));
+                appendStrongText(categoryLink, suggestedCategory.name);
+
+                resultsBox.appendChild(categoryLink);
+            }
+
+            products.forEach((product) => {
+                const item = document.createElement("a");
+                item.href = safeSameOriginUrl(product.url);
+                item.className = "flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0";
+
+                const image = document.createElement("img");
+                image.src = safeSameOriginUrl(product.image);
+                image.alt = String(product.name ?? "");
+                image.className = "w-10 h-10 object-cover rounded-lg border border-gray-200";
+                item.appendChild(image);
+
+                const body = document.createElement("div");
+                body.className = "flex-1 min-w-0";
+
+                const title = document.createElement("span");
+                title.className = "block text-sm font-bold text-gray-800 truncate";
+                title.textContent = String(product.name ?? "");
+                body.appendChild(title);
+
+                const meta = document.createElement("div");
+                meta.className = "flex items-center gap-2 text-xs text-gray-500 mt-1";
+
+                const category = document.createElement("span");
+                category.className = "bg-gray-100 px-1.5 py-0.5 rounded";
+                category.textContent = String(product.category_name ?? "");
+
+                const separator = document.createElement("span");
+                separator.textContent = "|";
+
+                const price = document.createElement("span");
+                price.className = "text-blue-600 font-medium";
+
+                const numericPrice = Number(product.price);
+                price.textContent = Number.isFinite(numericPrice) ? formatMoney(numericPrice) : "";
+
+                meta.appendChild(category);
+                meta.appendChild(separator);
+                meta.appendChild(price);
+
+                body.appendChild(meta);
+                item.appendChild(body);
+                resultsBox.appendChild(item);
             });
-            resultsBox.innerHTML = htmlContent;
+
             resultsBox.style.display = "block";
         }
         document.addEventListener("click", function(e) { if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) { resultsBox.style.display = "none"; } });

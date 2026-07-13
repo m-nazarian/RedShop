@@ -61,7 +61,7 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     let salesChart = null;
                     const ctx = document.getElementById('salesChart').getContext('2d');
-                    const chartData = JSON.parse('{{ chart|safe }}');
+                    const chartData = JSON.parse('{{ chart|escapejs }}');
 
                     function getColors() {
                         const isDark = document.documentElement.classList.contains('dark') ||
