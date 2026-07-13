@@ -8,12 +8,24 @@ from collections.abc import Mapping, Sequence
 
 EMAIL_RE = re.compile(r"(?P<local>[A-Za-z0-9._%+-]{1,64})@(?P<domain>[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 IRAN_MOBILE_RE = re.compile(r"(?<!\d)(?:\+?98|0)?9\d{9}(?!\d)")
-CARD_RE = re.compile(r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)")
+CARD_RE = re.compile(r"(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)")
+AUTH_BEARER_RE = re.compile(
+    r"\b(?P<key>authorization)(?P<sep>\s*[:=]\s*)Bearer\s+[A-Za-z0-9._~+/=-]{12,}",
+    re.IGNORECASE,
+)
 BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]{12,}", re.IGNORECASE)
+AUTH_VALUE_RE = re.compile(
+    r"\b(?P<key>authorization)(?P<sep>\s*[:=]\s*)(?P<value>(?!Bearer\b)[^\s,;&]+)",
+    re.IGNORECASE,
+)
 KEY_VALUE_SECRET_RE = re.compile(
-    r"(?P<key>\b(?:password|passwd|secret|token|authorization|api[_-]?key|merchant[_-]?id)\b)"
+    r"(?P<key>\b(?:password|passwd|secret|token|api[_-]?key|merchant[_-]?id)\b)"
     r"(?P<sep>\s*[:=]\s*)"
     r"(?P<value>[^\s,;&]+)",
+    re.IGNORECASE,
+)
+SENSITIVE_KEY_RE = re.compile(
+    r"(password|passwd|secret|token|authorization|api[_-]?key|merchant[_-]?id)",
     re.IGNORECASE,
 )
 
@@ -44,8 +56,20 @@ def redact_text(value):
 
     text = EMAIL_RE.sub(_mask_email, text)
     text = IRAN_MOBILE_RE.sub("[REDACTED_MOBILE]", text)
+
+    text = AUTH_BEARER_RE.sub(
+        lambda m: f"{m.group('key')}{m.group('sep')}Bearer [REDACTED_TOKEN]",
+        text,
+    )
     text = BEARER_RE.sub("Bearer [REDACTED_TOKEN]", text)
-    text = KEY_VALUE_SECRET_RE.sub(lambda m: f"{m.group('key')}{m.group('sep')}[REDACTED]", text)
+    text = AUTH_VALUE_RE.sub(
+        lambda m: f"{m.group('key')}{m.group('sep')}[REDACTED]",
+        text,
+    )
+    text = KEY_VALUE_SECRET_RE.sub(
+        lambda m: f"{m.group('key')}{m.group('sep')}[REDACTED]",
+        text,
+    )
 
     def replace_card(match):
         return _mask_card_like(match.group(0))
@@ -67,7 +91,7 @@ def redact_value(value):
 
         for key, item in value.items():
             key_text = str(key)
-            if re.search(r"(password|passwd|secret|token|authorization|api[_-]?key|merchant[_-]?id)", key_text, re.IGNORECASE):
+            if SENSITIVE_KEY_RE.search(key_text):
                 redacted[key] = "[REDACTED]"
             else:
                 redacted[key] = redact_value(item)
@@ -96,9 +120,12 @@ class RedactingFilter(logging.Filter):
     """Mask common sensitive values before records reach formatters/handlers."""
 
     def filter(self, record):
-        record.msg = redact_value(record.msg)
+        try:
+            rendered_message = record.getMessage()
+        except Exception:
+            rendered_message = f"{record.msg} {record.args}"
 
-        if record.args:
-            record.args = redact_value(record.args)
+        record.msg = redact_text(rendered_message)
+        record.args = ()
 
         return True
