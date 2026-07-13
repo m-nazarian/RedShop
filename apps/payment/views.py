@@ -16,7 +16,6 @@ from apps.orders.services import OrderLifecycleService, PaymentLifecycleService
 
 from .zarinpal_service import ZarinPalService
 from apps.orders.session_keys import (
-from .logging_events import log_payment_callback_event
     CHECKOUT_ORDER_SESSION_KEY,
     PAYMENT_ORDER_SESSION_KEY,
     clear_checkout_order_session,
@@ -128,6 +127,8 @@ def payment_process(request):
         {"error_code": response.get("code"), "show_retry": True},
     )
 
+
+from .logging_events import log_payment_callback_event
 
 @require_GET
 def payment_verify(request):
