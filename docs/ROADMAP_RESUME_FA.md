@@ -329,3 +329,19 @@ Recommended next:
 1. Add granular callback outcome events for success, failure, cancel, and payment_review branches.
 2. Add a README security/operations summary linking DEPLOYMENT_FA.md and OPERATIONS_FA.md.
 3. Add CI badge after GitHub Actions runs successfully on main.
+
+
+## Phase 19 - README security and operations summary
+
+Implemented:
+
+- Added a README hardening summary for quick GitHub/resume review.
+- Summarized payment lifecycle safety, payment_review, audit logs, request_id, authority_hash, RedactingFilter, deployment checks, CI, and expired-order release.
+- Linked README to DEPLOYMENT_FA.md, OPERATIONS_FA.md, and ROADMAP_RESUME_FA.md.
+- Added regression tests to keep the README connected to the project hardening work.
+
+Recommended next:
+
+1. Add granular payment callback outcome logs for success, failure, cancel, and payment_review.
+2. Add README CI badge after GitHub Actions has run successfully on main.
+3. Add screenshot or architecture diagram section for portfolio presentation.

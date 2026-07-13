@@ -167,3 +167,46 @@
 
 ---
 ⭐️ **اگر این پروژه برایتان مفید بود یا از کدنویسی آن خوشتان آمد، لطفاً به آن ستاره دهید!**
+
+
+## RedShop hardening summary
+
+RedShop is being hardened as a resume-ready Django ecommerce project. The recent hardening work focuses on payment correctness, financial data integrity, account security, frontend safety, operational observability, and production readiness.
+
+### Security and integrity highlights
+
+- Payment callbacks are idempotent and handled through a lifecycle service.
+- Late successful payments after inventory release move orders to payment_review instead of silently shipping or corrupting stock.
+- Financial records are preserved with safer delete behavior and protected transaction history.
+- Admin users cannot directly edit sensitive paid/status fields outside the lifecycle path.
+- OrderAuditLog records sensitive admin actions and includes request_id for traceability.
+- Login attempts are throttled.
+- Registration uses stronger validation.
+- Public profile forms no longer collect plaintext national ID or card fields.
+- Frontend live search and toast rendering avoid unsafe innerHTML patterns.
+- Database constraints protect order totals, transaction consistency, product pricing, review values, feature uniqueness, and default addresses.
+- Security headers and CSP support are installed through middleware.
+
+### Observability and operations
+
+- Every response receives X-Request-ID.
+- Logs include request_id for tracing checkout and payment incidents.
+- Payment callback logs use authority_hash instead of raw gateway Authority values.
+- RedactingFilter masks emails, Iranian mobile numbers, card-like numbers, Bearer tokens, password, secret, token, authorization, api_key, and merchant_id values.
+- release_expired_orders can release stale unpaid online order reservations.
+- redshop_deployment_check reports production-readiness problems and supports --strict mode.
+- GitHub Actions CI runs compile checks, migration dry-run, Django checks, deployment readiness report, and tests.
+
+### Operational documents
+
+- docs/DEPLOYMENT_FA.md covers environment variables, deployment checks, security headers, expired order release, payment_review, request IDs, audit logs, and payment callback logging.
+- docs/OPERATIONS_FA.md is the production runbook for payment incidents, request_id, authority_hash, OrderAuditLog, redaction, and expired order operations.
+- docs/ROADMAP_RESUME_FA.md tracks the resume-focused hardening phases.
+
+### Useful commands
+
+    python manage.py makemigrations --check --dry-run
+    python manage.py check
+    python manage.py redshop_deployment_check --strict
+    python manage.py release_expired_orders --older-than-minutes 30 --limit 200
+    python manage.py test -v 2
