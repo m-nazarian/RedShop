@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET
 
 from apps.orders.emails import send_order_confirmation
 from apps.orders.models import Order, Transaction
-from apps.orders.services import OrderLifecycleService
+from apps.orders.services import OrderLifecycleService, PaymentLifecycleService
 
 from .zarinpal_service import ZarinPalService
 from apps.orders.session_keys import (
@@ -137,7 +137,7 @@ def payment_verify(request):
         return render(
             request,
             "payment/failure.html",
-            {"message": "شناسه تراکنش ارسال نشده است.", "show_retry": False},
+            {"message": "Payment authority was not provided.", "show_retry": False},
         )
 
     payment_transaction = Transaction.objects.filter(
@@ -149,46 +149,51 @@ def payment_verify(request):
         return render(
             request,
             "payment/failure.html",
-            {"message": "تراکنش معتبر پیدا نشد.", "show_retry": False},
+            {"message": "A valid transaction was not found.", "show_retry": False},
         )
 
     if payment_transaction.success:
-        return render(
-            request,
-            "payment/success.html",
-            {
-                "ref_id": payment_transaction.ref_id,
-                "order_number": payment_transaction.order.order_number,
-            },
+        order = payment_transaction.order
+        clear_checkout_order_session_if_matches(request.session, order.id)
+
+        template = (
+            "payment/failure.html"
+            if order.status == Order.STATUS_PAYMENT_REVIEW
+            else "payment/success.html"
         )
+
+        context = {
+            "ref_id": payment_transaction.ref_id,
+            "order_number": order.order_number,
+        }
+
+        if template == "payment/failure.html":
+            context.update(
+                {
+                    "message": "Payment was verified, but the order needs manual review.",
+                    "show_retry": False,
+                }
+            )
+
+        return render(request, template, context)
 
     if status != "OK":
-        with db_transaction.atomic():
-            locked_transaction = Transaction.objects.select_for_update().get(
-                id=payment_transaction.id
-            )
-            locked_transaction.status = "canceled"
-            locked_transaction.raw_response = {
-                "callback_status": status or "unknown",
-                "verified": False,
-            }
-            locked_transaction.save(update_fields=["status", "raw_response", "updated_at"])
-
-        order, _ = OrderLifecycleService.cancel_unpaid_order(
-            payment_transaction.order_id,
-            reason="پرداخت از طرف کاربر یا درگاه لغو شد.",
+        result = PaymentLifecycleService.cancel_from_callback(
+            payment_transaction.pk,
+            callback_status=status,
         )
 
-        if request.session.get(PAYMENT_ORDER_SESSION_KEY) == order.id:
+        if request.session.get(PAYMENT_ORDER_SESSION_KEY) == result.order.id:
             request.session.pop(PAYMENT_ORDER_SESSION_KEY, None)
-        if request.session.get(CHECKOUT_ORDER_SESSION_KEY) == order.id:
+
+        if request.session.get(CHECKOUT_ORDER_SESSION_KEY) == result.order.id:
             request.session.pop(CHECKOUT_ORDER_SESSION_KEY, None)
 
         return render(
             request,
             "payment/failure.html",
             {
-                "message": "پرداخت لغو شد و موجودی سفارش به انبار برگشت.",
+                "message": "Payment was canceled and the reserved stock was released.",
                 "show_retry": False,
             },
         )
@@ -197,52 +202,39 @@ def payment_verify(request):
     response = zarinpal.verify_payment(authority, payment_transaction.amount)
 
     if not response["status"]:
-        payment_transaction.status = "failed"
-        payment_transaction.raw_response = {
-            "verified": False,
-            "code": response.get("code"),
-        }
-        payment_transaction.save(update_fields=["status", "raw_response", "updated_at"])
+        PaymentLifecycleService.mark_verification_failed(
+            payment_transaction.pk,
+            response_code=response.get("code"),
+        )
+
         return render(
             request,
             "payment/failure.html",
             {"error_code": response.get("code"), "show_retry": False},
         )
 
-    with db_transaction.atomic():
-        locked_transaction = Transaction.objects.select_for_update().get(
-            id=payment_transaction.id
+    result = PaymentLifecycleService.confirm_online_payment(
+        payment_transaction.pk,
+        ref_id=response["ref_id"],
+        response_code=response.get("code"),
+    )
+
+    clear_checkout_order_session_if_matches(request.session, result.order.id)
+
+    if result.outcome == PaymentLifecycleService.OUTCOME_REVIEW:
+        return render(
+            request,
+            "payment/failure.html",
+            {
+                "message": "Payment was verified, but the order needs manual review.",
+                "ref_id": response["ref_id"],
+                "order_number": result.order.order_number,
+                "show_retry": False,
+            },
         )
-        order = Order.objects.select_for_update().get(id=locked_transaction.order_id)
-
-        if not locked_transaction.success:
-            locked_transaction.success = True
-            locked_transaction.status = "paid"
-            locked_transaction.ref_id = str(response["ref_id"])
-            locked_transaction.raw_response = {
-                "verified": True,
-                "code": response.get("code"),
-                "ref_id": str(response["ref_id"]),
-            }
-            locked_transaction.save(
-                update_fields=["success", "status", "ref_id", "raw_response", "updated_at"]
-            )
-
-            was_paid = order.paid
-            order.paid = True
-            order.status = "processing"
-            order.save(update_fields=["paid", "status", "updated"])
-
-            if not was_paid:
-                db_transaction.on_commit(
-                    partial(send_order_confirmation, order),
-                    robust=True,
-                )
-
-    clear_checkout_order_session_if_matches(request.session, order.id)
 
     return render(
         request,
         "payment/success.html",
-        {"ref_id": response["ref_id"], "order_number": order.order_number},
+        {"ref_id": response["ref_id"], "order_number": result.order.order_number},
     )

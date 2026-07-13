@@ -41,3 +41,9 @@ _roadmap_backups/
 *.sqlite3
 logs/
 *.log
+
+images/
+# Local AI patch/audit artifacts
+_ai_audits/
+_ai_backups/
+_ai_phase*.py

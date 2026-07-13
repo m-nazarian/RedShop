@@ -1,168 +1,226 @@
-from django.contrib import admin
-from unfold.admin import ModelAdmin, TabularInline
-from unfold.decorators import display
-from .models import Order, OrderItem, Transaction
-
-class OrderItemInline(TabularInline):
-    model = OrderItem
-    extra = 0
-    readonly_fields = ('product', 'price', 'quantity', 'get_cost')
-    can_delete = False
-    tab = True
-
-@admin.register(Order)
-class OrderAdmin(ModelAdmin):
-    list_display = ['order_number', 'customer_fullname', 'phone', 'status', 'payment_method_badge', 'total_display',
-                    'paid', 'created_jalali']
-    list_filter = ['status', 'payment_method', 'created', 'paid']
-    search_fields = ('order_number', 'phone', 'last_name', 'address')
-    inlines = [OrderItemInline]
-    list_editable = ('status', 'paid')
-    readonly_fields = ('order_number', 'subtotal', 'total', 'created', 'updated')
-    list_per_page = 20
-    list_filter_submit = True
-
-    # وضعیت سفارش رنگی
-    @display(description="وضعیت", label={
-        'pending': 'warning',
-        'processing': 'info',
-        'shipped': 'primary',
-        'delivered': 'success',
-        'canceled': 'danger',
-        'refunded': 'secondary',
-    })
-    # def status_badge(self, obj):
-    #     return obj.status
-
-    # روش پرداخت رنگی
-    @display(description="روش پرداخت", label={
-        'online': 'success',
-        'cod': 'warning',
-    })
-    def payment_method_badge(self, obj):
-        return obj.payment_method
-
-    @display(description="مبلغ کل", label=True)
-    def total_display(self, obj):
-        return f"{obj.total:,} تومان"
-
-    def customer_fullname(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
-    customer_fullname.short_description = 'مشتری'
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related('user')
-
-    def created_jalali(self, obj):
-        return obj.created.strftime("%Y/%m/%d %H:%M")
-    created_jalali.short_description = 'تاریخ'
-
-@admin.register(Transaction)
-class TransactionAdmin(ModelAdmin):
-    list_display = ('order', 'provider', 'amount_display', 'success_badge', 'created_jalali')
-    list_filter = ('provider', 'success')
-    search_fields = ('transaction_id', 'ref_id', 'order__order_number')
-
-    @display(description="مبلغ", label=True)
-    def amount_display(self, obj):
-        return f"{obj.amount:,} تومان"
-
-    @display(description="وضعیت", label={
-        True: 'success',
-        False: 'danger'
-    })
-    def success_badge(self, obj):
-        return obj.success
-
-    def created_jalali(self, obj):
-        # ✅ اصلاح شد: created_at به جای created
-        return obj.created_at.strftime("%Y/%m/%d %H:%M")
-    created_jalali.short_description = "تاریخ ایجاد"
-
-# --- RedShop safe order admin actions ---
 
 import logging
 
-from django.contrib import admin as _redshop_admin
-from django.contrib import messages as _redshop_messages
+from django.contrib import admin, messages
+from unfold.admin import ModelAdmin, TabularInline
+from unfold.decorators import display
 
-from .models import Order as _RedShopOrder
-from .services import OrderLifecycleService as _RedShopOrderLifecycleService
+from .models import Order, OrderItem, Transaction
+from .services import OrderLifecycleService
 
-_redshop_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
+@admin.action(description="Safely cancel unpaid orders and release stock")
 def cancel_unpaid_orders(modeladmin, request, queryset):
-    """سفارش‌های پرداخت‌نشده را از مسیر امن Service لغو می‌کند."""
-    canceled_count = 0
-    unchanged_count = 0
-    paid_count = 0
-    error_count = 0
+    """Route every cancellation through the order lifecycle service.
 
-    for order in queryset.select_related("user"):
+    Directly editing paid/status in Django admin is intentionally disabled. The
+    service keeps inventory and coupon usage consistent with the order state.
+    """
+    counters = {"canceled": 0, "unchanged": 0, "paid": 0, "errors": 0}
+
+    for order in queryset.only("id", "paid"):
         if order.paid:
-            paid_count += 1
+            counters["paid"] += 1
             continue
 
         try:
-            _updated_order, changed = _RedShopOrderLifecycleService.cancel_unpaid_order(
+            _order, changed = OrderLifecycleService.cancel_unpaid_order(
                 order.id,
-                reason="لغو از پنل مدیریت",
+                reason="Canceled from admin",
             )
         except Exception:
-            _redshop_logger.exception(
-                "لغو امن سفارش از پنل مدیریت با خطا روبه‌رو شد. order_id=%s",
-                order.id,
-            )
-            error_count += 1
+            logger.exception("Safe admin cancellation failed. order_id=%s", order.id)
+            counters["errors"] += 1
             continue
 
-        if changed:
-            canceled_count += 1
-        else:
-            unchanged_count += 1
+        counters["canceled" if changed else "unchanged"] += 1
 
     parts = []
-
-    if canceled_count:
-        parts.append(f"{canceled_count} سفارش پرداخت‌نشده لغو شد و موجودی آن برگشت.")
-
-    if paid_count:
-        parts.append(f"{paid_count} سفارش پرداخت‌شده تغییر نکرد.")
-
-    if unchanged_count:
-        parts.append(f"{unchanged_count} سفارش از قبل در وضعیت نهایی بود.")
-
-    if error_count:
-        parts.append(f"{error_count} سفارش به‌دلیل خطا پردازش نشد.")
-
+    if counters["canceled"]:
+        parts.append(f"{counters['canceled']} unpaid order(s) were canceled.")
+    if counters["paid"]:
+        parts.append(f"{counters['paid']} paid order(s) were not changed.")
+    if counters["unchanged"]:
+        parts.append(f"{counters['unchanged']} order(s) were already final.")
+    if counters["errors"]:
+        parts.append(f"{counters['errors']} order(s) failed.")
     if not parts:
-        parts.append("هیچ سفارشی برای لغو امن پیدا نشد.")
+        parts.append("No cancellable order was found.")
 
-    if error_count:
-        level = _redshop_messages.ERROR
-    elif canceled_count:
-        level = _redshop_messages.SUCCESS
-    else:
-        level = _redshop_messages.WARNING
+    level = messages.ERROR if counters["errors"] else messages.SUCCESS
+    if not counters["errors"] and not counters["canceled"]:
+        level = messages.WARNING
 
     modeladmin.message_user(request, " ".join(parts), level=level)
 
 
-cancel_unpaid_orders.short_description = "لغو امن سفارش‌های پرداخت‌نشده و برگشت موجودی"
+class OrderItemInline(TabularInline):
+    model = OrderItem
+    extra = 0
+    can_delete = False
+    tab = True
+    readonly_fields = ("product", "title", "price", "quantity", "weight", "get_cost")
 
-try:
-    _order_admin = _redshop_admin.site._registry.get(_RedShopOrder)
-    if _order_admin is not None:
-        _existing_actions = list(getattr(_order_admin, "actions", []) or [])
-        _existing_names = {
-            getattr(action, "__name__", str(action))
-            for action in _existing_actions
-        }
+    def has_add_permission(self, request, obj=None):
+        return False
 
-        if "cancel_unpaid_orders" not in _existing_names:
-            _order_admin.actions = [*_existing_actions, cancel_unpaid_orders]
-except Exception:
-    _redshop_logger.exception("ثبت Admin Action لغو امن سفارش ناموفق بود.")
 
-# --- End RedShop safe order admin actions ---
+@admin.register(Order)
+class OrderAdmin(ModelAdmin):
+    list_display = (
+        "order_number",
+        "customer_fullname",
+        "phone",
+        "status_badge",
+        "payment_method_badge",
+        "total_display",
+        "paid_badge",
+        "created_jalali",
+    )
+    list_filter = ("status", "payment_method", "created", "paid")
+    search_fields = ("order_number", "phone", "last_name", "address")
+    inlines = (OrderItemInline,)
+    actions = (cancel_unpaid_orders,)
+    readonly_fields = (
+        "order_number",
+        "user",
+        "first_name",
+        "last_name",
+        "phone",
+        "address",
+        "province",
+        "city",
+        "postal_code",
+        "address_line",
+        "payment_method",
+        "paid",
+        "stock_released",
+        "status",
+        "subtotal",
+        "discount_amount",
+        "coupon_code",
+        "coupon_released",
+        "shipping_price",
+        "post_price",
+        "total",
+        "created",
+        "updated",
+        "canceled_at",
+        "notes",
+    )
+    list_per_page = 20
+    list_filter_submit = True
+
+    @display(
+        description="Status",
+        label={
+            Order.STATUS_PENDING: "warning",
+            Order.STATUS_PROCESSING: "info",
+            Order.STATUS_PAYMENT_REVIEW: "danger",
+            Order.STATUS_SHIPPED: "primary",
+            Order.STATUS_DELIVERED: "success",
+            Order.STATUS_CANCELED: "danger",
+            Order.STATUS_REFUNDED: "secondary",
+        },
+    )
+    def status_badge(self, obj):
+        return obj.status
+
+    @display(
+        description="Payment method",
+        label={
+            Order.PAYMENT_METHOD_ONLINE: "success",
+            Order.PAYMENT_METHOD_COD: "warning",
+        },
+    )
+    def payment_method_badge(self, obj):
+        return obj.payment_method
+
+    @display(description="Paid", boolean=True)
+    def paid_badge(self, obj):
+        return obj.paid
+
+    @display(description="Total", label=True)
+    def total_display(self, obj):
+        return f"{obj.total:,} toman"
+
+    @admin.display(description="Customer")
+    def customer_fullname(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+    @admin.display(description="Created")
+    def created_jalali(self, obj):
+        return obj.created.strftime("%Y/%m/%d %H:%M")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Transaction)
+class TransactionAdmin(ModelAdmin):
+    list_display = (
+        "order",
+        "provider",
+        "amount_display",
+        "status_badge",
+        "success_badge",
+        "created_jalali",
+    )
+    list_filter = ("provider", "status", "success")
+    search_fields = ("transaction_id", "ref_id", "order__order_number")
+    readonly_fields = (
+        "order",
+        "transaction_id",
+        "ref_id",
+        "provider",
+        "amount",
+        "success",
+        "status",
+        "created_at",
+        "updated_at",
+        "raw_response",
+    )
+
+    @display(description="Amount", label=True)
+    def amount_display(self, obj):
+        return f"{obj.amount:,} toman"
+
+    @display(
+        description="Status",
+        label={
+            Transaction.STATUS_PENDING: "warning",
+            Transaction.STATUS_PAID: "success",
+            Transaction.STATUS_FAILED: "danger",
+            Transaction.STATUS_CANCELED: "secondary",
+        },
+    )
+    def status_badge(self, obj):
+        return obj.status
+
+    @display(description="Success", boolean=True)
+    def success_badge(self, obj):
+        return obj.success
+
+    @admin.display(description="Created")
+    def created_jalali(self, obj):
+        return obj.created_at.strftime("%Y/%m/%d %H:%M")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("order")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return request.method in {"GET", "HEAD", "OPTIONS"}
+
+    def has_delete_permission(self, request, obj=None):
+        return False
