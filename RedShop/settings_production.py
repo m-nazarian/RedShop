@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from .settings import *  # noqa: F401,F403
-from .env import env_bool, env_int, env_list, env_required
+from .env import env_bool, env_int, env_list, env_required, env_value
+from .logging_config import build_logging_config
 
 
 # Production settings are intentionally environment-driven.
@@ -35,3 +36,9 @@ REDSHOP_ENFORCE_CSP = env_bool("REDSHOP_ENFORCE_CSP", True)
 
 # Keep Django's deployment checks meaningful in CI/production.
 SILENCED_SYSTEM_CHECKS = []
+
+LOGGING = build_logging_config(
+    log_level=env_value("DJANGO_LOG_LEVEL", "INFO"),
+    log_file=env_value("DJANGO_LOG_FILE", None),
+    json_format=env_bool("DJANGO_LOG_JSON", False),
+)

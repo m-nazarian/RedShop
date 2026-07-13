@@ -218,3 +218,22 @@ Recommended next:
 1. Verify CI environment variable names against the final hosting provider.
 2. Add README badges after the first successful GitHub Actions run.
 3. Add production logging configuration and Sentry-style error reporting.
+
+
+## Phase 13 - Production logging
+
+Implemented:
+
+- Added RedShop.logging_config with dependency-free production logging helpers.
+- Added console logging for all deployments.
+- Added optional rotating file logging through DJANGO_LOG_FILE.
+- Added optional JSON logs through DJANGO_LOG_JSON.
+- Added focused loggers for django, django.request, apps.orders, and apps.payment.
+- Wired LOGGING into RedShop.settings_production through environment variables.
+- Regression tests cover log-level normalization, console logging, file logging, JSON formatting, and production settings integration.
+
+Recommended next:
+
+1. Add request correlation IDs for tracing checkout and payment flows.
+2. Add structured audit logs for staff actions on payment_review orders.
+3. Add external error reporting such as Sentry when a production provider is chosen.
